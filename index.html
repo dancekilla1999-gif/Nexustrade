@@ -5,20 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <title>Nexus Prop — Trade like a boss</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#08080B; --bg2:#0E0E12;
-  --card:#141419; --card2:#1B1B22; --hover:#24242D;
-  --line:#26262F; --line2:#3A3A46;
-  --gold:#EAC97A; --gold2:#DcB861; --gold-deep:#B8923C;
-  --green:#34E585; --green2:#18D46E; --green-dim:rgba(52,229,133,0.13);
-  --red:#FF5C6C; --red-dim:rgba(255,92,108,0.13);
-  --txt:#F5F4EF; --txt2:#9C9CA8; --txt3:#61616C;
-  --gold-dim:rgba(234,201,122,0.13);
+  --bg:#04070C; --bg2:#070D15;
+  --card:#0B1220; --card2:#101A2C; --hover:#16233B;
+  --line:#15304A; --line2:#1F4568;
+  --gold:#22E4FF; --gold2:#12C6E6; --gold-deep:#0B8FB4;
+  --green:#2BFF9E; --green2:#12E07F; --green-dim:rgba(43,255,158,0.12);
+  --red:#FF3B57; --red-dim:rgba(255,59,87,0.13);
+  --txt:#EAF7FF; --txt2:#7FA0BC; --txt3:#43607E;
+  --gold-dim:rgba(34,228,255,0.12);
   --r:18px; --r-s:13px; --r-xs:10px;
   --font:'Manrope',-apple-system,sans-serif;
-  --display:'Space Grotesk','Manrope',sans-serif;
+  --display:'Chakra Petch','Manrope',sans-serif;
   --mono:'JetBrains Mono',monospace;
   --ease:cubic-bezier(.4,0,.2,1); --spring:cubic-bezier(.34,1.56,.64,1);
 }
@@ -27,9 +27,10 @@ html{height:100%;}
 body{min-height:100%;}
 body{
   background:
-    radial-gradient(1100px 560px at 12% -8%, rgba(234,201,122,0.09), transparent 58%),
-    radial-gradient(820px 560px at 108% 106%, rgba(52,229,133,0.045), transparent 55%),
-    radial-gradient(600px 400px at 90% 0%, rgba(234,201,122,0.04), transparent 60%),
+    radial-gradient(1100px 560px at 12% -8%, rgba(34,228,255,0.10), transparent 58%),
+    radial-gradient(900px 620px at 108% 108%, rgba(255,59,87,0.06), transparent 55%),
+    repeating-linear-gradient(0deg, rgba(34,228,255,0.028) 0 1px, transparent 1px 44px),
+    repeating-linear-gradient(90deg, rgba(34,228,255,0.028) 0 1px, transparent 1px 44px),
     var(--bg);
   color:var(--txt); font-family:var(--font); font-size:14px; line-height:1.45;
   -webkit-font-smoothing:antialiased; overflow-x:hidden;
@@ -85,7 +86,7 @@ body::before{content:'';position:fixed;inset:-12%;z-index:-1;pointer-events:none
   font-weight:800;font-size:14px;padding:14px 20px;position:relative;overflow:hidden;
   transition:transform .18s var(--spring),box-shadow .25s var(--ease),filter .2s;}
 .btn:active{transform:scale(.96);}
-.btn-gold{background:linear-gradient(135deg,#F3D989,var(--gold),var(--gold-deep));color:#1A1405;box-shadow:0 8px 22px -10px rgba(234,201,122,.55), 0 1px 0 rgba(255,255,255,.35) inset;
+.btn-gold{background:linear-gradient(135deg,#7DF3FF,var(--gold),var(--gold-deep));color:#03202B;box-shadow:0 8px 26px -10px rgba(34,228,255,.65), 0 1px 0 rgba(255,255,255,.4) inset, 0 0 18px rgba(34,228,255,.25);
   box-shadow:0 0 0 1px rgba(232,197,88,.4),0 10px 26px rgba(232,197,88,.22);}
 .btn-gold:active{filter:brightness(1.08);}
 .btn-green{background:linear-gradient(135deg,#2BFF84,#0BBF5D);color:#04140A;
@@ -172,7 +173,7 @@ body::before{content:'';position:fixed;inset:-12%;z-index:-1;pointer-events:none
   box-shadow:0 0 6px var(--green);}
 
 /* ===== HERO ACCOUNT CARD ===== */
-.hero-card{border-radius:22px;padding:22px;position:relative;overflow:hidden;box-shadow:0 20px 50px -28px rgba(0,0,0,.85), 0 0 0 1px rgba(234,201,122,.10) inset;
+.hero-card{border-radius:22px;padding:22px;position:relative;overflow:hidden;box-shadow:0 20px 50px -28px rgba(0,0,0,.9), 0 0 0 1px rgba(34,228,255,.12) inset, 0 0 34px -18px rgba(34,228,255,.5);
   background:linear-gradient(150deg, rgba(232,197,88,0.13), rgba(34,255,122,0.05) 55%, rgba(16,21,16,0.6)), var(--card);
   border:1px solid rgba(232,197,88,0.3);}
 .hero-card::before{content:'';position:absolute;top:-45%;right:-12%;width:260px;height:260px;border-radius:50%;
@@ -338,12 +339,47 @@ body::before{content:'';position:fixed;inset:-12%;z-index:-1;pointer-events:none
 .flt-badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:11px;font-weight:800;
   padding:3px 9px;border-radius:8px;background:var(--green-dim);color:var(--green);}
 .flt-badge.mid{background:var(--gold-dim);color:var(--gold);}
-.mascot-ava{background-image:url('mascot.png');background-size:cover;background-position:center top;box-shadow:0 0 0 2px rgba(234,201,122,.45), 0 4px 12px rgba(0,0,0,.5);}
+.mascot-ava{background-image:url('mascot.png');background-size:cover;background-position:center top;box-shadow:0 0 0 2px rgba(34,228,255,.5), 0 0 16px rgba(34,228,255,.35);}
 .home-bull{width:100%;max-width:260px;margin:0 auto 6px;display:block;border-radius:20px;
-  box-shadow:0 22px 55px -18px rgba(0,0,0,.75), 0 0 60px -10px rgba(234,201,122,.28), 0 0 0 1px rgba(234,201,122,.18);
+  box-shadow:0 22px 55px -18px rgba(0,0,0,.8), 0 0 70px -8px rgba(34,228,255,.35), 0 0 0 1px rgba(34,228,255,.22);
   animation:bullFloat 5s ease-in-out infinite;}
 @keyframes bullFloat{0%,100%{transform:translateY(0) rotate(-.6deg);}50%{transform:translateY(-7px) rotate(.6deg);}}
 img.coin-ic{object-fit:cover;background:var(--card2);}
+
+.seg-lg{display:flex;gap:8px;background:var(--card2);border:1px solid var(--line);border-radius:16px;padding:6px;}
+.seg-lg-b{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:11px 6px;border-radius:12px;color:var(--txt2);transition:all .2s var(--spring);border:1px solid transparent;}
+.seg-lg-b b{font-family:var(--display);font-size:15px;}
+.seg-lg-b span{font-size:11px;}
+.seg-lg-b.active{background:linear-gradient(180deg,var(--gold-dim),transparent);color:var(--gold);border-color:rgba(34,228,255,.45);text-shadow:0 0 12px rgba(34,228,255,.6);}
+.rules-tbl{width:100%;border-collapse:collapse;font-size:12.5px;}
+.rules-tbl th{color:var(--txt2);font-weight:600;text-align:center;padding:7px 4px;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;}
+.rules-tbl td{text-align:center;padding:9px 4px;background:var(--card2);}
+.rules-tbl tr td:first-child{border-radius:9px 0 0 9px;text-align:left;padding-left:12px;color:var(--txt2);font-weight:600;}
+.rules-tbl tr td:last-child{border-radius:0 9px 9px 0;}
+.rules-tbl .up{color:var(--green);font-weight:700;} .rules-tbl .dn{color:var(--red);font-weight:700;}
+.ch-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.ch-card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 12px;text-align:center;cursor:pointer;transition:all .18s var(--spring);overflow:hidden;}
+.ch-card:active{transform:scale(.97);}
+.ch-card.sel{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold), 0 0 24px rgba(34,228,255,.35);background:linear-gradient(160deg,var(--gold-dim),transparent);}
+.ch-card .cn{font-size:11px;color:var(--txt2);}
+.ch-card .cs{font-family:var(--display);font-weight:700;font-size:22px;margin-top:3px;}
+.ch-card .cp{color:var(--gold);font-weight:800;font-family:var(--mono);margin-top:2px;}
+.ch-card .cx{display:inline-block;margin-top:6px;font-size:10px;background:var(--gold-dim);color:var(--gold);padding:2px 8px;border-radius:7px;font-weight:700;}
+.ch-flag{position:absolute;top:0;left:50%;transform:translateX(-50%);font-size:9px;font-weight:800;padding:3px 10px;border-radius:0 0 8px 8px;letter-spacing:.03em;}
+.ch-flag.pro{background:var(--gold);color:#1a1405;} .ch-flag.hot{background:var(--red);color:#fff;}
+.pay-net{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:10px 0;}
+.pay-addr{font-family:var(--mono);font-size:12px;word-break:break-all;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center;}
+.qr-box{width:180px;height:180px;margin:12px auto;border-radius:14px;background:#fff;padding:8px;}
+.qr-box img{width:100%;height:100%;}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.stat-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;}
+.stat-card .sv{font-family:var(--display);font-weight:700;font-size:26px;}
+.stat-card .sl{font-size:11px;color:var(--txt2);margin-top:2px;}
+.pay-row{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px;margin-bottom:9px;}
+.dp-row{position:relative;display:flex;align-items:center;font-size:11px;padding:3px 6px;border-radius:6px;overflow:hidden;margin-bottom:2px;}
+.dp-bar{position:absolute;right:0;top:0;bottom:0;opacity:.16;border-radius:6px;}
+.dp-bar.b{background:var(--green);} .dp-bar.a{background:var(--red);}
+.dp-row span{position:relative;z-index:1;}
 </style>
 </head>
 <body>
@@ -434,6 +470,7 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>
         <span class="notif-dot"></span>
       </button>
+      <button class="icon-btn" id="adminBtn" data-go="admin" style="display:none;" aria-label="Админ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg></button>
     </div>
   </div>
 
@@ -462,7 +499,7 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
     <span class="h2">Инструменты</span>
   </div>
   <div class="tools">
-    <div class="tool-card" data-go="accounts">
+    <div class="tool-card" data-go="challenges">
       <div class="tool-ic" style="background:var(--gold-dim);color:var(--gold);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg></div>
       <div class="h3">Челлендж</div>
       <div class="small mt2">Пройди 2 этапа и получи капитал</div>
@@ -557,6 +594,8 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
     </div>
     <button class="tbar-ic" id="drawBtn" title="Инструменты рисования"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20l5-1L20 8a2 2 0 00-3-3L6 16l-2 4z"/></svg></button>
     <button class="tbar-ic" id="delDraws" title="Очистить"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/></svg></button>
+    <button class="tbar-ic" id="depthBtn" title="Стакан"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h7M4 10h5M4 14h8M4 18h6"/><path d="M20 6h-4M20 10h-6M20 14h-3M20 18h-5"/></svg></button>
+    <button class="tbar-ic" id="obBtn" title="Ордер-блоки"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5" width="16" height="5" rx="1"/><rect x="4" y="14" width="16" height="5" rx="1"/></svg></button>
     <button class="tbar-ic gold" id="indBtn" title="Индикаторы"><span style="font-weight:800;font-style:italic;">ƒ</span></button>
     <div class="tool-cur" id="toolCur"></div>
   </div>
@@ -653,6 +692,32 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
   <div class="note-box mt4">⚠️ Проверяйте сеть перед выводом. Отправка в неверную сеть приведёт к потере средств. Реальные выплаты подключаются на стороне сервера/провайдера.</div>
 </section>
 
+
+<!-- ================= CHALLENGES ================= -->
+<section class="screen" id="screen-challenges">
+  <div class="row between" style="padding:4px 0 12px;">
+    <span class="h1">Выбери челлендж</span>
+    <button class="icon-btn" data-go="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="seg-lg" id="chTypeSeg">
+    <button class="seg-lg-b active" data-cht="base"><b>Базовый</b><span>2 этапа</span></button>
+    <button class="seg-lg-b" data-cht="fast"><b>Ускоренный</b><span>1 этап</span></button>
+  </div>
+  <div id="chRules" class="mt4"></div>
+  <div class="h2 mt5" style="margin-bottom:12px;">Размер счёта</div>
+  <div id="chSizes" class="ch-grid"></div>
+  <div id="chSummary" class="mt5"></div>
+</section>
+
+<!-- ================= ADMIN ================= -->
+<section class="screen" id="screen-admin">
+  <div class="row between" style="padding:4px 0 14px;">
+    <span class="h1">Админ-панель</span>
+    <button class="icon-btn" data-go="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg></button>
+  </div>
+  <div id="adminBody"><div class="mut small" style="text-align:center;padding:20px;">Загружаю статистику…</div></div>
+</section>
+
 <!-- ================= AUTH ================= -->
 <section class="screen" id="screen-auth">
   <div style="text-align:center;padding:20px 0 6px;">
@@ -722,11 +787,27 @@ const API_BASE=''; /* тот же домен Vercel; функции в /api */
 const CORE_SYMS = ['BTCUSDT','ETHUSDT','SOLUSDT','BNBUSDT','XRPUSDT','DOGEUSDT','TONUSDT'];
 const CDC = { BTCUSDT:'BTCUSD-PERP', ETHUSDT:'ETHUSD-PERP', SOLUSDT:'SOLUSD-PERP', BNBUSDT:'BNBUSD-PERP', XRPUSDT:'XRPUSD-PERP', DOGEUSDT:'DOGEUSD-PERP', TONUSDT:'TONUSD-PERP' };
 const CDC_TF = { '1m':'1m','5m':'5m','15m':'15m','30m':'30m','1h':'1h','4h':'4h','1d':'1D','1w':'7D' };
-const TIERS = [
-  { size:10000, fee:99 },
-  { size:25000, fee:199, best:true },
-  { size:50000, fee:349 }
-];
+const TIERS = [ { size:10000, fee:0 } ];  // демо — только $10k
+const ADMIN_ID = '566501781';
+const PAY = {
+  BEP20:{ label:'USDT · BEP-20 (BNB)', addr:'0x35cd937f9a5639589d6582636a1ad013e73ce2d8' },
+  TRC20:{ label:'USDT · TRC-20 (Tron)', addr:'TPaM8Q8wboHbfXyiHsTAuM3fGqqHtY5PJC' },
+  ERC20:{ label:'USDT · ERC-20 (ETH)', addr:'0x35cd937f9a5639589d6582636a1ad013e73ce2d8' },
+  TON:{ label:'TON', addr:'UQBbSaosxtD53fERch_CjmNHtAqNgdS8zhHOeDJasYjg2PHJ' }
+};
+// Челленджи как на макете (без Турбо)
+const CH_RULES = {
+  base:{ name:'Базовый', stages:'2 этапа', rows:[['Этап 1','+5%','−5%','−10%','3'],['Этап 2','+8%','−5%','−10%','5'],['Фандед','∞','−5%','−10%','5']] },
+  fast:{ name:'Ускоренный', stages:'1 этап', rows:[['Этап 1','+10%','−3%','−6%','3'],['Фандед','∞','−3%','−6%','5']] }
+};
+const CH_SIZES = {
+  base:[ {name:'Легенда рынка',size:200000,price:1399,pro:false},{name:'Выбор топов',size:100000,price:799,pro:true},
+         {name:'Уверенный вход',size:50000,price:399},{name:'Оптимальный',size:25000,price:249,hot:true},
+         {name:'Плавный старт',size:10000,price:119},{name:'Минимум риска',size:5000,price:69} ],
+  fast:[ {name:'Король рынка',size:200000,price:1499,pro:false},{name:'Сильный старт',size:100000,price:899,pro:true},
+         {name:'Баланс силы',size:50000,price:459},{name:'Золотая середина',size:25000,price:259,hot:true},
+         {name:'Топ за свои',size:10000,price:129},{name:'Пробуй смело',size:5000,price:79} ]
+};
 const RULES = { target1:5, target2:8, dailyLoss:5, maxDD:10, profitDays:3, split:80 };
 
 const S = {
@@ -735,11 +816,11 @@ const S = {
   prices:{},      // symbol -> {price, change24h}
   klines:{},      // symbol_interval -> [{t,o,h,l,c,v}]
   term:{ symbol:'BTCUSDT', interval:'1h', hover:null, tool:'cursor', pending:null, layout:null, view:null, type:'candle' },
-  marketFilter:'all', search:'', coinMeta:{}, mktLimit:60,
+  marketFilter:'all', search:'', coinMeta:{}, mktLimit:60, chType:'base', chSel:null, adminStat:null,
   acc:{ active:true, tier:10000, stage:1, balance:10000, startDay:10000, profitDays:0, dayPnlPeak:0, status:'RUN' },
   positions:[], history:[], nextId:1,
   equityHist:[], ptab:'pos', stab:'signals', tier:'free', wallet:{}, chat:[], user:null,
-  ind:{ema9:true,ema21:true,bb:false,vwap:false,rsi:false,macd:false,stoch:false}, draws:{}, src:'DEMO'
+  indA:['EMA 21','RSI 14'], showOB:false, draws:{}, src:'DEMO'
 };
 
 /* ============ UTILS ============ */
@@ -931,12 +1012,13 @@ function checkChallenge(){
 function startChallenge(size, fee){
   S.acc={ active:true, tier:size, stage:1, balance:size, startDay:size, profitDays:0, dayPnlPeak:0, status:'RUN' };
   S.positions=[]; S.history=[]; S.equityHist=[];
-  toast(`Челлендж $${fmt(size,0)} активирован (демо, fee $${fee} — оплата подключается позже)`,'⚡');
+  toast(fee?`Счёт $${fmt(size,0)} активирован`:`Демо-счёт $${fmt(size,0)} активирован`,'⚡');
   haptic('ok'); go('accounts');
 }
 
 /* ============ RENDER: HOME ============ */
 function renderHome(){
+  const ab=$('adminBtn'); if(ab) ab.style.display=isAdmin()?'flex':'none';
   const eq=equity(), start=S.acc.tier, pnl=eq-start, pct=pnl/start*100;
   $('homeEquity').textContent=fUsd(eq);
   $('homePnl').innerHTML=`<span class="${pnl>=0?'up':'down'}">${pnl>=0?'+':''}${fUsd(pnl)} (${pnl>=0?'+':''}${pct.toFixed(2)}%)</span>`;
@@ -1019,7 +1101,7 @@ function renderAccounts(){
 }
 function renderTiers(body){
   const wrap=document.createElement('div');
-  wrap.innerHTML = `<div class="small" style="margin-bottom:12px;">Выбери размер счёта. Цель этапа 1 — +${RULES.target1}%, этапа 2 — +${RULES.target2}%. Дневная просадка ${RULES.dailyLoss}%, общая ${RULES.maxDD}%.</div>`;
+  wrap.innerHTML = `<div class="small" style="margin-bottom:12px;">Демо-счёт $10 000 — торгуй без риска и тестируй стратегии. Реальные челленджи с выводом — в разделе «Челлендж».</div>`;
   TIERS.forEach(t=>{
     const el=document.createElement('div');
     el.className='tier'+(t.best?' best':''); el.style.marginBottom='12px';
@@ -1033,8 +1115,8 @@ function renderTiers(body){
         <div class="rule"><div class="micro">Дневной лимит</div><div class="v down">−${RULES.dailyLoss}%</div></div>
         <div class="rule"><div class="micro">Макс. просадка</div><div class="v down">−${RULES.maxDD}%</div></div>
       </div>
-      <button class="btn ${t.best?'btn-gold':'btn-ghost'} btn-block mt4" data-tier="${t.size}" data-fee="${t.fee}">
-        Активировать · $${t.fee}
+      <button class="btn btn-gold btn-block mt4" data-tier="${t.size}" data-fee="${t.fee}">
+        ${t.fee?('Активировать · $'+t.fee):'Активировать демо-счёт'}
       </button>`;
     wrap.appendChild(el);
   });
@@ -1134,7 +1216,7 @@ function updateMarketPrices(){
 
 /* ============ RENDER: TERMINAL ============ */
 async function openTerminal(sym){
-  S.term.symbol=sym; S.term.view=null; S.term.hover=null; S.term.pending=null; go('terminal');
+  S.term.symbol=sym; S.term.view=null; S.term.hover=null; S.term.pend=null; go('terminal');
   await loadKlines(sym, S.term.interval);
   renderTerminal();
 }
@@ -1159,16 +1241,58 @@ function updateNotional(){
   $('levVal').textContent='x'+l;
   $('levSlider').style.setProperty('--v', ((l-1)/19*100)+'%');
 }
+/* ================= CALC LIB ================= */
 function emaArr(v,p){ const kk=2/(p+1), o=new Array(v.length); o[0]=v[0];
   for(let i=1;i<v.length;i++) o[i]=v[i]*kk+o[i-1]*(1-kk); return o; }
 function smaArr(v,p){ const o=new Array(v.length).fill(null); let s=0;
   for(let i=0;i<v.length;i++){ s+=v[i]; if(i>=p) s-=v[i-p]; if(i>=p-1) o[i]=s/p; } return o; }
+function wmaArr(v,p){ const o=new Array(v.length).fill(null);
+  for(let i=p-1;i<v.length;i++){ let s=0,w=0; for(let j=0;j<p;j++){ s+=v[i-j]*(p-j); w+=(p-j);} o[i]=s/w; } return o; }
+function hmaArr(v,p){ const h=Math.round(p/2), sq=Math.round(Math.sqrt(p));
+  const w1=wmaArr(v,h), w2=wmaArr(v,p);
+  const d=v.map((_,i)=>(w1[i]!=null&&w2[i]!=null)?2*w1[i]-w2[i]:v[i]);
+  return wmaArr(d,sq); }
+function demaArr(v,p){ const e=emaArr(v,p), e2=emaArr(e,p); return v.map((_,i)=>2*e[i]-e2[i]); }
+function temaArr(v,p){ const e=emaArr(v,p), e2=emaArr(e,p), e3=emaArr(e2,p); return v.map((_,i)=>3*e[i]-3*e2[i]+e3[i]); }
+function almaArr(v,p){ const m=Math.floor((p-1)*0.85), s=p/6; const o=new Array(v.length).fill(null);
+  for(let i=p-1;i<v.length;i++){ let sum=0,norm=0; for(let j=0;j<p;j++){ const w=Math.exp(-((j-m)*(j-m))/(2*s*s)); sum+=v[i-p+1+j]*w; norm+=w; } o[i]=sum/norm; } return o; }
 function bbArr(v,p,m){ p=p||20; m=m||2; const mid=smaArr(v,p), up=[], lo2=[];
   for(let i=0;i<v.length;i++){ if(i<p-1||mid[i]===null){ up.push(null); lo2.push(null); continue; }
     let s=0; for(let j=i-p+1;j<=i;j++){ const d=v[j]-mid[i]; s+=d*d; }
     const sd=Math.sqrt(s/p); up.push(mid[i]+m*sd); lo2.push(mid[i]-m*sd); }
   return {mid,up,lo:lo2}; }
+function trArr(k){ return k.map((c,i)=>i?Math.max(c.h-c.l,Math.abs(c.h-k[i-1].c),Math.abs(c.l-k[i-1].c)):c.h-c.l); }
+function atrArr(k,p){ return emaArr(trArr(k),p||14); }
+function keltArr(k,cl){ const mid=emaArr(cl,20), a=atrArr(k,10);
+  return {mid, up:cl.map((_,i)=>mid[i]+2*a[i]), lo:cl.map((_,i)=>mid[i]-2*a[i])}; }
+function donchArr(k,p){ p=p||20; const up=[],lo=[];
+  for(let i=0;i<k.length;i++){ if(i<p-1){up.push(null);lo.push(null);continue;}
+    let h=-1e18,l=1e18; for(let j=i-p+1;j<=i;j++){ if(k[j].h>h)h=k[j].h; if(k[j].l<l)l=k[j].l; } up.push(h); lo.push(l); }
+  return {up,lo,mid:up.map((u,i)=>u!=null?(u+lo[i])/2:null)}; }
+function envArr(cl,p,pc){ const m=smaArr(cl,p||20); return {mid:m, up:m.map(x=>x!=null?x*(1+pc):null), lo:m.map(x=>x!=null?x*(1-pc):null)}; }
 function vwapArr(k){ let pv=0,vv=0; return k.map(c=>{ const tp=(c.h+c.l+c.c)/3, v=c.v||0; pv+=tp*v; vv+=v; return vv?pv/vv:c.c; }); }
+function psarArr(k){ const o=new Array(k.length).fill(null); if(k.length<3) return o;
+  let up=k[1].c>=k[0].c, af=0.02, ep=up?k[1].h:k[1].l, sar=up?k[0].l:k[0].h;
+  for(let i=2;i<k.length;i++){ sar=sar+af*(ep-sar);
+    if(up){ if(k[i].l<sar){ up=false; sar=ep; ep=k[i].l; af=0.02; } else { if(k[i].h>ep){ep=k[i].h; af=Math.min(0.2,af+0.02);} } }
+    else { if(k[i].h>sar){ up=true; sar=ep; ep=k[i].h; af=0.02; } else { if(k[i].l<ep){ep=k[i].l; af=Math.min(0.2,af+0.02);} } }
+    o[i]=sar; } return o; }
+function superArr(k,cl){ const a=atrArr(k,10), o=new Array(k.length).fill(null); if(k.length<12) return {line:o};
+  let dir=1, line=null;
+  for(let i=11;i<k.length;i++){ const mid=(k[i].h+k[i].l)/2, up=mid+3*a[i], lo=mid-3*a[i];
+    if(line===null){ line=lo; }
+    if(dir===1){ line=Math.max(line,lo); if(cl[i]<line){ dir=-1; line=up; } }
+    else { line=Math.min(line,up); if(cl[i]>line){ dir=1; line=lo; } }
+    o[i]=line; } return {line:o}; }
+function ichiArr(k){ const hh=(p,i)=>{let h=-1e18;for(let j=Math.max(0,i-p+1);j<=i;j++)if(k[j].h>h)h=k[j].h;return h;};
+  const ll=(p,i)=>{let l=1e18;for(let j=Math.max(0,i-p+1);j<=i;j++)if(k[j].l<l)l=k[j].l;return l;};
+  const n=k.length, ten=[],kij=[],spA=[],spB=[];
+  for(let i=0;i<n;i++){ ten.push((hh(9,i)+ll(9,i))/2); kij.push((hh(26,i)+ll(26,i))/2); }
+  for(let i=0;i<n;i++){ spA.push((ten[i]+kij[i])/2); spB.push((hh(52,i)+ll(52,i))/2); }
+  return {ten,kij,spA,spB}; }
+function pivotsCalc(k){ const n=k.length, look=Math.min(n,24);
+  let h=-1e18,l=1e18,c=k[n-1].c; for(let i=n-look;i<n;i++){ if(k[i].h>h)h=k[i].h; if(k[i].l<l)l=k[i].l; }
+  const p=(h+l+c)/3; return [['P',p],['R1',2*p-l],['S1',2*p-h],['R2',p+(h-l)],['S2',p-(h-l)]]; }
 function rsiArr(v,p){ p=p||14; const o=new Array(v.length).fill(null);
   if(v.length<=p) return o; let g=0,l=0;
   for(let i=1;i<=p;i++){ const d=v[i]-v[i-1]; if(d>=0) g+=d; else l-=d; }
@@ -1180,19 +1304,150 @@ function macdArr(v){ const f=emaArr(v,12), s=emaArr(v,26);
   const macd=v.map((_,i)=>f[i]-s[i]); const sig=emaArr(macd,9);
   const hist=macd.map((m,i)=>m-sig[i]); return {macd,sig,hist}; }
 function stochArr(k,p,d){ p=p||14; d=d||3; const kA=new Array(k.length).fill(null);
-  for(let i=0;i<k.length;i++){ if(i<p-1) continue; let hh=-Infinity,ll=Infinity;
+  for(let i=0;i<k.length;i++){ if(i<p-1) continue; let hh=-1e18,ll=1e18;
     for(let j=i-p+1;j<=i;j++){ if(k[j].h>hh)hh=k[j].h; if(k[j].l<ll)ll=k[j].l; }
     kA[i]= hh===ll?50:(k[i].c-ll)/(hh-ll)*100; }
   const dA=new Array(k.length).fill(null);
   for(let i=0;i<k.length;i++){ if(kA[i]===null) continue; let s=0,c=0;
     for(let j=Math.max(0,i-d+1);j<=i;j++){ if(kA[j]!==null){ s+=kA[j]; c++; } } dA[i]=c?s/c:null; }
   return {k:kA,d:dA}; }
-function oscList(){ const o=[]; if(S.ind.rsi)o.push('rsi'); if(S.ind.macd)o.push('macd'); if(S.ind.stoch)o.push('stoch'); return o; }
-function chartWrapH(){ return 300 + oscList().length*84; }
+function stochRsiArr(v){ const r=rsiArr(v,14), o=new Array(v.length).fill(null);
+  for(let i=27;i<v.length;i++){ let h=-1e18,l=1e18;
+    for(let j=i-13;j<=i;j++){ if(r[j]==null)continue; if(r[j]>h)h=r[j]; if(r[j]<l)l=r[j]; }
+    o[i]=h===l?50:(r[i]-l)/(h-l)*100; }
+  return {k:o, d:smaArr(o.map(x=>x==null?50:x),3)}; }
+function aoArr(k){ const med=k.map(c=>(c.h+c.l)/2); const f=smaArr(med,5), s=smaArr(med,34);
+  return med.map((_,i)=>(f[i]!=null&&s[i]!=null)?f[i]-s[i]:null); }
+function cciArr(k,p){ p=p||20; const tp=k.map(c=>(c.h+c.l+c.c)/3), m=smaArr(tp,p), o=new Array(k.length).fill(null);
+  for(let i=p-1;i<k.length;i++){ let md=0; for(let j=i-p+1;j<=i;j++) md+=Math.abs(tp[j]-m[i]); md/=p;
+    o[i]=md?(tp[i]-m[i])/(0.015*md):0; } return o; }
+function wprArr(k,p){ p=p||14; const o=new Array(k.length).fill(null);
+  for(let i=p-1;i<k.length;i++){ let h=-1e18,l=1e18; for(let j=i-p+1;j<=i;j++){ if(k[j].h>h)h=k[j].h; if(k[j].l<l)l=k[j].l; }
+    o[i]=h===l?-50:(h-k[i].c)/(h-l)*-100; } return o; }
+function mfiArr(k,p){ p=p||14; const o=new Array(k.length).fill(null);
+  const tp=k.map(c=>(c.h+c.l+c.c)/3);
+  for(let i=p;i<k.length;i++){ let pos=0,neg=0;
+    for(let j=i-p+1;j<=i;j++){ const mf=tp[j]*(k[j].v||1); if(tp[j]>tp[j-1]) pos+=mf; else neg+=mf; }
+    o[i]=neg===0?100:100-100/(1+pos/neg); } return o; }
+function obvArr(k){ let s=0; return k.map((c,i)=>{ if(i){ if(c.c>k[i-1].c) s+=(c.v||1); else if(c.c<k[i-1].c) s-=(c.v||1); } return s; }); }
+function rocArr(v,p){ p=p||12; return v.map((x,i)=>i>=p?(x-v[i-p])/v[i-p]*100:null); }
+function momArr(v,p){ p=p||10; return v.map((x,i)=>i>=p?x-v[i-p]:null); }
+function trixArr(v,p){ p=p||15; const e=emaArr(emaArr(emaArr(v,p),p),p);
+  return e.map((x,i)=>i?(x-e[i-1])/e[i-1]*10000:null); }
+function dpoArr(v,p){ p=p||20; const m=smaArr(v,p), sh=Math.floor(p/2)+1;
+  return v.map((x,i)=>(i>=sh&&m[i-sh]!=null)?x-m[i-sh]:null); }
+function cmfArr(k,p){ p=p||20; const o=new Array(k.length).fill(null);
+  for(let i=p-1;i<k.length;i++){ let mv=0,vv=0;
+    for(let j=i-p+1;j<=i;j++){ const c=k[j], r=c.h-c.l||1e-9;
+      mv+=((c.c-c.l)-(c.h-c.c))/r*(c.v||1); vv+=(c.v||1); }
+    o[i]=vv?mv/vv:0; } return o; }
+function fiArr(k){ const raw=k.map((c,i)=>i?(c.c-k[i-1].c)*(c.v||1):0); return emaArr(raw,13); }
+function elderArr(k,cl){ const e=emaArr(cl,13);
+  return {bull:k.map((c,i)=>c.h-e[i]), bear:k.map((c,i)=>c.l-e[i])}; }
+function vortexArr(k,p){ p=p||14; const tr=trArr(k), vp=[],vm=[];
+  for(let i=0;i<k.length;i++){ vp.push(i?Math.abs(k[i].h-k[i-1].l):0); vm.push(i?Math.abs(k[i].l-k[i-1].h):0); }
+  const o1=new Array(k.length).fill(null), o2=new Array(k.length).fill(null);
+  for(let i=p;i<k.length;i++){ let sp=0,sm=0,st=0;
+    for(let j=i-p+1;j<=i;j++){ sp+=vp[j]; sm+=vm[j]; st+=tr[j]; }
+    o1[i]=st?sp/st:1; o2[i]=st?sm/st:1; } return {vp:o1,vm:o2}; }
+function cmoArr(v,p){ p=p||14; const o=new Array(v.length).fill(null);
+  for(let i=p;i<v.length;i++){ let up=0,dn=0;
+    for(let j=i-p+1;j<=i;j++){ const d=v[j]-v[j-1]; if(d>0)up+=d; else dn-=d; }
+    o[i]=(up+dn)?(up-dn)/(up+dn)*100:0; } return o; }
+function uoArr(k){ const bp=[],tr=trArr(k);
+  for(let i=0;i<k.length;i++){ const pc=i?k[i-1].c:k[i].o; bp.push(k[i].c-Math.min(k[i].l,pc)); }
+  const avg=(p,i)=>{ let b=0,t=0; for(let j=i-p+1;j<=i;j++){ b+=bp[j]; t+=tr[j]; } return t?b/t:0; };
+  const o=new Array(k.length).fill(null);
+  for(let i=27;i<k.length;i++) o[i]=100*(4*avg(7,i)+2*avg(14,i)+avg(28,i))/7;
+  return o; }
+function kstArr(v){ const r=(p)=>rocArr(v,p).map(x=>x==null?0:x);
+  const a=smaArr(r(10),10), b=smaArr(r(15),10), c=smaArr(r(20),10), d=smaArr(r(30),15);
+  const kk=v.map((_,i)=>(a[i]!=null&&d[i]!=null)?a[i]+2*(b[i]||0)+3*(c[i]||0)+4*d[i]:null);
+  return {k:kk, s:smaArr(kk.map(x=>x==null?0:x),9)}; }
+
+/* ================= INDICATOR REGISTRY (47) ================= */
+const IC={cy:'#22E4FF', gd:'#EAC97A', gr:'#2BFF9E', rd:'#FF3B57', pu:'#B98CFF', or:'#FFA657', wh:'rgba(234,247,255,.75)', bl:'#5EB0FF'};
+const INDS=[
+ ['SMA 10','ov',(k,c)=>({lines:[[smaArr(c,10),IC.wh,1.2]]})],
+ ['SMA 20','ov',(k,c)=>({lines:[[smaArr(c,20),IC.bl,1.2]]})],
+ ['SMA 50','ov',(k,c)=>({lines:[[smaArr(c,50),IC.or,1.2]]})],
+ ['SMA 100','ov',(k,c)=>({lines:[[smaArr(c,100),IC.pu,1.2]]})],
+ ['SMA 200','ov',(k,c)=>({lines:[[smaArr(c,200),IC.rd,1.2]]})],
+ ['EMA 9','ov',(k,c)=>({lines:[[emaArr(c,9),IC.cy,1.4]]})],
+ ['EMA 21','ov',(k,c)=>({lines:[[emaArr(c,21),IC.gr,1.4]]})],
+ ['EMA 50','ov',(k,c)=>({lines:[[emaArr(c,50),IC.or,1.3]]})],
+ ['EMA 100','ov',(k,c)=>({lines:[[emaArr(c,100),IC.pu,1.3]]})],
+ ['EMA 200','ov',(k,c)=>({lines:[[emaArr(c,200),IC.rd,1.3]]})],
+ ['WMA 20','ov',(k,c)=>({lines:[[wmaArr(c,20),IC.bl,1.2]]})],
+ ['HMA 21','ov',(k,c)=>({lines:[[hmaArr(c,21),IC.cy,1.4]]})],
+ ['DEMA 21','ov',(k,c)=>({lines:[[demaArr(c,21),IC.gd,1.2]]})],
+ ['TEMA 21','ov',(k,c)=>({lines:[[temaArr(c,21),IC.pu,1.2]]})],
+ ['ALMA 21','ov',(k,c)=>({lines:[[almaArr(c,21),IC.gr,1.2]]})],
+ ['Bollinger','ov',(k,c)=>{const b=bbArr(c,20,2);return {lines:[[b.up,IC.wh,1],[b.lo,IC.wh,1],[b.mid,IC.wh,1,[3,3]]],fills:[[b.up,b.lo,'rgba(34,228,255,.05)']]};}],
+ ['Keltner','ov',(k,c)=>{const b=keltArr(k,c);return {lines:[[b.up,IC.or,1],[b.lo,IC.or,1],[b.mid,IC.or,1,[3,3]]]};}],
+ ['Donchian','ov',(k,c)=>{const b=donchArr(k,20);return {lines:[[b.up,IC.bl,1],[b.lo,IC.bl,1],[b.mid,IC.bl,1,[3,3]]]};}],
+ ['Envelope 2%','ov',(k,c)=>{const b=envArr(c,20,0.02);return {lines:[[b.up,IC.pu,1],[b.lo,IC.pu,1]]};}],
+ ['VWAP','ov',(k,c)=>({lines:[[vwapArr(k),IC.gd,1.5,[5,4]]]})],
+ ['Parabolic SAR','ov',(k,c)=>({dots:[[psarArr(k),IC.cy]]})],
+ ['Supertrend','ov',(k,c)=>({lines:[[superArr(k,c).line,IC.gr,1.6]]})],
+ ['Ichimoku','ov',(k,c)=>{const x=ichiArr(k);return {lines:[[x.ten,IC.cy,1.1],[x.kij,IC.rd,1.1]],fills:[[x.spA,x.spB,'rgba(43,255,158,.07)']]};}],
+ ['Pivot Points','ov',(k,c)=>({hl:pivotsCalc(k).map(pp=>[pp[1], pp[0]==='P'?IC.gd:(pp[0][0]==='R'?IC.rd:IC.gr), pp[0]])})],
+ ['RSI 14','os',(k,c)=>({lines:[[rsiArr(c,14),IC.cy]],range:[0,100],levels:[30,70],label:'RSI'})],
+ ['Stochastic','os',(k,c)=>{const s=stochArr(k,14,3);return {lines:[[s.k,IC.gd],[s.d,IC.cy]],range:[0,100],levels:[20,80],label:'Stoch'};}],
+ ['Stoch RSI','os',(k,c)=>{const s=stochRsiArr(c);return {lines:[[s.k,IC.gd],[s.d,IC.cy]],range:[0,100],levels:[20,80],label:'StochRSI'};}],
+ ['MACD','os',(k,c)=>{const m=macdArr(c);return {lines:[[m.macd,IC.cy],[m.sig,IC.rd]],hist:m.hist,label:'MACD'};}],
+ ['Awesome Osc','os',(k,c)=>({hist:aoArr(k),label:'AO'})],
+ ['CCI 20','os',(k,c)=>({lines:[[cciArr(k,20),IC.or]],levels:[-100,100],zero:1,label:'CCI'})],
+ ['Williams %R','os',(k,c)=>({lines:[[wprArr(k,14),IC.pu]],range:[-100,0],levels:[-80,-20],label:'W%R'})],
+ ['MFI 14','os',(k,c)=>({lines:[[mfiArr(k,14),IC.gr]],range:[0,100],levels:[20,80],label:'MFI'})],
+ ['OBV','os',(k,c)=>({lines:[[obvArr(k),IC.bl]],label:'OBV'})],
+ ['ROC 12','os',(k,c)=>({lines:[[rocArr(c,12),IC.cy]],zero:1,label:'ROC'})],
+ ['Momentum','os',(k,c)=>({lines:[[momArr(c,10),IC.gd]],zero:1,label:'MOM'})],
+ ['ATR 14','os',(k,c)=>({lines:[[atrArr(k,14),IC.or]],label:'ATR'})],
+ ['ADX 14','os',(k,c)=>{const p=14, tr=trArr(k); const pdm=[],mdm=[];
+   for(let i=0;i<k.length;i++){ const up=i?k[i].h-k[i-1].h:0, dn=i?k[i-1].l-k[i].l:0;
+     pdm.push(up>dn&&up>0?up:0); mdm.push(dn>up&&dn>0?dn:0); }
+   const atr=emaArr(tr,p), pdi=emaArr(pdm,p).map((x,i)=>atr[i]?100*x/atr[i]:0), mdi=emaArr(mdm,p).map((x,i)=>atr[i]?100*x/atr[i]:0);
+   const dx=pdi.map((x,i)=>{const s=x+mdi[i];return s?100*Math.abs(x-mdi[i])/s:0;});
+   return {lines:[[emaArr(dx,p),IC.wh],[pdi,IC.gr],[mdi,IC.rd]],range:[0,60],levels:[25],label:'ADX'};}],
+ ['TRIX','os',(k,c)=>({lines:[[trixArr(c,15),IC.pu]],zero:1,label:'TRIX'})],
+ ['DPO 20','os',(k,c)=>({lines:[[dpoArr(c,20),IC.bl]],zero:1,label:'DPO'})],
+ ['CMF 20','os',(k,c)=>({lines:[[cmfArr(k,20),IC.gr]],zero:1,label:'CMF'})],
+ ['Force Index','os',(k,c)=>({lines:[[fiArr(k),IC.or]],zero:1,label:'FI'})],
+ ['Elder Ray','os',(k,c)=>{const e=elderArr(k,c);return {hist:e.bull,lines:[[e.bear,IC.rd]],zero:1,label:'Elder'};}],
+ ['Vortex 14','os',(k,c)=>{const v=vortexArr(k,14);return {lines:[[v.vp,IC.gr],[v.vm,IC.rd]],label:'VI'};}],
+ ['CMO 14','os',(k,c)=>({lines:[[cmoArr(c,14),IC.cy]],range:[-100,100],levels:[-50,50],zero:1,label:'CMO'})],
+ ['Ultimate Osc','os',(k,c)=>({lines:[[uoArr(k),IC.gd]],range:[0,100],levels:[30,70],label:'UO'})],
+ ['KST','os',(k,c)=>{const x=kstArr(c);return {lines:[[x.k,IC.cy],[x.s,IC.rd]],zero:1,label:'KST'};}],
+ ['Volume','os',(k,c)=>({hist:k.map(x=>x.v||0),label:'Vol'})],
+];
+function indByName(n){ return INDS.find(x=>x[0]===n); }
+function oscList(){ return (S.indA||[]).filter(n=>{const d=indByName(n);return d&&d[1]==='os';}).slice(0,4); }
+function chartWrapH(){ return 300 + oscList().length*76; }
+
+/* ================= ORDER BLOCKS ================= */
+let _obC={};
+function orderBlocks(k){
+  const key=S.term.symbol+'_'+S.term.interval+'_'+k.length;
+  if(_obC.key===key) return _obC.z;
+  const a=atrArr(k,14), z=[];
+  for(let i=3;i<k.length-3;i++){
+    const atr=a[i]||((k[i].h-k[i].l)||1);
+    const fwdUp=Math.max(k[i+1].c,k[i+2].c,k[i+3].c)-k[i].c;
+    const fwdDn=k[i].c-Math.min(k[i+1].c,k[i+2].c,k[i+3].c);
+    if(k[i].c<k[i].o && fwdUp>1.4*atr) z.push({t:k[i].t, top:Math.max(k[i].o,k[i].c), bot:Math.min(k[i].o,k[i].c), bull:true});
+    if(k[i].c>k[i].o && fwdDn>1.4*atr) z.push({t:k[i].t, top:Math.max(k[i].o,k[i].c), bot:Math.min(k[i].o,k[i].c), bull:false});
+  }
+  const out=z.slice(-8); _obC={key, z:out}; return out;
+}
+
+/* ================= DRAWS STORE ================= */
 function drawsKey(){ return S.term.symbol+'_'+S.term.interval; }
 function saveDraws(){ try{ localStorage.setItem('nx_draws', JSON.stringify(S.draws)); }catch(e){} }
 function loadDraws(){ try{ const d=localStorage.getItem('nx_draws'); if(d) S.draws=JSON.parse(d); }catch(e){} }
-function saveInd(){ try{ localStorage.setItem('nx_ind', JSON.stringify(S.ind)); }catch(e){} }
+function saveInd(){ try{ localStorage.setItem('nx_indA', JSON.stringify(S.indA)); }catch(e){} }
+
+/* ================= CHART ================= */
 function drawTermChart(){
   const cv=$('termChart'), wrap=$('termChartWrap');
   const k=S.klines[S.term.symbol+'_'+S.term.interval]; if(!cv||!k||!k.length) return;
@@ -1203,146 +1458,254 @@ function drawTermChart(){
   const W=Math.max(200,rect.width), H=Math.max(180,rect.height);
   cv.width=W*dpr; cv.height=H*dpr; cv.style.width=W+'px'; cv.style.height=H+'px';
   const x=cv.getContext('2d'); x.setTransform(dpr,0,0,dpr,0,0); x.clearRect(0,0,W,H);
-  const oscs=oscList(); const oscH=72, oscGap=12;
+  const oscA=oscList().map(n=>indByName(n)); const oscH=66, oscGap=10;
   const mR=54, mB=16, mT=4;
-  const totalOsc=oscs.length*(oscH+oscGap);
-  const priceTop=mT, priceBottom=H-mB-totalOsc;
+  const priceTop=mT, priceBottom=H-mB-oscA.length*(oscH+oscGap);
   const n=vis.length;
   const closesAll=k.map(o=>o.c);
-  const ov={};
-  if(S.ind.ema9) ov.e9=emaArr(closesAll,9);
-  if(S.ind.ema21) ov.e21=emaArr(closesAll,21);
-  if(S.ind.bb) ov.bb=bbArr(closesAll,20,2);
-  if(S.ind.vwap) ov.vw=vwapArr(k);
+  // активные оверлеи
+  const ovSpecs=(S.indA||[]).map(nm=>{const d=indByName(nm); return d&&d[1]==='ov'?{n:nm,s:d[2](k,closesAll)}:null;}).filter(Boolean);
   let hi=-Infinity, lo=Infinity;
   vis.forEach(o=>{ if(o.h>hi)hi=o.h; if(o.l<lo)lo=o.l; });
-  const ovVisit=arr=>{ for(let g=V.a; g<V.b; g++){ const v=arr[g]; if(v!==null&&isFinite(v)){ if(v>hi)hi=v; if(v<lo)lo=v; } } };
-  Object.keys(ov).forEach(key2=>{ const o=ov[key2]; if(o.up){ ovVisit(o.up); ovVisit(o.lo); ovVisit(o.mid); } else ovVisit(o); });
+  const scan=arr=>{ for(let g=V.a;g<V.b;g++){ const v=arr[g]; if(v!=null&&isFinite(v)){ if(v>hi)hi=v; if(v<lo)lo=v; } } };
+  ovSpecs.forEach(o=>{ (o.s.lines||[]).forEach(L=>scan(L[0])); (o.s.fills||[]).forEach(F=>{scan(F[0]);scan(F[1]);}); (o.s.dots||[]).forEach(D=>scan(D[0])); });
   const pad=(hi-lo)*0.06||1; hi+=pad; lo-=pad;
   const plotL=4, plotR=W-mR, pw=Math.max(10,plotR-plotL), sw=pw/n, cw=Math.max(1.1,sw*0.6);
   const X=i=>plotL+i*sw+sw/2, Y=p=>priceBottom-(p-lo)/(hi-lo)*(priceBottom-priceTop);
+  const idxOfTimeG=t=>{ let a=0,b=k.length-1; while(a<b){ const m=(a+b)>>1; if(k[m].t<t) a=m+1; else b=m; } return a; };
+  const xOfTime=t=>plotL+(idxOfTimeG(t)-V.a)*sw+sw/2;
+  const P=pt=>[xOfTime(pt.t), Y(pt.p)];
   S.term.layout={plotL,plotR,priceTop,priceBottom,hi,lo,sw,n};
-  x.strokeStyle='rgba(245,244,234,0.05)'; x.fillStyle='rgba(245,244,234,0.34)';
+  // сетка
+  x.strokeStyle='rgba(34,228,255,0.06)'; x.fillStyle='rgba(234,247,255,0.35)';
   x.font='10px JetBrains Mono'; x.textBaseline='middle';
   for(let g=0; g<=4; g++){ const p=lo+(hi-lo)*g/4, y=Y(p);
     x.beginPath(); x.moveTo(plotL,y); x.lineTo(plotR,y); x.stroke(); x.fillText(fmt(p, decOf(S.term.symbol)), plotR+6, y); }
+  // ORDER BLOCKS
+  if(S.showOB){ orderBlocks(k).forEach(z=>{
+    const zx=xOfTime(z.t); if(zx>plotR) return;
+    const y1=Y(z.top), y2=Y(z.bot);
+    x.fillStyle=z.bull?'rgba(43,255,158,.09)':'rgba(255,59,87,.09)';
+    x.strokeStyle=z.bull?'rgba(43,255,158,.5)':'rgba(255,59,87,.5)';
+    x.fillRect(Math.max(plotL,zx), Math.min(y1,y2), plotR-Math.max(plotL,zx), Math.abs(y2-y1)||1);
+    x.strokeRect(Math.max(plotL,zx), Math.min(y1,y2), plotR-Math.max(plotL,zx), Math.abs(y2-y1)||1);
+    x.fillStyle=z.bull?'rgba(43,255,158,.8)':'rgba(255,59,87,.8)'; x.font='9px JetBrains Mono';
+    x.fillText('OB', Math.max(plotL,zx)+3, Math.min(y1,y2)+8); x.font='10px JetBrains Mono'; x.fillStyle='rgba(234,247,255,0.35)';
+  }); }
+  // свечи/бары/линия
   const ctype=S.term.type||'candle';
   if(ctype==='line'){
     const grad=x.createLinearGradient(0,priceTop,0,priceBottom);
-    grad.addColorStop(0,'rgba(232,197,88,0.22)'); grad.addColorStop(1,'rgba(232,197,88,0.01)');
+    grad.addColorStop(0,'rgba(34,228,255,0.20)'); grad.addColorStop(1,'rgba(34,228,255,0.01)');
     x.beginPath(); x.moveTo(X(0),Y(vis[0].c));
     for(let i=1;i<n;i++) x.lineTo(X(i),Y(vis[i].c));
-    x.strokeStyle='#E8C558'; x.lineWidth=1.8; x.lineJoin='round'; x.stroke();
+    x.strokeStyle='#22E4FF'; x.lineWidth=1.8; x.lineJoin='round'; x.stroke();
     x.lineTo(X(n-1),priceBottom); x.lineTo(X(0),priceBottom); x.closePath(); x.fillStyle=grad; x.fill();
   } else if(ctype==='bar'){
     for(let i=0;i<n;i++){ const o=vis[i], px=X(i), u=o.c>=o.o;
-      x.strokeStyle=u?'#22FF7A':'#FF4D5E'; x.lineWidth=Math.max(1.1,cw*0.22);
+      x.strokeStyle=u?'#2BFF9E':'#FF3B57'; x.lineWidth=Math.max(1.1,cw*0.22);
       x.beginPath(); x.moveTo(px,Y(o.h)); x.lineTo(px,Y(o.l));
       x.moveTo(px-cw/2,Y(o.o)); x.lineTo(px,Y(o.o));
       x.moveTo(px,Y(o.c)); x.lineTo(px+cw/2,Y(o.c)); x.stroke(); }
   } else {
     for(let i=0;i<n;i++){ const o=vis[i], px=X(i), u=o.c>=o.o;
-      x.strokeStyle=u?'#22FF7A':'#FF4D5E'; x.lineWidth=Math.max(1,cw*0.16);
+      x.strokeStyle=u?'#2BFF9E':'#FF3B57'; x.lineWidth=Math.max(1,cw*0.16);
       x.beginPath(); x.moveTo(px,Y(o.h)); x.lineTo(px,Y(o.l)); x.stroke();
-      x.fillStyle=u?'#22FF7A':'#FF4D5E';
+      x.fillStyle=u?'#2BFF9E':'#FF3B57';
       const a=Y(o.o), b=Y(o.c); x.fillRect(px-cw/2, Math.min(a,b), cw, Math.max(Math.abs(b-a),1.1)); }
   }
-  function iline(arr,color,dash){ x.beginPath(); let st=false;
-    for(let i=0;i<n;i++){ const v=arr[V.a+i]; if(v===null||v===undefined||!isFinite(v)) continue;
+  // оверлеи
+  function iline(arr,color,w,dash){ x.beginPath(); let st=false;
+    for(let i=0;i<n;i++){ const v=arr[V.a+i]; if(v==null||!isFinite(v)) continue;
       const px=X(i), py=Y(v); if(!st){ x.moveTo(px,py); st=true; } else x.lineTo(px,py); }
-    x.strokeStyle=color; x.lineWidth=1.5; x.setLineDash(dash||[]); x.stroke(); x.setLineDash([]); }
-  if(ov.bb){ iline(ov.bb.up,'rgba(245,244,234,0.4)'); iline(ov.bb.lo,'rgba(245,244,234,0.4)'); iline(ov.bb.mid,'rgba(245,244,234,0.25)',[3,3]); }
-  if(ov.e9) iline(ov.e9,'#E8C558');
-  if(ov.e21) iline(ov.e21,'#22FF7A');
-  if(ov.vw) iline(ov.vw,'#7FD8F0',[5,4]);
+    x.strokeStyle=color; x.lineWidth=w||1.3; x.setLineDash(dash||[]); x.stroke(); x.setLineDash([]); }
+  ovSpecs.forEach(o=>{
+    (o.s.fills||[]).forEach(F=>{ x.beginPath(); let st=false;
+      for(let i=0;i<n;i++){ const v=F[0][V.a+i]; if(v==null){continue;} const px=X(i),py=Y(v); if(!st){x.moveTo(px,py);st=true;} else x.lineTo(px,py); }
+      for(let i=n-1;i>=0;i--){ const v=F[1][V.a+i]; if(v==null) continue; x.lineTo(X(i),Y(v)); }
+      x.closePath(); x.fillStyle=F[2]; x.fill(); });
+    (o.s.lines||[]).forEach(L=>iline(L[0],L[1],L[2],L[3]));
+    (o.s.dots||[]).forEach(D=>{ x.fillStyle=D[1];
+      for(let i=0;i<n;i++){ const v=D[0][V.a+i]; if(v==null||!isFinite(v)) continue; x.beginPath(); x.arc(X(i),Y(v),1.6,0,Math.PI*2); x.fill(); } });
+    (o.s.hl||[]).forEach(HL=>{ const y=Y(HL[0]); if(y<priceTop||y>priceBottom) return;
+      x.setLineDash([4,4]); x.strokeStyle=HL[1]; x.lineWidth=1;
+      x.beginPath(); x.moveTo(plotL,y); x.lineTo(plotR,y); x.stroke(); x.setLineDash([]);
+      x.fillStyle=HL[1]; x.font='9px JetBrains Mono'; x.fillText(HL[2]||'', plotL+3, y-6); x.font='10px JetBrains Mono'; x.fillStyle='rgba(234,247,255,0.35)'; });
+  });
+  // позиции
   S.positions.filter(p=>p.symbol===S.term.symbol).forEach(p=>{
     const y=Y(p.entry); if(y<priceTop||y>priceBottom) return;
-    x.setLineDash([4,4]); x.strokeStyle=p.side==='LONG'?'rgba(34,255,122,.7)':'rgba(255,77,94,.7)';
+    x.setLineDash([4,4]); x.strokeStyle=p.side==='LONG'?'rgba(43,255,158,.7)':'rgba(255,59,87,.7)';
     x.lineWidth=1.2; x.beginPath(); x.moveTo(plotL,y); x.lineTo(plotR,y); x.stroke(); x.setLineDash([]);
   });
-  const idxOfTimeG=t=>{ let best=0,bd=Infinity; for(let i=0;i<k.length;i++){ const d=Math.abs(k[i].t-t); if(d<bd){bd=d;best=i;} } return best; };
-  const xOfTime=t=>plotL+(idxOfTimeG(t)-V.a)*sw+sw/2;
-  (S.draws[drawsKey()]||[]).forEach(d=>{
-    if(d.type==='h'){ const y=Y(d.p); if(y<priceTop-8||y>priceBottom+8) return;
-      x.setLineDash([6,4]); x.strokeStyle='rgba(232,197,88,.85)'; x.lineWidth=1.3;
-      x.beginPath(); x.moveTo(plotL,y); x.lineTo(plotR,y); x.stroke(); x.setLineDash([]);
-      x.fillStyle='#E8C558'; x.fillText(fmt(d.p, decOf(S.term.symbol)), plotL+4, y-8); x.fillStyle='rgba(245,244,234,0.34)';
-    } else if(d.type==='t'||d.type==='r'){
-      x.save(); x.beginPath(); x.rect(plotL,priceTop,plotR-plotL,priceBottom-priceTop); x.clip();
-      x.strokeStyle='rgba(232,197,88,.95)'; x.lineWidth=1.6;
-      let x1=xOfTime(d.t1),y1=Y(d.p1),x2=xOfTime(d.t2),y2=Y(d.p2);
-      if(d.type==='r'){ const dx=x2-x1,dy=y2-y1; const f=(plotR-x1)/(dx||1e-6); if(dx>0){ x2=plotR; y2=y1+dy*f; } }
-      x.beginPath(); x.moveTo(x1,y1); x.lineTo(x2,y2); x.stroke(); x.restore();
-    } else if(d.type==='v'){
-      const vx=xOfTime(d.t); if(vx<plotL||vx>plotR) return;
-      x.setLineDash([5,4]); x.strokeStyle='rgba(232,197,88,.7)'; x.lineWidth=1.2;
-      x.beginPath(); x.moveTo(vx,priceTop); x.lineTo(vx,priceBottom); x.stroke(); x.setLineDash([]);
-    } else if(d.type==='x'){
-      const rx1=xOfTime(d.t1),ry1=Y(d.p1),rx2=xOfTime(d.t2),ry2=Y(d.p2);
-      x.fillStyle='rgba(232,197,88,.10)'; x.strokeStyle='rgba(232,197,88,.8)'; x.lineWidth=1.3;
-      x.fillRect(Math.min(rx1,rx2),Math.min(ry1,ry2),Math.abs(rx2-rx1),Math.abs(ry2-ry1));
-      x.strokeRect(Math.min(rx1,rx2),Math.min(ry1,ry2),Math.abs(rx2-rx1),Math.abs(ry2-ry1));
-    } else if(d.type==='f'){
-      const levels=[0,0.236,0.382,0.5,0.618,0.786,1];
-      const fx1=xOfTime(d.t1),fx2=xOfTime(d.t2);
-      const hiP=Math.max(d.p1,d.p2), loP=Math.min(d.p1,d.p2);
-      x.font='9px JetBrains Mono'; x.textBaseline='middle';
-      levels.forEach(lv=>{ const p=hiP-(hiP-loP)*lv, yy=Y(p);
-        x.setLineDash([4,3]); x.strokeStyle='rgba(232,197,88,.55)'; x.lineWidth=1;
-        x.beginPath(); x.moveTo(Math.min(fx1,fx2),yy); x.lineTo(Math.max(fx1,fx2),yy); x.stroke(); x.setLineDash([]);
-        x.fillStyle='rgba(232,197,88,.9)'; x.fillText((lv*100).toFixed(1)+'%', Math.min(fx1,fx2)+2, yy-6);
-      });
-      x.fillStyle='rgba(245,244,234,0.34)';
-    }
-  });
-  if(['trend','ray','rect','fib'].indexOf(S.term.tool)>=0 && S.term.pending && S.term.hover!==null && S.term.hover<n){
-    x.setLineDash([4,4]); x.strokeStyle='rgba(232,197,88,.6)'; x.lineWidth=1.4;
-    x.beginPath(); x.moveTo(xOfTime(S.term.pending.t),Y(S.term.pending.p));
-    x.lineTo(X(S.term.hover), Y(vis[S.term.hover].c)); x.stroke(); x.setLineDash([]);
-    x.fillStyle='#E8C558'; x.beginPath(); x.arc(xOfTime(S.term.pending.t),Y(S.term.pending.p),3,0,Math.PI*2); x.fill();
-    x.fillStyle='rgba(245,244,234,0.34)';
+  // ПОСТРОЕНИЯ
+  x.save(); x.beginPath(); x.rect(plotL,priceTop,plotR-plotL,priceBottom-priceTop+2); x.clip();
+  const CYA='rgba(34,228,255,.95)', CYD='rgba(34,228,255,.55)';
+  function pts(d){ if(d.pts) return d.pts;
+    if(d.type==='h') return [{t:k[Math.max(0,V.a)].t,p:d.p}];
+    if(d.type==='v') return [{t:d.t,p:(hi+lo)/2}];
+    if(d.type==='t'||d.type==='r') return [{t:d.t1,p:d.p1},{t:d.t2,p:d.p2}];
+    if(d.type==='x'||d.type==='f') return [{t:d.t1,p:d.p1},{t:d.t2,p:d.p2}];
+    return []; }
+  function seg(a,b,ext){ let [x1,y1]=a,[x2,y2]=b;
+    if(ext){ const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy)||1;
+      if(ext==='ray'||ext==='both'){ x2=x2+dx/L*2000; y2=y2+dy/L*2000; }
+      if(ext==='both'){ x1=x1-dx/L*2000; y1=y1-dy/L*2000; } }
+    x.beginPath(); x.moveTo(x1,y1); x.lineTo(x2,y2); x.stroke(); return [x1,y1,x2,y2]; }
+  function arrowHead(x1,y1,x2,y2){ const a=Math.atan2(y2-y1,x2-x1);
+    x.beginPath(); x.moveTo(x2,y2); x.lineTo(x2-9*Math.cos(a-0.4),y2-9*Math.sin(a-0.4));
+    x.moveTo(x2,y2); x.lineTo(x2-9*Math.cos(a+0.4),y2-9*Math.sin(a+0.4)); x.stroke(); }
+  const FIBL=[0,0.236,0.382,0.5,0.618,0.786,1];
+  function renderDraw(d, ghost){
+    const pp=pts(d).map(P); if(!pp.length) return;
+    x.strokeStyle=ghost?CYD:CYA; x.fillStyle=ghost?CYD:CYA; x.lineWidth=1.5; x.font='9.5px JetBrains Mono';
+    const ty=d.type;
+    if(ty==='trend'||ty==='t'){ if(pp[1]) seg(pp[0],pp[1]); }
+    else if(ty==='ray'||ty==='r'){ if(pp[1]) seg(pp[0],pp[1],'ray'); }
+    else if(ty==='ext'){ if(pp[1]) seg(pp[0],pp[1],'both'); }
+    else if(ty==='arrow'){ if(pp[1]){ seg(pp[0],pp[1]); arrowHead(pp[0][0],pp[0][1],pp[1][0],pp[1][1]); } }
+    else if(ty==='hline'||ty==='h'){ const y=pp[0][1]; x.setLineDash([6,4]); x.beginPath(); x.moveTo(plotL,y); x.lineTo(plotR,y); x.stroke(); x.setLineDash([]);
+      x.fillText(fmt(priceAtYv(y), decOf(S.term.symbol)), plotL+4, y-7); }
+    else if(ty==='hray'){ const y=pp[0][1]; x.setLineDash([6,4]); x.beginPath(); x.moveTo(pp[0][0],y); x.lineTo(plotR,y); x.stroke(); x.setLineDash([]); }
+    else if(ty==='vline'||ty==='v'){ const vx=pp[0][0]; x.setLineDash([5,4]); x.beginPath(); x.moveTo(vx,priceTop); x.lineTo(vx,priceBottom); x.stroke(); x.setLineDash([]); }
+    else if(ty==='cross'){ const [cx,cy]=pp[0]; x.setLineDash([4,3]);
+      x.beginPath(); x.moveTo(plotL,cy); x.lineTo(plotR,cy); x.moveTo(cx,priceTop); x.lineTo(cx,priceBottom); x.stroke(); x.setLineDash([]); }
+    else if(ty==='channel'){ if(pp.length>=3){ const dy=pp[2][1]-pp[0][1];
+      seg(pp[0],pp[1]); seg([pp[0][0],pp[0][1]+dy],[pp[1][0],pp[1][1]+dy]);
+      x.globalAlpha=.08; x.beginPath(); x.moveTo(pp[0][0],pp[0][1]); x.lineTo(pp[1][0],pp[1][1]); x.lineTo(pp[1][0],pp[1][1]+dy); x.lineTo(pp[0][0],pp[0][1]+dy); x.closePath(); x.fill(); x.globalAlpha=1; }
+      else if(pp[1]) seg(pp[0],pp[1]); }
+    else if(ty==='pitch'||ty==='schiff'){ if(pp.length>=3){
+      let a=pp[0]; if(ty==='schiff') a=[(pp[0][0]+pp[1][0])/2,(pp[0][1]+pp[1][1])/2];
+      const m=[(pp[1][0]+pp[2][0])/2,(pp[1][1]+pp[2][1])/2];
+      const dx=m[0]-a[0], dy=m[1]-a[1];
+      seg(a,[a[0]+dx*3,a[1]+dy*3]);
+      seg(pp[1],[pp[1][0]+dx*3,pp[1][1]+dy*3]); seg(pp[2],[pp[2][0]+dx*3,pp[2][1]+dy*3]); }
+      else if(pp[1]) seg(pp[0],pp[1]); }
+    else if(ty==='curve'){ if(pp.length>=3){ x.beginPath(); x.moveTo(pp[0][0],pp[0][1]);
+      x.quadraticCurveTo(2*pp[1][0]-(pp[0][0]+pp[2][0])/2, 2*pp[1][1]-(pp[0][1]+pp[2][1])/2, pp[2][0],pp[2][1]); x.stroke(); }
+      else if(pp[1]) seg(pp[0],pp[1]); }
+    else if(ty==='brush'||ty==='hlb'){ x.lineWidth=ty==='hlb'?7:1.8; if(ty==='hlb') x.globalAlpha=.3;
+      x.lineJoin='round'; x.lineCap='round'; x.beginPath();
+      pp.forEach((q,i)=>i?x.lineTo(q[0],q[1]):x.moveTo(q[0],q[1])); x.stroke(); x.globalAlpha=1; }
+    else if(ty==='rect'||ty==='x'){ if(pp[1]){ x.globalAlpha=.10; x.fillRect(Math.min(pp[0][0],pp[1][0]),Math.min(pp[0][1],pp[1][1]),Math.abs(pp[1][0]-pp[0][0]),Math.abs(pp[1][1]-pp[0][1])); x.globalAlpha=1;
+      x.strokeRect(Math.min(pp[0][0],pp[1][0]),Math.min(pp[0][1],pp[1][1]),Math.abs(pp[1][0]-pp[0][0]),Math.abs(pp[1][1]-pp[0][1])); } }
+    else if(ty==='ellipse'){ if(pp[1]){ x.beginPath(); x.ellipse((pp[0][0]+pp[1][0])/2,(pp[0][1]+pp[1][1])/2,Math.abs(pp[1][0]-pp[0][0])/2,Math.abs(pp[1][1]-pp[0][1])/2,0,0,Math.PI*2); x.globalAlpha=.08; x.fill(); x.globalAlpha=1; x.stroke(); } }
+    else if(ty==='circle'){ if(pp[1]){ const r=Math.hypot(pp[1][0]-pp[0][0],pp[1][1]-pp[0][1]); x.beginPath(); x.arc(pp[0][0],pp[0][1],r,0,Math.PI*2); x.stroke(); } }
+    else if(ty==='tri'){ if(pp.length>=3){ x.beginPath(); x.moveTo(pp[0][0],pp[0][1]); x.lineTo(pp[1][0],pp[1][1]); x.lineTo(pp[2][0],pp[2][1]); x.closePath(); x.globalAlpha=.08; x.fill(); x.globalAlpha=1; x.stroke(); } else if(pp[1]) seg(pp[0],pp[1]); }
+    else if(ty==='fibret'||ty==='f'){ if(pp[1]){ const p1=pts(d)[0].p, p2=pts(d)[1].p;
+      const hiP=Math.max(p1,p2), loP=Math.min(p1,p2), xa=Math.min(pp[0][0],pp[1][0]), xb=Math.max(pp[0][0],pp[1][0]);
+      FIBL.forEach(lv=>{ const yy=Y(hiP-(hiP-loP)*lv); x.setLineDash([4,3]); x.beginPath(); x.moveTo(xa,yy); x.lineTo(xb,yy); x.stroke(); x.setLineDash([]);
+        x.fillText((lv*100).toFixed(1)+'%', xa+2, yy-6); }); } }
+    else if(ty==='fibext'){ if(pp.length>=3){ const q=pts(d); const dp=q[1].p-q[0].p;
+      [0,0.618,1,1.618,2.618].forEach(lv=>{ const yy=Y(q[2].p+dp*lv); x.setLineDash([4,3]); x.beginPath(); x.moveTo(pp[2][0],yy); x.lineTo(plotR,yy); x.stroke(); x.setLineDash([]);
+        x.fillText(lv+'', pp[2][0]+2, yy-6); }); } else if(pp[1]) seg(pp[0],pp[1]); }
+    else if(ty==='fibfan'){ if(pp[1]){ const dx=pp[1][0]-pp[0][0], dy=pp[1][1]-pp[0][1];
+      [0.382,0.5,0.618,1].forEach(lv=>{ seg(pp[0],[pp[0][0]+dx*3, pp[0][1]+dy*lv*3]); }); } }
+    else if(ty==='fibtz'){ if(pp[1]){ const step=pp[1][0]-pp[0][0];
+      [1,2,3,5,8,13,21,34].forEach(f=>{ const vx=pp[0][0]+step*f; if(vx>plotR) return;
+        x.setLineDash([4,4]); x.beginPath(); x.moveTo(vx,priceTop); x.lineTo(vx,priceBottom); x.stroke(); x.setLineDash([]); }); } }
+    else if(ty==='fibcirc'){ if(pp[1]){ const r=Math.hypot(pp[1][0]-pp[0][0],pp[1][1]-pp[0][1]);
+      [0.382,0.618,1,1.618].forEach(lv=>{ x.beginPath(); x.arc(pp[0][0],pp[0][1],r*lv,0,Math.PI*2); x.stroke(); }); } }
+    else if(ty==='gannfan'){ if(pp[1]){ const dx=pp[1][0]-pp[0][0], dy=pp[1][1]-pp[0][1];
+      [8,4,3,2,1,0.5,1/3,0.25,0.125].forEach(sl=>{ seg(pp[0],[pp[0][0]+dx*3, pp[0][1]+dy*sl*3]); }); } }
+    else if(ty==='gannbox'){ if(pp[1]){ const x1=Math.min(pp[0][0],pp[1][0]),x2=Math.max(pp[0][0],pp[1][0]),y1=Math.min(pp[0][1],pp[1][1]),y2=Math.max(pp[0][1],pp[1][1]);
+      x.strokeRect(x1,y1,x2-x1,y2-y1);
+      x.setLineDash([3,3]); [0.25,0.5,0.75].forEach(f=>{ x.beginPath(); x.moveTo(x1,y1+(y2-y1)*f); x.lineTo(x2,y1+(y2-y1)*f); x.moveTo(x1+(x2-x1)*f,y1); x.lineTo(x1+(x2-x1)*f,y2); x.stroke(); }); x.setLineDash([]);
+      x.beginPath(); x.moveTo(x1,y2); x.lineTo(x2,y1); x.moveTo(x1,y1); x.lineTo(x2,y2); x.stroke(); } }
+    else if(ty==='long'||ty==='short'){ if(pp[1]){ const q=pts(d); const entry=q[0].p, stop=q[1].p;
+      const risk=Math.abs(entry-stop)||1e-9, dir=ty==='long'?1:-1;
+      if((ty==='long'&&stop>entry)||(ty==='short'&&stop<entry)) return;
+      const target=entry+dir*risk*2;
+      const xe=pp[0][0], xr=plotR;
+      const yE=Y(entry), yS=Y(stop), yT=Y(target);
+      x.globalAlpha=.13; x.fillStyle='#2BFF9E'; x.fillRect(xe,Math.min(yE,yT),xr-xe,Math.abs(yT-yE));
+      x.fillStyle='#FF3B57'; x.fillRect(xe,Math.min(yE,yS),xr-xe,Math.abs(yS-yE)); x.globalAlpha=1;
+      x.strokeStyle='#EAF7FF'; x.beginPath(); x.moveTo(xe,yE); x.lineTo(xr,yE); x.stroke();
+      x.fillStyle=ghost?CYD:CYA; x.fillText('RR 1:2 · вход '+fmt(entry,decOf(S.term.symbol)), xe+4, yE-7); } }
+    else if(ty==='ruler'||ty==='prange'||ty==='drange'||ty==='dprange'){ if(pp[1]){ const q=pts(d);
+      seg(pp[0],pp[1]); arrowHead(pp[0][0],pp[0][1],pp[1][0],pp[1][1]);
+      const dpct=((q[1].p-q[0].p)/q[0].p*100).toFixed(2);
+      const bars=Math.abs(idxOfTimeG(q[1].t)-idxOfTimeG(q[0].t));
+      const lbl = ty==='prange' ? dpct+'%' : (ty==='drange' ? bars+' бар' : dpct+'% · '+bars+' бар');
+      x.fillText(lbl, (pp[0][0]+pp[1][0])/2+4, (pp[0][1]+pp[1][1])/2-8); } }
+    else if(ty==='text'||ty==='callout'){ const [tx,tyy]=pp[0];
+      if(ty==='callout'){ x.beginPath(); x.moveTo(tx,tyy); x.lineTo(tx+18,tyy-18); x.stroke(); }
+      x.font='11px Manrope'; x.fillText(d.txt||'Текст', tx+(ty==='callout'?20:4), tyy-(ty==='callout'?20:6)); x.font='9.5px JetBrains Mono'; }
+    else if(ty==='plabel'){ const [tx,tyy]=pp[0]; const pr=fmt(pts(d)[0].p, decOf(S.term.symbol));
+      const wl=x.measureText(pr).width+10;
+      x.globalAlpha=.9; x.fillRect(tx-wl/2,tyy-16,wl,13); x.globalAlpha=1;
+      x.fillStyle='#04070C'; x.fillText(pr, tx-wl/2+5, tyy-9.5); x.fillStyle=ghost?CYD:CYA; }
+    else if(ty==='flag'){ const [tx,tyy]=pp[0]; x.beginPath(); x.moveTo(tx,tyy); x.lineTo(tx,tyy-18); x.stroke();
+      x.fillText('⚑', tx+1, tyy-16); }
+    else if(ty==='mup'||ty==='mdown'){ const [tx,tyy]=pp[0];
+      x.font='13px Manrope'; x.fillStyle=ty==='mup'?'#2BFF9E':'#FF3B57'; x.fillText(ty==='mup'?'▲':'▼', tx-5, tyy); x.font='9.5px JetBrains Mono'; }
+    else if(ty==='emoji'){ const [tx,tyy]=pp[0]; x.font='15px Manrope'; x.fillText(d.txt||'🔥', tx-7, tyy); x.font='9.5px JetBrains Mono'; }
   }
-  oscs.forEach((name,oi)=>{
+  function priceAtYv(py){ return lo + (priceBottom-py)/(priceBottom-priceTop)*(hi-lo); }
+  (S.draws[drawsKey()]||[]).forEach(d=>renderDraw(d,false));
+  // превью незавершённого построения
+  if(S.term.pend && S.term.pend.length && S.term.hover!=null && S.term.hover<n){
+    const hovPt={t:vis[S.term.hover].t, p:S.term.hoverP!=null?S.term.hoverP:vis[S.term.hover].c};
+    renderDraw({type:S.term.tool, pts:[...S.term.pend, hovPt], txt:''}, true);
+    S.term.pend.forEach(q=>{ const [qx,qy]=P(q); x.fillStyle=CYA; x.beginPath(); x.arc(qx,qy,3.2,0,Math.PI*2); x.fill(); });
+  }
+  x.restore();
+  // OSC PANES
+  oscA.forEach((ind,oi)=>{
     const top=priceBottom+oscGap+oi*(oscH+oscGap), bot=top+oscH;
-    x.strokeStyle='rgba(245,244,234,0.08)'; x.strokeRect(plotL,top,plotR-plotL,oscH);
-    const lineFrom=(arr,color,lo,hi)=>{ x.beginPath(); let st=false;
-      for(let i=0;i<n;i++){ const v=arr[V.a+i]; if(v===null||v===undefined||!isFinite(v)) continue;
-        const py=bot-(v-lo)/(hi-lo)*(bot-top); const px=X(i);
-        if(!st){ x.moveTo(px,py); st=true; } else x.lineTo(px,py); }
-      x.strokeStyle=color; x.lineWidth=1.4; x.stroke(); };
-    x.font='9px JetBrains Mono'; x.textBaseline='middle'; x.fillStyle='rgba(245,244,234,0.5)';
-    if(name==='rsi'){ const r=rsiArr(closesAll,14);
-      [30,70].forEach(v=>{ const yy=bot-(v/100)*(bot-top); x.setLineDash([3,3]); x.strokeStyle='rgba(245,244,234,0.16)';
-        x.beginPath(); x.moveTo(plotL,yy); x.lineTo(plotR,yy); x.stroke(); x.setLineDash([]); x.fillText(String(v),plotR+6,yy); });
-      lineFrom(r,'#7FD8F0',0,100);
-      const lv=r[V.b-1]; if(lv!=null) x.fillText('RSI '+lv.toFixed(1), plotL+4, top+8);
-    } else if(name==='macd'){ const m=macdArr(closesAll);
-      let mn=Infinity,mx=-Infinity; for(let i=V.a;i<V.b;i++){ [m.macd[i],m.sig[i],m.hist[i]].forEach(v=>{ if(isFinite(v)){ if(v<mn)mn=v; if(v>mx)mx=v; } }); }
-      const pad=(mx-mn)*0.1||1; mn-=pad; mx+=pad; const zeroY=bot-(0-mn)/(mx-mn)*(bot-top);
+    x.strokeStyle='rgba(34,228,255,0.10)'; x.strokeRect(plotL,top,plotR-plotL,oscH);
+    const spec=ind[2](k, closesAll);
+    let mn=Infinity,mx=-Infinity;
+    const consider=arr=>{ for(let g=V.a;g<V.b;g++){ const v=arr[g]; if(v!=null&&isFinite(v)){ if(v<mn)mn=v; if(v>mx)mx=v; } } };
+    if(spec.range){ mn=spec.range[0]; mx=spec.range[1]; }
+    else { (spec.lines||[]).forEach(L=>consider(L[0])); if(spec.hist) consider(spec.hist);
+      if(!isFinite(mn)){mn=0;mx=1;} const pd=(mx-mn)*0.12||1; mn-=pd; mx+=pd; }
+    const yv=v=>bot-(v-mn)/(mx-mn)*(bot-top);
+    x.font='9px JetBrains Mono';
+    (spec.levels||[]).forEach(v=>{ const yy=yv(v); x.setLineDash([3,3]); x.strokeStyle='rgba(234,247,255,0.15)';
+      x.beginPath(); x.moveTo(plotL,yy); x.lineTo(plotR,yy); x.stroke(); x.setLineDash([]);
+      x.fillStyle='rgba(234,247,255,0.4)'; x.fillText(String(v), plotR+5, yy); });
+    if(spec.zero && mn<0 && mx>0){ const zy=yv(0); x.strokeStyle='rgba(234,247,255,0.2)';
+      x.beginPath(); x.moveTo(plotL,zy); x.lineTo(plotR,zy); x.stroke(); }
+    if(spec.hist){ const zy=yv(Math.max(mn,Math.min(mx,0)));
       const bw=Math.max(1,(plotR-plotL)/n*0.6);
-      for(let i=0;i<n;i++){ const hv=m.hist[V.a+i]; if(!isFinite(hv))continue; const px=X(i); const py=bot-(hv-mn)/(mx-mn)*(bot-top);
-        x.fillStyle=hv>=0?'rgba(34,255,122,.6)':'rgba(255,77,94,.6)'; x.fillRect(px-bw/2,Math.min(py,zeroY),bw,Math.abs(py-zeroY)||1); }
-      lineFrom(m.macd,'#E8C558',mn,mx); lineFrom(m.sig,'#FF7DB0',mn,mx);
-      x.fillStyle='rgba(232,197,88,.9)'; x.fillText('MACD 12/26/9', plotL+4, top+8);
-    } else if(name==='stoch'){ const s=stochArr(k,14,3);
-      [20,80].forEach(v=>{ const yy=bot-(v/100)*(bot-top); x.setLineDash([3,3]); x.strokeStyle='rgba(245,244,234,0.16)';
-        x.beginPath(); x.moveTo(plotL,yy); x.lineTo(plotR,yy); x.stroke(); x.setLineDash([]); x.fillText(String(v),plotR+6,yy); });
-      lineFrom(s.k,'#E8C558',0,100); lineFrom(s.d,'#7FD8F0',0,100);
-      x.fillStyle='rgba(232,197,88,.9)'; x.fillText('Stoch 14/3', plotL+4, top+8);
-    }
-    x.fillStyle='rgba(245,244,234,0.34)';
+      for(let i=0;i<n;i++){ const hv=spec.hist[V.a+i]; if(hv==null||!isFinite(hv)) continue;
+        const py=yv(hv); x.fillStyle=hv>=0?'rgba(43,255,158,.55)':'rgba(255,59,87,.55)';
+        x.fillRect(X(i)-bw/2, Math.min(py,zy), bw, Math.abs(py-zy)||1); } }
+    (spec.lines||[]).forEach(L=>{ x.beginPath(); let st=false;
+      for(let i=0;i<n;i++){ const v=L[0][V.a+i]; if(v==null||!isFinite(v)) continue;
+        const px=X(i), py=yv(v); if(!st){ x.moveTo(px,py); st=true; } else x.lineTo(px,py); }
+      x.strokeStyle=L[1]; x.lineWidth=1.3; x.stroke(); });
+    x.fillStyle='rgba(34,228,255,.85)'; x.fillText(spec.label||ind[0], plotL+4, top+8);
+    x.fillStyle='rgba(234,247,255,0.35)'; x.font='10px JetBrains Mono';
   });
+  // crosshair + tooltip
   const tt=$('termTT'); const hov=S.term.hover;
   if(hov!==null && hov>=0 && hov<n){
     const o=vis[hov], px=X(hov);
-    x.setLineDash([3,3]); x.strokeStyle='rgba(245,244,234,.25)'; x.lineWidth=1;
+    x.setLineDash([3,3]); x.strokeStyle='rgba(234,247,255,.25)'; x.lineWidth=1;
     x.beginPath(); x.moveTo(px,priceTop); x.lineTo(px,H-mB); x.stroke(); x.setLineDash([]);
     const d=new Date(o.t);
     tt.innerHTML='<div><b>'+d.toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+'</b></div>'+
-      '<div>O <b>'+fmt(o.o,decOf(S.term.symbol))+'</b> C <b style="color:'+(o.c>=o.o?'#22FF7A':'#FF4D5E')+'">'+fmt(o.c,decOf(S.term.symbol))+'</b></div>';
+      '<div>O <b>'+fmt(o.o,decOf(S.term.symbol))+'</b> C <b style="color:'+(o.c>=o.o?'#2BFF9E':'#FF3B57')+'">'+fmt(o.c,decOf(S.term.symbol))+'</b></div>';
     let left=px+12; if(left+130>W) left=px-142;
     tt.style.left=left+'px'; tt.style.top='6px'; tt.style.opacity='1';
   } else tt.style.opacity='0';
+}
+/* ЛУПА для точной постановки точек */
+function drawLoupe(pos){
+  const cv=$('termChart'); if(!cv) return;
+  const x=cv.getContext('2d'); const dpr=window.devicePixelRatio||1;
+  const R=48, Z=2.4, cy=Math.max(R+8, pos.y-84);
+  const cx=Math.min(Math.max(pos.x, R+8), cv.width/dpr-R-8);
+  x.save();
+  x.beginPath(); x.arc(cx,cy,R,0,Math.PI*2); x.clip();
+  x.drawImage(cv, (pos.x-R/Z)*dpr, (pos.y-R/Z)*dpr, (2*R/Z)*dpr, (2*R/Z)*dpr, cx-R, cy-R, 2*R, 2*R);
+  x.strokeStyle='rgba(34,228,255,.9)'; x.lineWidth=1;
+  x.beginPath(); x.moveTo(cx-R,cy); x.lineTo(cx+R,cy); x.moveTo(cx,cy-R); x.lineTo(cx,cy+R); x.stroke();
+  x.restore();
+  x.strokeStyle='rgba(34,228,255,.9)'; x.lineWidth=2; x.shadowColor='rgba(34,228,255,.6)'; x.shadowBlur=10;
+  x.beginPath(); x.arc(cx,cy,R,0,Math.PI*2); x.stroke(); x.shadowBlur=0;
 }
 
 function renderPortfolio(){
@@ -1427,6 +1790,8 @@ function go(screen){
   if(screen==='terminal') renderTerminal();
   if(screen==='signals') renderSignals();
   if(screen==='wallet') renderWallet();
+  if(screen==='challenges') renderChallenges();
+  if(screen==='admin') renderAdmin();
   if(screen==='auth') renderAuth();
   haptic();
 }
@@ -1444,6 +1809,7 @@ document.addEventListener('click', e=>{
   const nav=e.target.closest('[data-go]'); if(nav){ go(nav.dataset.go); return; }
   const sh=e.target.closest('[data-sheet]'); if(sh){ openSheet(sh.dataset.sheet); return; }
   const st=e.target.closest('#sigTabs [data-stab]'); if(st){ S.stab=st.dataset.stab; renderSignals(); return; }
+  const ct=e.target.closest('#chTypeSeg [data-cht]'); if(ct){ S.chType=ct.dataset.cht; S.chSel=null; renderChallenges(); return; }
 });
 document.addEventListener('click', e=>{
   if(e.target.id==='saveWallet'){
@@ -1506,34 +1872,72 @@ function zoomView(factor, anchorLocal){
   const k=curK(); const V=S.term.view; if(!k||!V) return;
   const span=V.b-V.a; let ns=Math.round(span*factor);
   ns=Math.max(15, Math.min(k.length, ns)); if(ns===span) return;
-  const anchorG=V.a+(anchorLocal!==null&&anchorLocal!==undefined?anchorLocal:Math.floor(span/2));
+  const anchorG=V.a+(anchorLocal!=null?anchorLocal:Math.floor(span/2));
   const frac=Math.max(0,Math.min(1,(anchorG-V.a)/span));
   let na=Math.round(anchorG-frac*ns);
   na=Math.max(0, Math.min(k.length-ns, na));
   S.term.view={a:na, b:na+ns}; drawTermChart();
 }
+
+/* ========= РЕЕСТР ИНСТРУМЕНТОВ (42) ========= */
+const TOOLS=[
+ // Линии
+ ['cursor','Курсор',0,'Линии'],['cross','Крест',1,'Линии'],['trend','Трендовая',2,'Линии'],['ray','Луч',2,'Линии'],
+ ['ext','Продлённая',2,'Линии'],['arrow','Стрелка',2,'Линии'],['hline','Горизонталь',1,'Линии'],['hray','Гор. луч',1,'Линии'],['vline','Вертикаль',1,'Линии'],
+ // Каналы
+ ['channel','Параллельный канал',3,'Каналы'],['pitch','Вилы Эндрюса',3,'Каналы'],['schiff','Вилы Шиффа',3,'Каналы'],['curve','Кривая',3,'Каналы'],
+ // Фибоначчи
+ ['fibret','Фибо коррекция',2,'Фибо'],['fibext','Фибо расширение',3,'Фибо'],['fibfan','Фибо веер',2,'Фибо'],['fibtz','Фибо тайм-зоны',2,'Фибо'],['fibcirc','Фибо окружности',2,'Фибо'],
+ // Ганн
+ ['gannfan','Веер Ганна',2,'Ганн'],['gannbox','Бокс Ганна',2,'Ганн'],
+ // Фигуры
+ ['rect','Прямоугольник',2,'Фигуры'],['ellipse','Эллипс',2,'Фигуры'],['circle','Окружность',2,'Фигуры'],['tri','Треугольник',3,'Фигуры'],
+ // Аннотации
+ ['text','Текст',1,'Аннотации'],['callout','Выноска',1,'Аннотации'],['plabel','Ценник',1,'Аннотации'],['flag','Флаг',1,'Аннотации'],
+ ['mup','Маркер вверх',1,'Аннотации'],['mdown','Маркер вниз',1,'Аннотации'],['emoji','Эмодзи',1,'Аннотации'],
+ // Позиции и измерения
+ ['long','Long позиция',2,'Позиции'],['short','Short позиция',2,'Позиции'],
+ ['ruler','Линейка',2,'Измерения'],['prange','Диапазон цены',2,'Измерения'],['drange','Диапазон дат',2,'Измерения'],['dprange','Дата+цена',2,'Измерения'],
+ // Кисти
+ ['brush','Кисть','free','Кисти'],['hlb','Маркер-хайлайт','free','Кисти'],
+];
+function toolDef(id){ return TOOLS.find(t=>t[0]===id); }
+const TXT_TOOLS={text:1,callout:1,emoji:1};
+
 const PTRS=new Map();
-let panSt=null, pinchSt=null;
+let panSt=null, pinchSt=null, brushing=null, loupePos=null;
 const tc=$('termChart');
+
+function commitDraw(type, ptsArr, txt){
+  const key=drawsKey(); S.draws[key]=S.draws[key]||[];
+  S.draws[key].push({type, pts:ptsArr, txt:txt||''});
+  if(S.draws[key].length>60) S.draws[key]=S.draws[key].slice(-60);
+  saveDraws(); haptic();
+}
+function ptAt(pos){
+  const li=idxAtX(pos.x); const k=curK(); if(!k||li==null) return null;
+  const gi=Math.min(k.length-1,(S.term.view?S.term.view.a:0)+li);
+  return {t:k[gi].t, p:priceAtY(pos.y)};
+}
+
 tc.addEventListener('pointerdown', e=>{
   const L=S.term.layout; if(!L) return;
   if(tc.setPointerCapture){ try{ tc.setPointerCapture(e.pointerId); }catch(err){} }
   const pos=chartPos(e); PTRS.set(e.pointerId,pos);
-  if(S.term.tool!=='cursor'){
+  const T=S.term.tool, td=toolDef(T);
+  if(T!=='cursor' && td){
     if(pos.y<L.priceTop||pos.y>L.priceBottom) return;
-    const price=priceAtY(pos.y); const li=idxAtX(pos.x);
-    const k=curK(); if(!k) return; const gi=Math.min(k.length-1,(S.term.view?S.term.view.a:0)+li);
-    const key=drawsKey(); S.draws[key]=S.draws[key]||[];
-    const T=S.term.tool;
-    if(T==='hline'){ S.draws[key].push({type:'h',p:price}); haptic(); saveDraws(); }
-    else if(T==='vline'){ S.draws[key].push({type:'v',t:k[gi].t}); haptic(); saveDraws(); }
-    else if(T==='trend'||T==='ray'||T==='rect'||T==='fib'){
-      if(!S.term.pending){ S.term.pending={t:k[gi].t,p:price}; }
-      else { const map={trend:'t',ray:'r',rect:'x',fib:'f'};
-        S.draws[key].push({type:map[T],t1:S.term.pending.t,p1:S.term.pending.p,t2:k[gi].t,p2:price});
-        S.term.pending=null; haptic(); saveDraws(); }
-    }
-    drawTermChart(); return;
+    const q=ptAt(pos); if(!q) return;
+    if(td[2]==='free'){ brushing=[q]; loupePos=pos; drawTermChart(); drawLoupe(pos); return; }
+    S.term.pend=S.term.pend||[];
+    S.term.pend.push(q);
+    if(S.term.pend.length>=td[2]){
+      let txt='';
+      if(TXT_TOOLS[T]){ txt=prompt(T==='emoji'?'Эмодзи:':'Текст:')||''; if(!txt){ S.term.pend=null; drawTermChart(); return; } }
+      commitDraw(T, S.term.pend, txt);
+      S.term.pend=null;
+    } else { haptic(); }
+    loupePos=pos; drawTermChart(); drawLoupe(pos); return;
   }
   if(PTRS.size===1){ panSt={x:pos.x, a:S.term.view.a, b:S.term.view.b}; pinchSt=null; }
   else if(PTRS.size===2){
@@ -1546,6 +1950,14 @@ tc.addEventListener('pointermove', e=>{
   const L=S.term.layout; if(!L) return;
   const pos=chartPos(e);
   if(PTRS.has(e.pointerId)) PTRS.set(e.pointerId,pos);
+  // кисть
+  if(brushing){ const q=ptAt(pos); if(q){ brushing.push(q);
+    const kk=drawsKey(); S.draws[kk]=S.draws[kk]||[];
+    S.draws[kk].push({type:S.term.tool, pts:brushing, _tmp:1});
+    drawTermChart();
+    S.draws[kk]=S.draws[kk].filter(d=>!d._tmp);
+    drawLoupe(pos); }
+    return; }
   if(pinchSt && PTRS.size===2){
     const pts=[...PTRS.values()];
     const d=Math.max(8,Math.abs(pts[0].x-pts[1].x));
@@ -1556,26 +1968,39 @@ tc.addEventListener('pointermove', e=>{
     const midLocal=Math.floor((pinchSt.mid-L.plotL)/L.sw);
     const anchorG=pinchSt.a+Math.max(0,Math.min(span0-1,midLocal));
     const frac=Math.max(0,Math.min(1,(anchorG-pinchSt.a)/span0));
-    let na=Math.round(anchorG-frac*ns); na=Math.max(0,Math.min(k.length-ns,na));
-    S.term.view={a:na,b:na+ns}; drawTermChart(); return;
+    let na=Math.round(anchorG-frac*ns);
+    na=Math.max(0, Math.min(k.length-ns, na));
+    S.term.view={a:na,b:na+ns}; S.term.hover=null; drawTermChart(); return;
   }
-  if(panSt && PTRS.size===1 && ((e.buttons&1) || e.pointerType==='touch')){
+  if(panSt && PTRS.size===1 && S.term.tool==='cursor'){
     const k=curK(); if(!k) return;
-    const shift=Math.round((panSt.x-pos.x)/L.sw);
+    const dx=pos.x-panSt.x;
+    const shift=Math.round(-dx/L.sw);
+    let na=panSt.a+shift;
     const span=panSt.b-panSt.a;
-    let na=Math.max(0, Math.min(k.length-span, panSt.a+shift));
-    if(na!==S.term.view.a){ S.term.view={a:na,b:na+span}; drawTermChart(); }
+    na=Math.max(0, Math.min(k.length-span, na));
+    if(na!==S.term.view.a){ S.term.view={a:na,b:na+span}; S.term.hover=null; drawTermChart(); }
     return;
   }
-  const idx=idxAtX(pos.x);
-  if(idx!==S.term.hover){ S.term.hover=idx; drawTermChart(); }
+  // hover
+  const li=idxAtX(pos.x);
+  S.term.hover=li; S.term.hoverP=priceAtY(pos.y);
+  drawTermChart();
+  if(S.term.tool!=='cursor'){ loupePos=pos; drawLoupe(pos); }
 });
-function endPtr(e){ PTRS.delete(e.pointerId); if(PTRS.size<2) pinchSt=null; if(PTRS.size<1) panSt=null; }
+function endPtr(e){ PTRS.delete(e.pointerId);
+  if(brushing){ if(brushing.length>3) commitDraw(S.term.tool, brushing); brushing=null; drawTermChart(); }
+  if(PTRS.size<2) pinchSt=null;
+  if(PTRS.size<1) panSt=null;
+  loupePos=null;
+}
 tc.addEventListener('pointerup', endPtr);
 tc.addEventListener('pointercancel', endPtr);
-tc.addEventListener('pointerleave', e=>{ endPtr(e); S.term.hover=null; drawTermChart(); });
-tc.addEventListener('wheel', e=>{ e.preventDefault(); zoomView(e.deltaY>0?1.25:0.8, idxAtX(chartPos(e).x)); }, {passive:false});
+tc.addEventListener('pointerleave', e=>{ if(!PTRS.size){ S.term.hover=null; S.term.hoverP=null; drawTermChart(); } });
+tc.addEventListener('wheel', e=>{ e.preventDefault(); zoomView(e.deltaY>0?1.15:0.87, S.term.hover); }, {passive:false});
 tc.addEventListener('dblclick', ()=>{ S.term.view=null; drawTermChart(); });
+
+/* ========= ПАНЕЛЬ ========= */
 $('chartType').addEventListener('click', e=>{
   const b=e.target.closest('[data-type]'); if(!b) return;
   S.term.type=b.dataset.type;
@@ -1583,42 +2008,93 @@ $('chartType').addEventListener('click', e=>{
   haptic(); drawTermChart();
 });
 $('drawBtn').addEventListener('click', openDrawSheet);
-$('delDraws').addEventListener('click', ()=>{ delete S.draws[drawsKey()]; S.term.pending=null; saveDraws(); drawTermChart(); toast('\u041f\u043e\u0441\u0442\u0440\u043e\u0435\u043d\u0438\u044f \u0443\u0434\u0430\u043b\u0435\u043d\u044b','\ud83e\uddf9'); });
+$('delDraws').addEventListener('click', ()=>{ delete S.draws[drawsKey()]; S.term.pend=null; saveDraws(); drawTermChart(); toast('Построения удалены','🧹'); });
 $('indBtn').addEventListener('click', openIndSheet);
-const DRAW_TOOLS=[['cursor','\u2196','\u041a\u0443\u0440\u0441\u043e\u0440'],['trend','\u2571','\u0422\u0440\u0435\u043d\u0434\u043e\u0432\u0430\u044f'],['ray','\u2197','\u041b\u0443\u0447'],['hline','\u2014','\u0413\u043e\u0440\u0438\u0437\u043e\u043d\u0442\u0430\u043b\u044c'],['vline','\u2502','\u0412\u0435\u0440\u0442\u0438\u043a\u0430\u043b\u044c'],['rect','\u25ad','\u041f\u0440\u044f\u043c\u043e\u0443\u0433\u043e\u043b\u044c\u043d\u0438\u043a'],['fib','\u2261','\u0424\u0438\u0431\u043e\u043d\u0430\u0447\u0447\u0438']];
-function toolLabel(t){ const it=DRAW_TOOLS.find(x=>x[0]===t); return it?it[2]:''; }
+$('obBtn').addEventListener('click', ()=>{ S.showOB=!S.showOB; $('obBtn').classList.toggle('active',S.showOB); haptic(); drawTermChart(); });
+$('depthBtn').addEventListener('click', openDepthSheet);
+
 function openDrawSheet(){
-  $('sheetContent').innerHTML='<div class="h2" style="text-align:center;">\u0418\u043d\u0441\u0442\u0440\u0443\u043c\u0435\u043d\u0442\u044b</div>'+
-    '<div class="draw-menu mt4" id="drawMenu">'+
-    DRAW_TOOLS.map(function(it){ return '<button class="chip'+(S.term.tool===it[0]?' active':'')+'" data-tool="'+it[0]+'"><b>'+it[1]+'</b> '+it[2]+'</button>'; }).join('')+
-    '</div><button class="btn btn-gold btn-block mt5" id="drawOk">\u0413\u043e\u0442\u043e\u0432\u043e</button>';
+  const grps=[...new Set(TOOLS.map(t=>t[3]))];
+  $('sheetContent').innerHTML='<div class="h2" style="text-align:center;">Инструменты</div>'+
+    grps.map(g=>'<div class="micro mt4" style="margin-bottom:6px;">'+g+'</div>'+
+      '<div class="draw-menu">'+TOOLS.filter(t=>t[3]===g).map(t=>
+        '<button class="chip'+(S.term.tool===t[0]?' active':'')+'" data-tool="'+t[0]+'">'+t[1]+'</button>').join('')+'</div>').join('')+
+    '<button class="btn btn-gold btn-block mt5" id="drawOk">Готово</button>';
   $('sheetVeil').classList.add('open');
-  $('drawMenu').addEventListener('click', function(e){
+  $('sheetContent').addEventListener('click', function h(e){
     const b=e.target.closest('[data-tool]'); if(!b) return;
-    S.term.tool=b.dataset.tool; S.term.pending=null;
-    document.querySelectorAll('#drawMenu [data-tool]').forEach(el2=>el2.classList.toggle('active', el2===b));
-    $('toolCur').textContent=b.dataset.tool==='cursor'?'':('\u270e '+toolLabel(b.dataset.tool));
-    $('drawBtn').classList.toggle('active', b.dataset.tool!=='cursor');
+    S.term.tool=b.dataset.tool; S.term.pend=null;
+    $('sheetContent').querySelectorAll('[data-tool]').forEach(el2=>el2.classList.toggle('active', el2===b.closest('[data-tool]')?el2===b:false));
+    const td=toolDef(S.term.tool);
+    $('toolCur').textContent=S.term.tool==='cursor'?'':('✎ '+td[1]);
+    $('drawBtn').classList.toggle('active', S.term.tool!=='cursor');
     haptic(); closeSheet();
   });
-  $('drawOk').addEventListener('click', closeSheet);
+  const ok=$('drawOk'); if(ok) ok.addEventListener('click', closeSheet);
 }
-const IND_LIST=[['ema9','EMA 9'],['ema21','EMA 21'],['bb','Bollinger (20,2)'],['vwap','VWAP'],['rsi','RSI (14)'],['macd','MACD'],['stoch','Stochastic']];
 function openIndSheet(){
-  $('sheetContent').innerHTML='<div class="h2" style="text-align:center;">\u0418\u043d\u0434\u0438\u043a\u0430\u0442\u043e\u0440\u044b</div>'+
-    '<div class="row gap2 mt4" style="flex-wrap:wrap;justify-content:center;" id="indChips">'+
-    IND_LIST.map(function(it){ return '<button class="chip'+(S.ind[it[0]]?' active':'')+'" data-ind="'+it[0]+'">'+it[1]+'</button>'; }).join('')+
-    '</div><button class="btn btn-gold btn-block mt5" id="indOk">\u0413\u043e\u0442\u043e\u0432\u043e</button>';
+  const draw=()=>{
+    const q=(($('indSearch')||{}).value||'').toLowerCase();
+    const grp=c=>INDS.filter(d=>d[1]===c && (!q||d[0].toLowerCase().includes(q)));
+    $('indList').innerHTML=
+      '<div class="micro" style="margin:6px 0;">Оверлеи ('+grp('ov').length+')</div><div class="draw-menu">'+
+      grp('ov').map(d=>'<button class="chip'+((S.indA||[]).includes(d[0])?' active':'')+'" data-ind="'+d[0]+'">'+d[0]+'</button>').join('')+'</div>'+
+      '<div class="micro mt4" style="margin-bottom:6px;">Осцилляторы ('+grp('os').length+')</div><div class="draw-menu">'+
+      grp('os').map(d=>'<button class="chip'+((S.indA||[]).includes(d[0])?' active':'')+'" data-ind="'+d[0]+'">'+d[0]+'</button>').join('')+'</div>';
+  };
+  $('sheetContent').innerHTML='<div class="h2" style="text-align:center;">Индикаторы <span class="micro">('+INDS.length+')</span></div>'+
+    '<input class="input mt3" id="indSearch" placeholder="Поиск индикатора…">'+
+    '<div id="indList" class="mt2" style="max-height:52vh;overflow-y:auto;"></div>'+
+    '<button class="btn btn-gold btn-block mt4" id="indOk">Готово</button>';
+  draw();
   $('sheetVeil').classList.add('open');
-  $('indChips').addEventListener('click', function(e){
+  $('indSearch').addEventListener('input', draw);
+  $('indList').addEventListener('click', e=>{
     const b=e.target.closest('[data-ind]'); if(!b) return;
-    S.ind[b.dataset.ind]=!S.ind[b.dataset.ind]; b.classList.toggle('active'); saveInd();
+    const nm=b.dataset.ind; S.indA=S.indA||[];
+    const d=indByName(nm);
+    if(S.indA.includes(nm)) S.indA=S.indA.filter(x=>x!==nm);
+    else {
+      if(d[1]==='os' && oscList().length>=4){ toast('Максимум 4 осциллятора','⚠️'); return; }
+      S.indA.push(nm);
+    }
+    b.classList.toggle('active'); saveInd();
     $('termChartWrap').style.height=chartWrapH()+'px';
     drawTermChart(); haptic();
   });
   $('indOk').addEventListener('click', closeSheet);
 }
 
+/* ========= СТАКАН (order book) ========= */
+let depthTimer=null;
+function openDepthSheet(){
+  $('sheetContent').innerHTML='<div class="h2" style="text-align:center;">Стакан · '+S.term.symbol.replace('USDT','')+'/USDT</div>'+
+    '<div id="depthBody" class="mt3"><div class="mut small" style="text-align:center;padding:16px;">Загружаю…</div></div>';
+  $('sheetVeil').classList.add('open');
+  const load=async()=>{
+    if(!$('depthBody') || !$('sheetVeil').classList.contains('open')){ clearInterval(depthTimer); return; }
+    try{
+      const r=await fetch('https://fapi.binance.com/fapi/v1/depth?symbol='+S.term.symbol+'&limit=20');
+      if(!r.ok) throw 0;
+      const d=await r.json();
+      const bids=d.bids.slice(0,12).map(x=>[+x[0],+x[1]]), asks=d.asks.slice(0,12).map(x=>[+x[0],+x[1]]);
+      const maxQ=Math.max(...bids.map(b=>b[1]), ...asks.map(a=>a[1]));
+      const bidV=bids.reduce((s,b)=>s+b[1],0), askV=asks.reduce((s,a)=>s+a[1],0);
+      const imb=bidV/(bidV+askV)*100;
+      const row=(p,qv,side)=>'<div class="dp-row"><div class="dp-bar '+side+'" style="width:'+(qv[1]/maxQ*100)+'%"></div>'+
+        '<span class="mono" style="color:'+(side==='b'?'var(--green)':'var(--red)')+'">'+fmt(p,decOf(S.term.symbol))+'</span>'+
+        '<span class="mono" style="margin-left:auto;">'+qv[1].toFixed(3)+'</span></div>';
+      $('depthBody').innerHTML=
+        '<div class="row between small"><span style="color:var(--green)">Покупатели '+imb.toFixed(0)+'%</span><span style="color:var(--red)">'+(100-imb).toFixed(0)+'% Продавцы</span></div>'+
+        '<div class="progress mt2" style="height:7px;"><div class="fill" style="width:'+imb+'%"></div></div>'+
+        '<div class="row mt3" style="gap:10px;align-items:flex-start;">'+
+        '<div style="flex:1;">'+bids.map(b=>row(b[0],b,'b')).join('')+'</div>'+
+        '<div style="flex:1;">'+asks.map(a=>row(a[0],a,'a')).join('')+'</div></div>'+
+        '<div class="micro mt3" style="text-align:center;">Binance Futures · обновление 3с</div>';
+    }catch(e){ if($('depthBody')) $('depthBody').innerHTML='<div class="note-box">Стакан недоступен для этой монеты (нет на Binance Futures).</div>'; clearInterval(depthTimer); }
+  };
+  clearInterval(depthTimer); load(); depthTimer=setInterval(load, 3000);
+}
 
 /* ============ SIGNALS ENGINE ============ */
 let _klinesReady=false;
@@ -1730,6 +2206,11 @@ function renderSigList(body){
   });
 }
 function subscribe(tier){
+  const t=TIERS_SUB.find(x=>x.id===tier); if(!t) return;
+  if(t.price===0){ S.tier='free'; saveMeta(); renderSignals(); return; }
+  openPay('subscription', t.name, t.price, ()=>{}); return;
+}
+function _oldSubscribe(tier){
   const t=TIERS_SUB.find(x=>x.id===tier); if(!t) return;
   if(t.price===0){ S.tier='free'; saveMeta(); renderSignals(); return; }
   $('sheetContent').innerHTML='<div class="h2" style="text-align:center;">Оформить '+t.name+'</div>'+
@@ -1879,6 +2360,148 @@ async function pullState(){ if(!S.user) return;
       if(o.acc)S.acc=o.acc; if(o.positions)S.positions=o.positions; if(o.history)S.history=o.history;
       if(o.tier)S.tier=o.tier; if(o.wallet)S.wallet=o.wallet; if(o.equityHist)S.equityHist=o.equityHist;
       renderAll(); } }catch(e){} }
+
+/* ============ ADMIN helpers ============ */
+function myTgId(){ return (S.user && /^tg_/.test(S.user.id)) ? S.user.id.slice(3) : null; }
+function isAdmin(){ return myTgId() === ADMIN_ID; }
+
+/* ============ CHALLENGES ============ */
+function renderChallenges(){
+  const t=S.chType, R=CH_RULES[t];
+  document.querySelectorAll('#chTypeSeg .seg-lg-b').forEach(b=>b.classList.toggle('active', b.dataset.cht===t));
+  // таблица правил
+  const hasDaily = R.rows[0].length===5;
+  let th = '<tr><th>Уровень</th><th>Прибыль</th><th>Дневная</th><th>Общая</th><th>Дней</th></tr>';
+  let body='';
+  R.rows.forEach(r=>{ body+='<tr><td>'+r[0]+'</td><td class="up">'+r[1]+'</td><td class="dn">'+r[2]+'</td><td class="dn">'+r[3]+'</td><td>'+r[4]+'</td></tr>'; });
+  $('chRules').innerHTML='<table class="rules-tbl">'+th+body+'</table>';
+  // карточки размеров
+  const sizes=CH_SIZES[t];
+  $('chSizes').innerHTML=sizes.map((s,i)=>{
+    const flag = s.pro?'<div class="ch-flag pro">😎 ВЫБОР ПРО</div>':(s.hot?'<div class="ch-flag hot">🔥 ПОПУЛЯРНЫЙ</div>':'');
+    const per=(s.price/(s.size/1000)).toFixed(2);
+    const sel = S.chSel && S.chSel.i===i && S.chSel.t===t ? ' sel':'';
+    return '<div class="ch-card'+sel+'" data-chi="'+i+'">'+flag+
+      '<div class="cn" style="margin-top:'+(flag?'10px':'0')+'">'+s.name+'</div>'+
+      '<div class="cs">$'+fmt(s.size,0)+'</div>'+
+      '<div class="cp">$'+s.price+'</div>'+
+      '<div class="cx">$1k за $'+per+'</div></div>';
+  }).join('');
+  $('chSizes').querySelectorAll('[data-chi]').forEach(c=>c.addEventListener('click',()=>{
+    S.chSel={t:t, i:+c.dataset.chi}; haptic(); renderChallenges();
+  }));
+  renderChSummary();
+}
+function renderChSummary(){
+  const box=$('chSummary'); if(!box) return;
+  if(!S.chSel || S.chSel.t!==S.chType){ box.innerHTML=''; return; }
+  const s=CH_SIZES[S.chType][S.chSel.i]; const R=CH_RULES[S.chType];
+  box.innerHTML='<div class="card"><div class="h2">Твой челлендж</div>'+
+    '<div class="row between mt3"><span class="small">'+R.name+' · '+s.name+' · $'+fmt(s.size,0)+'</span><span class="mono" style="font-weight:800;color:var(--gold);">$'+s.price+'</span></div>'+
+    '<button class="btn btn-gold btn-block mt4" id="chBuy">Получить $'+fmt(s.size,0)+'</button>'+
+    '<div class="micro mt2" style="text-align:center;">Оплата криптовалютой · счёт выдаётся после подтверждения</div></div>';
+  $('chBuy').addEventListener('click',()=>{
+    openPay('challenge', R.name+' '+ (s.size>=1000?(s.size/1000)+'K':s.size), s.price, ()=>{
+      // после подтверждения оплаты (админом) счёт активируется; здесь — заявка отправлена
+    }, {size:s.size});
+  });
+}
+
+/* ============ ОПЛАТА (адрес + QR + скрин) ============ */
+function openPay(kind, plan, amount, onDone, extra){
+  let net='TON';
+  const render=()=>{
+    const p=PAY[net];
+    const qr='https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=0&data='+encodeURIComponent(p.addr);
+    $('sheetContent').innerHTML=
+      '<div class="h2" style="text-align:center;">Оплата '+ (kind==='subscription'?'подписки':'челленджа') +'</div>'+
+      '<div class="small mt2" style="text-align:center;color:var(--txt2);">'+plan+' · <b style="color:var(--gold);">$'+amount+'</b></div>'+
+      '<div class="pay-net" id="payNet">'+Object.keys(PAY).map(k=>'<button class="chip'+(k===net?' active':'')+'" data-net="'+k+'">'+k+'</button>').join('')+'</div>'+
+      '<div class="small" style="text-align:center;color:var(--txt2);">'+p.label+'</div>'+
+      '<div class="qr-box"><img src="'+qr+'" alt="QR"></div>'+
+      '<div class="pay-addr" id="payAddr">'+p.addr+'</div>'+
+      '<button class="btn btn-ghost btn-block mt2" id="payCopy">Скопировать адрес</button>'+
+      '<div class="note-box mt4">Переведите <b>$'+amount+'</b> в сети <b>'+net+'</b> на адрес выше, затем загрузите скрин оплаты. Счёт активируется после проверки.</div>'+
+      '<input type="file" accept="image/*" id="payFile" style="display:none;">'+
+      '<button class="btn btn-gold btn-block mt4" id="payProof">📎 Загрузить скрин оплаты</button>';
+    $('payNet').addEventListener('click',e=>{ const b=e.target.closest('[data-net]'); if(b){ net=b.dataset.net; render(); }});
+    $('payCopy').addEventListener('click',()=>{ try{ navigator.clipboard.writeText(p.addr); }catch(e){} toast('Адрес скопирован','📋'); haptic(); });
+    $('payProof').addEventListener('click',()=>$('payFile').click());
+    $('payFile').addEventListener('change',e=>{
+      const f=e.target.files[0]; if(!f) return;
+      $('payProof').textContent='Отправляю…';
+      downscale(f, dataUrl=>submitPayment({kind,plan,amount,network:net,address:p.addr,proof:dataUrl,extra,onDone}));
+    });
+  };
+  render();
+  $('sheetVeil').classList.add('open');
+}
+function downscale(file, cb){
+  const img=new Image(); const rd=new FileReader();
+  rd.onload=()=>{ img.onload=()=>{
+    const max=900, sc=Math.min(1, max/Math.max(img.width,img.height));
+    const cv=document.createElement('canvas'); cv.width=img.width*sc; cv.height=img.height*sc;
+    cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+    cb(cv.toDataURL('image/jpeg',0.6));
+  }; img.src=rd.result; };
+  rd.readAsDataURL(file);
+}
+async function submitPayment(o){
+  try{
+    const res=await fetch(API_BASE+'/api/payments',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'create', user:S.user?S.user.id:null, name:S.user?S.user.name:'', kind:o.kind, plan:o.plan, amount:o.amount, network:o.network, address:o.address, proof:o.proof})});
+    if(!res.ok) throw 0;
+    // сохраняем «ожидает» локально
+    S.pendingPay=S.pendingPay||[]; S.pendingPay.push({plan:o.plan, kind:o.kind, ts:Date.now()});
+    closeSheet(); haptic('ok');
+    $('sheetContent').innerHTML='<div style="text-align:center;padding:10px;"><div style="font-size:40px;">🧾</div><div class="h2 mt3">Заявка отправлена</div><div class="small mt2" style="color:var(--txt2);">Мы проверим оплату и активируем '+ (o.kind==='subscription'?'подписку':'счёт') +'. Обычно это быстро.</div><button class="btn btn-gold btn-block mt4" id="payOk">Понятно</button></div>';
+    $('sheetVeil').classList.add('open');
+    $('payOk').addEventListener('click',closeSheet);
+    if(o.onDone) o.onDone();
+  }catch(e){ toast('Ошибка отправки. Попробуйте ещё раз','⚠️'); const pp=$('payProof'); if(pp) pp.textContent='📎 Загрузить скрин оплаты'; }
+}
+
+/* ============ АДМИН-ПАНЕЛЬ ============ */
+async function renderAdmin(){
+  const body=$('adminBody');
+  if(!isAdmin()){ body.innerHTML='<div class="note-box">Доступ только для владельца.</div>'; return; }
+  body.innerHTML='<div class="mut small" style="text-align:center;padding:20px;">Загружаю…</div>';
+  const id=myTgId();
+  try{
+    const [st, pend]=await Promise.all([
+      fetch(API_BASE+'/api/admin?admin='+id).then(r=>r.json()),
+      fetch(API_BASE+'/api/payments?admin='+id+'&status=pending').then(r=>r.json())
+    ]);
+    let html='<div class="stat-grid">'+
+      '<div class="stat-card"><div class="sv">'+(st.users||0)+'</div><div class="sl">Пользователей</div></div>'+
+      '<div class="stat-card"><div class="sv" style="color:var(--gold);">$'+fmt(st.revenue||0,0)+'</div><div class="sl">Выручка (подтв.)</div></div>'+
+      '<div class="stat-card"><div class="sv" style="color:var(--green);">'+((st.payments&&st.payments.approved)||0)+'</div><div class="sl">Оплат подтверждено</div></div>'+
+      '<div class="stat-card"><div class="sv" style="color:var(--red);">'+((st.payments&&st.payments.pending)||0)+'</div><div class="sl">Ждут проверки</div></div>'+
+      '</div>';
+    html+='<div class="h2 mt5" style="margin-bottom:10px;">Заявки на оплату</div>';
+    const list=(pend&&pend.payments)||[];
+    if(!list.length) html+='<div class="note-box">Новых заявок нет.</div>';
+    else list.forEach(p=>{
+      html+='<div class="pay-row"><div class="row between"><b>'+(p.plan||'')+'</b><span class="mono" style="color:var(--gold);">$'+p.amount+'</span></div>'+
+        '<div class="small mt2" style="color:var(--txt2);">'+(p.user_name||p.user_id||'—')+' · '+(p.network||'')+'</div>'+
+        (p.proof_url?'<img src="'+p.proof_url+'" style="width:100%;border-radius:10px;margin-top:8px;max-height:220px;object-fit:contain;background:#000;">':'')+
+        '<div class="row gap2 mt3"><button class="btn btn-gold grow btn-sm" data-ok="'+p.id+'">Подтвердить</button>'+
+        '<button class="btn btn-ghost grow btn-sm" data-no="'+p.id+'">Отклонить</button></div></div>';
+    });
+    body.innerHTML=html;
+    body.querySelectorAll('[data-ok]').forEach(b=>b.addEventListener('click',()=>reviewPay(b.dataset.ok,'approved')));
+    body.querySelectorAll('[data-no]').forEach(b=>b.addEventListener('click',()=>reviewPay(b.dataset.no,'rejected')));
+  }catch(e){ body.innerHTML='<div class="note-box">Не удалось загрузить. Проверьте, что бэкенд и переменная ADMIN_TG_ID настроены.</div>'; }
+}
+async function reviewPay(id, decision){
+  try{
+    await fetch(API_BASE+'/api/payments',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'review', admin:myTgId(), id:+id, decision})});
+    toast(decision==='approved'?'Подтверждено ✅':'Отклонено','');
+    haptic('ok'); renderAdmin();
+  }catch(e){ toast('Ошибка','⚠️'); }
+}
+
 // параллакс маскота
 const mw=$('mascotWrap');
 document.addEventListener('pointermove', e=>{
@@ -1909,7 +2532,7 @@ async function tick(){
 async function init(){
   loadDraws(); loadMeta(); loadUser(); loadState();
   loadMarkets().then(ok=>{ if(ok && S.screen==='market') renderMarket(); }).catch(()=>{});
-  try{ const si=localStorage.getItem('nx_ind'); if(si) Object.assign(S.ind, JSON.parse(si)); }catch(e){}
+  try{ const si=localStorage.getItem('nx_indA'); if(si) S.indA=JSON.parse(si); }catch(e){}
   if(!S.user && tg && tg.initDataUnsafe && tg.initDataUnsafe.user){ authTelegram(); }
   else if(S.user){ pullState(); }
   startWS();
