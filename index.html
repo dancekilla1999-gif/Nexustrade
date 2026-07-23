@@ -146,19 +146,39 @@ body::before{content:'';position:fixed;inset:-12%;z-index:-1;pointer-events:none
 @keyframes sheen{to{background-position:220% center;}}
 
 /* ===== SPLASH ===== */
-#screen-splash{position:fixed;inset:0;z-index:60;background:
-  radial-gradient(700px 500px at 50% 20%, rgba(232,197,88,0.1), transparent 60%), var(--bg);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;}
-#screen-splash.hidden{display:none;}
-.mascot-wrap{width:230px;height:230px;position:relative;animation:floatY 4.5s ease-in-out infinite;
-  filter:drop-shadow(0 24px 44px rgba(232,197,88,0.22));transition:transform .15s ease-out;}
-@keyframes floatY{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
-.mascot-glow{position:absolute;inset:-14%;border-radius:50%;z-index:-1;
-  background:radial-gradient(circle, rgba(232,197,88,0.22), rgba(34,255,122,0.06) 55%, transparent 70%);
-  animation:pulseGlow 3.4s ease-in-out infinite;}
-@keyframes pulseGlow{0%,100%{opacity:.7;transform:scale(1);}50%{opacity:1;transform:scale(1.07);}}
-.splash-title{font-family:var(--display);font-size:36px;font-weight:700;letter-spacing:-0.02em;margin-top:18px;}
-.splash-sub{color:var(--txt2);margin-top:8px;max-width:290px;font-size:13.5px;}
+#screen-splash{position:fixed;inset:0;z-index:60;overflow:hidden;background:#04070C;
+  display:flex;align-items:flex-end;justify-content:center;}
+.sp-bg{position:absolute;inset:-6%;background-image:url('mascot.png');background-size:cover;background-position:center 18%;
+  transform:scale(1.06);transition:transform .25s ease-out;will-change:transform;}
+.sp-bg::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(180deg, rgba(4,7,12,.30) 0%, rgba(4,7,12,.10) 35%, rgba(4,7,12,.78) 68%, #04070C 92%);}
+.sp-fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+.sp-scan{position:absolute;inset:0;pointer-events:none;mix-blend-mode:overlay;opacity:.35;
+  background:repeating-linear-gradient(0deg, rgba(34,228,255,.10) 0 1px, transparent 1px 3px);
+  animation:scanMove 7s linear infinite;}
+@keyframes scanMove{from{background-position-y:0;}to{background-position-y:120px;}}
+.sp-vig{position:absolute;inset:0;pointer-events:none;
+  box-shadow:inset 0 0 160px 40px rgba(0,0,0,.85), inset 0 0 60px rgba(34,228,255,.12);}
+.sp-content{position:relative;z-index:3;width:100%;max-width:400px;padding:0 26px calc(46px + env(safe-area-inset-bottom));text-align:center;
+  animation:spRise .9s var(--spring) both;}
+@keyframes spRise{from{opacity:0;transform:translateY(28px);}to{opacity:1;transform:none;}}
+.sp-badge{display:inline-block;font-family:var(--display);font-size:11px;font-weight:700;letter-spacing:.16em;
+  color:var(--gold);border:1px solid rgba(34,228,255,.45);border-radius:99px;padding:5px 14px;margin-bottom:14px;
+  background:rgba(4,7,12,.5);backdrop-filter:blur(8px);box-shadow:0 0 22px rgba(34,228,255,.28);}
+.sp-title{position:relative;font-family:var(--display);font-size:44px;font-weight:700;letter-spacing:.01em;line-height:1;
+  color:#EAF7FF;text-shadow:0 0 18px rgba(34,228,255,.75), 0 0 46px rgba(34,228,255,.4), 0 4px 20px rgba(0,0,0,.9);}
+.sp-title::before,.sp-title::after{content:attr(data-txt);position:absolute;inset:0;}
+.sp-title::before{color:#FF3B57;animation:glitchA 3.6s steps(2,end) infinite;clip-path:inset(0 0 62% 0);opacity:.55;}
+.sp-title::after{color:#22E4FF;animation:glitchB 3.6s steps(2,end) infinite;clip-path:inset(58% 0 0 0);opacity:.55;}
+@keyframes glitchA{0%,88%,100%{transform:none;}90%{transform:translate(-3px,-2px);}94%{transform:translate(2px,1px);}}
+@keyframes glitchB{0%,88%,100%{transform:none;}91%{transform:translate(3px,2px);}95%{transform:translate(-2px,-1px);}}
+.sp-sub{margin-top:14px;font-size:14px;line-height:1.6;color:#B9D4E6;text-shadow:0 2px 12px rgba(0,0,0,.9);}
+.sp-sub b{color:var(--gold);}
+.sp-cta{margin-top:22px;font-family:var(--display);font-size:16px;letter-spacing:.08em;
+  animation:ctaPulse 2.6s ease-in-out infinite;}
+@keyframes ctaPulse{0%,100%{box-shadow:0 8px 26px -10px rgba(34,228,255,.65), 0 0 18px rgba(34,228,255,.25);}
+  50%{box-shadow:0 8px 34px -8px rgba(34,228,255,.9), 0 0 34px rgba(34,228,255,.5);}}
+.sp-note{margin-top:12px;font-size:11.5px;color:#7FA0BC;text-shadow:0 2px 8px rgba(0,0,0,.9);}
 
 /* ===== TOPBAR ===== */
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:4px 0 14px;}
@@ -333,7 +353,7 @@ body::before{content:'';position:fixed;inset:-12%;z-index:-1;pointer-events:none
   box-shadow:0 12px 40px rgba(0,0,0,.55), 0 0 0 3px rgba(232,197,88,.35), 0 0 60px rgba(232,197,88,.18);
   animation:mascotFloat 4s ease-in-out infinite;}
 @keyframes mascotFloat{0%,100%{transform:translateY(0) rotate(-1deg);}50%{transform:translateY(-8px) rotate(1deg);}}
-.mascot-hero{width:100%;max-width:340px;margin:0 auto;display:block;border-radius:22px;
+.mascot-hero{width:100%;max-width:250px;margin:0 auto;display:block;border-radius:20px;
   box-shadow:0 20px 60px rgba(0,0,0,.5), 0 0 50px rgba(232,197,88,.14);}
 .mascot-img{background-image:url('mascot.png');}
 .flt-badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:11px;font-weight:800;
@@ -386,71 +406,16 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
 
 <!-- ================= SPLASH ================= -->
 <div id="screen-splash">
-  <div class="mascot-wrap" id="mascotWrap">
-    <div class="mascot-glow"></div>
-    <img src="mascot.png" alt="Nexus Bull" class="mascot-hero" id="mascotPng" style="display:none;position:relative;z-index:2;"
-      onload="this.style.display='block';var s=document.getElementById('mascotSvg');if(s)s.style.display='none';"
-      onerror="this.remove();">
-    <svg viewBox="0 0 200 200" width="230" height="230" id="mascotSvg">
-      <defs>
-        <linearGradient id="gGold" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#F5E08A"/><stop offset=".5" stop-color="#E8C558"/><stop offset="1" stop-color="#B8933A"/>
-        </linearGradient>
-        <linearGradient id="gBody" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#2E2E2E"/><stop offset="1" stop-color="#141414"/>
-        </linearGradient>
-        <linearGradient id="gMuz" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#4A4038"/><stop offset="1" stop-color="#2C2620"/>
-        </linearGradient>
-        <linearGradient id="gGlass" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stop-color="#0A0A0A"/><stop offset=".55" stop-color="#101710"/><stop offset="1" stop-color="#0A0A0A"/>
-        </linearGradient>
-      </defs>
-      <!-- horns -->
-      <path d="M38 62 Q18 46 22 24 Q40 34 50 52 Z" fill="url(#gGold)"/>
-      <path d="M162 62 Q182 46 178 24 Q160 34 150 52 Z" fill="url(#gGold)"/>
-      <!-- ears -->
-      <ellipse cx="42" cy="74" rx="16" ry="10" fill="#1E1E1E" transform="rotate(-24 42 74)"/>
-      <ellipse cx="158" cy="74" rx="16" ry="10" fill="#1E1E1E" transform="rotate(24 158 74)"/>
-      <!-- gold earring -->
-      <circle cx="34" cy="84" r="6" fill="none" stroke="url(#gGold)" stroke-width="3"/>
-      <!-- head -->
-      <path d="M55 58 Q100 40 145 58 Q160 78 156 110 Q152 138 128 152 L72 152 Q48 138 44 110 Q40 78 55 58 Z" fill="url(#gBody)"/>
-      <!-- crown -->
-      <path d="M66 44 L74 24 L88 40 L100 18 L112 40 L126 24 L134 44 Q100 34 66 44 Z" fill="url(#gGold)" stroke="#8A6B25" stroke-width="1.5"/>
-      <circle cx="74" cy="24" r="3.4" fill="#22FF7A"/><circle cx="100" cy="18" r="3.4" fill="#22FF7A"/><circle cx="126" cy="24" r="3.4" fill="#22FF7A"/>
-      <!-- sunglasses -->
-      <g id="glasses">
-        <rect x="52" y="76" width="42" height="26" rx="9" fill="url(#gGlass)" stroke="url(#gGold)" stroke-width="2.5"/>
-        <rect x="106" y="76" width="42" height="26" rx="9" fill="url(#gGlass)" stroke="url(#gGold)" stroke-width="2.5"/>
-        <rect x="94" y="84" width="12" height="6" rx="3" fill="url(#gGold)"/>
-        <path d="M58 82 L84 82" stroke="rgba(34,255,122,.6)" stroke-width="2.4" stroke-linecap="round"/>
-        <path d="M112 82 L138 82" stroke="rgba(34,255,122,.6)" stroke-width="2.4" stroke-linecap="round"/>
-      </g>
-      <!-- muzzle -->
-      <path d="M64 112 Q100 98 136 112 Q142 132 128 146 L72 146 Q58 132 64 112 Z" fill="url(#gMuz)"/>
-      <ellipse cx="84" cy="126" rx="6.4" ry="8" fill="#0E0C0A"/>
-      <ellipse cx="116" cy="126" rx="6.4" ry="8" fill="#0E0C0A"/>
-      <!-- smirk + gold tooth -->
-      <path d="M80 143 Q100 151 122 141" stroke="#0E0C0A" stroke-width="3.4" fill="none" stroke-linecap="round"/>
-      <rect x="107" y="141" width="8" height="7" rx="2" fill="url(#gGold)"/>
-      <!-- nose ring -->
-      <path d="M94 134 A8 8 0 0 0 106 134" fill="none" stroke="url(#gGold)" stroke-width="3.4" stroke-linecap="round"/>
-      <!-- chain -->
-      <path d="M58 152 Q100 186 142 152" fill="none" stroke="url(#gGold)" stroke-width="7" stroke-linecap="round" stroke-dasharray="1 11"/>
-      <path d="M58 152 Q100 182 142 152" fill="none" stroke="rgba(184,147,58,.5)" stroke-width="2"/>
-      <!-- pendant -->
-      <g transform="translate(100 178)">
-        <path d="M-13 -8 L13 -8 L17 0 L0 16 L-17 0 Z" fill="url(#gGold)" stroke="#8A6B25" stroke-width="1.5"/>
-        <text x="0" y="6" text-anchor="middle" font-family="Inter,sans-serif" font-weight="900" font-size="14" fill="#171206">N</text>
-      </g>
-    </svg>
-  </div>
-  <div class="splash-title"><span class="gold-text">NEXUS PROP</span></div>
-  <div class="splash-sub">Пройди челлендж — получи капитал фирмы. Торгуй как босс, забирай до 80% профита.</div>
-  <div class="mt5" style="width:100%;max-width:320px;">
-    <button class="btn btn-gold btn-block" data-go="home">Начать</button>
-    <div class="small mt3" style="text-align:center;color:var(--txt3);">Демо-режим · подключение платежей и KYC — на бэкенде</div>
+  <div class="sp-bg" id="spBg"></div>
+  <canvas class="sp-fx" id="spFx"></canvas>
+  <div class="sp-scan"></div>
+  <div class="sp-vig"></div>
+  <div class="sp-content" id="spContent">
+    <div class="sp-badge">⚡ PROP TRADING</div>
+    <div class="sp-title" data-txt="NEXUS PROP">NEXUS PROP</div>
+    <div class="sp-sub">Пройди челлендж — получи капитал фирмы.<br>Торгуй как босс, забирай до <b>80%</b> профита.</div>
+    <button class="btn btn-gold btn-block sp-cta" data-go="home">НАЧАТЬ</button>
+    <div class="sp-note">Демо-счёт бесплатно · челленджи с выводом — оплата криптой</div>
   </div>
 </div>
 
@@ -2502,13 +2467,74 @@ async function reviewPay(id, decision){
   }catch(e){ toast('Ошибка','⚠️'); }
 }
 
-// параллакс маскота
-const mw=$('mascotWrap');
-document.addEventListener('pointermove', e=>{
-  if($('screen-splash').classList.contains('hidden')) return;
-  const dx=(e.clientX/window.innerWidth-0.5)*10, dy=(e.clientY/window.innerHeight-0.5)*8;
-  mw.style.transform=`rotateY(${dx}deg) rotateX(${-dy}deg)`;
-});
+
+/* ============ SPLASH VFX (частицы, лучи, 3D-параллакс) ============ */
+(function(){
+  const cv=document.getElementById('spFx'); if(!cv) return;
+  const bg=document.getElementById('spBg'), content=document.getElementById('spContent');
+  const ctx=cv.getContext('2d');
+  let W=0,H=0,dpr=Math.min(2,window.devicePixelRatio||1), parts=[], rays=[], raf=null, t0=performance.now();
+  function size(){ W=cv.clientWidth; H=cv.clientHeight; cv.width=W*dpr; cv.height=H*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); }
+  function init(){
+    size(); parts=[]; rays=[];
+    const n=Math.min(70, Math.round(W*H/9000));
+    for(let i=0;i<n;i++) parts.push({
+      x:Math.random()*W, y:Math.random()*H,
+      r:Math.random()*1.7+0.5, sp:Math.random()*0.5+0.15,
+      dx:(Math.random()-0.5)*0.25, a:Math.random()*0.6+0.25,
+      hue:Math.random()<0.22?'#FF3B57':'#22E4FF', ph:Math.random()*6.28
+    });
+    for(let i=0;i<3;i++) rays.push({x:Math.random()*W, w:Math.random()*70+50, sp:Math.random()*0.05+0.02, a:Math.random()*0.05+0.03});
+  }
+  function frame(now){
+    const t=(now-t0)/1000;
+    ctx.clearRect(0,0,W,H);
+    // световые лучи
+    rays.forEach(r=>{
+      r.x+= Math.sin(t*r.sp)*0.3;
+      const g=ctx.createLinearGradient(r.x-r.w/2,0,r.x+r.w/2,H);
+      g.addColorStop(0,'rgba(34,228,255,0)'); g.addColorStop(.5,'rgba(34,228,255,'+r.a+')'); g.addColorStop(1,'rgba(34,228,255,0)');
+      ctx.fillStyle=g; ctx.fillRect(r.x-r.w/2,0,r.w,H);
+    });
+    // частицы
+    parts.forEach(p=>{
+      p.y-=p.sp; p.x+=p.dx+Math.sin(t*0.6+p.ph)*0.2;
+      if(p.y<-6){ p.y=H+6; p.x=Math.random()*W; }
+      if(p.x<-6) p.x=W+6; if(p.x>W+6) p.x=-6;
+      const tw=0.55+0.45*Math.sin(t*2.2+p.ph);
+      ctx.globalAlpha=p.a*tw; ctx.fillStyle=p.hue;
+      ctx.shadowColor=p.hue; ctx.shadowBlur=10;
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.283); ctx.fill();
+    });
+    ctx.globalAlpha=1; ctx.shadowBlur=0;
+    raf=requestAnimationFrame(frame);
+  }
+  // 3D-параллакс: наклон телефона или движение пальца
+  let tx=0,ty=0,cx=0,cy=0;
+  function apply(){
+    cx+=(tx-cx)*0.08; cy+=(ty-cy)*0.08;
+    if(bg) bg.style.transform='scale(1.06) translate('+(cx*-14)+'px,'+(cy*-14)+'px)';
+    if(content) content.style.transform='translate('+(cx*7)+'px,'+(cy*7)+'px)';
+    requestAnimationFrame(apply);
+  }
+  window.addEventListener('deviceorientation', e=>{
+    if(e.gamma==null) return;
+    tx=Math.max(-1,Math.min(1,(e.gamma||0)/38));
+    ty=Math.max(-1,Math.min(1,((e.beta||0)-45)/38));
+  });
+  const sp=document.getElementById('screen-splash');
+  if(sp) sp.addEventListener('pointermove', e=>{
+    tx=(e.clientX/window.innerWidth-0.5)*2; ty=(e.clientY/window.innerHeight-0.5)*2;
+  });
+  window.addEventListener('resize', init);
+  init(); raf=requestAnimationFrame(frame); apply();
+  // выключаем анимацию, когда сплэш скрыт (экономия батареи)
+  const stop=()=>{ if(raf){ cancelAnimationFrame(raf); raf=null; } };
+  const obs=new MutationObserver(()=>{ const s=document.getElementById('screen-splash');
+    if(!s || s.style.display==='none' || s.classList.contains('hide')) stop(); });
+  if(sp) obs.observe(sp,{attributes:true,attributeFilter:['style','class']});
+})();
+
 
 const TIPS=[
   'Риск на сделку держи ≤ 1–2% — челлендж выигрывает дисциплина, а не размер позиции.',
