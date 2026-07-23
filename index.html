@@ -362,10 +362,14 @@ body::before{content:'';position:fixed;inset:-12%;z-index:-1;pointer-events:none
   padding:3px 9px;border-radius:8px;background:var(--green-dim);color:var(--green);}
 .flt-badge.mid{background:var(--gold-dim);color:var(--gold);}
 .mascot-ava{background-image:url('mascot.png');background-size:cover;background-position:center top;box-shadow:0 0 0 2px rgba(34,228,255,.5), 0 0 16px rgba(34,228,255,.35);}
-.home-bull{width:100%;max-width:260px;margin:0 auto 6px;display:block;border-radius:20px;
-  box-shadow:0 22px 55px -18px rgba(0,0,0,.8), 0 0 70px -8px rgba(34,228,255,.35), 0 0 0 1px rgba(34,228,255,.22);
-  animation:bullFloat 5s ease-in-out infinite;}
-@keyframes bullFloat{0%,100%{transform:translateY(0) rotate(-.6deg);}50%{transform:translateY(-7px) rotate(.6deg);}}
+.hero-bull::before{content:'';position:absolute;right:-6%;top:-10%;width:62%;height:130%;
+  background-image:url('mascot.png');background-size:cover;background-position:center 22%;
+  -webkit-mask-image:linear-gradient(90deg, transparent 0%, rgba(0,0,0,.55) 34%, #000 78%);
+  mask-image:linear-gradient(90deg, transparent 0%, rgba(0,0,0,.55) 34%, #000 78%);
+  opacity:.5;pointer-events:none;filter:saturate(1.1) contrast(1.05);}
+.hero-bull::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(90deg, rgba(11,18,32,.96) 8%, rgba(11,18,32,.72) 42%, rgba(11,18,32,.18) 100%);}
+.hero-bull > *{position:relative;z-index:2;}
 img.coin-ic{object-fit:cover;background:var(--card2);}
 
 .seg-lg{display:flex;gap:8px;background:var(--card2);border:1px solid var(--line);border-radius:16px;padding:6px;}
@@ -441,8 +445,7 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
     </div>
   </div>
 
-  <img src="mascot.png" alt="Nexus Bull" class="home-bull" onerror="this.remove();">
-  <div class="hero-card" id="homeHero">
+  <div class="hero-card hero-bull" id="homeHero">
     <div class="row between">
       <span class="badge b-gold" id="homeStageBadge">ЭТАП 1 / 2</span>
       <span class="badge b-mut">ДЕМО-СЧЁТ</span>
@@ -2560,6 +2563,11 @@ async function tick(){
 }
 async function init(){
   loadDraws(); loadMeta(); loadUser(); loadState();
+  // миграция: демо теперь только $10k
+  if(S.acc && S.acc.tier && S.acc.tier!==10000 && !S.acc.paid){
+    S.acc={ active:true, tier:10000, stage:1, balance:10000, startDay:10000, profitDays:0, dayPnlPeak:0, status:'RUN' };
+    S.positions=[]; S.equityHist=[]; persistState();
+  }
   loadMarkets().then(ok=>{ if(ok && S.screen==='market') renderMarket(); }).catch(()=>{});
   try{ const si=localStorage.getItem('nx_indA'); if(si) S.indA=JSON.parse(si); }catch(e){}
   if(!S.user && tg && tg.initDataUnsafe && tg.initDataUnsafe.user){ authTelegram(); }
