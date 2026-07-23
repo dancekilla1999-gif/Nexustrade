@@ -147,7 +147,9 @@ body::before{content:'';position:fixed;inset:-12%;z-index:-1;pointer-events:none
 
 /* ===== SPLASH ===== */
 #screen-splash{position:fixed;inset:0;z-index:60;overflow:hidden;background:#04070C;
-  display:flex;align-items:flex-end;justify-content:center;}
+  display:flex;align-items:flex-end;justify-content:center;
+  opacity:1;transition:opacity .45s ease, transform .45s ease;}
+#screen-splash.hidden{opacity:0;pointer-events:none;transform:scale(1.04);}
 .sp-bg{position:absolute;inset:-6%;background-image:url('mascot.png');background-size:cover;background-position:center 18%;
   transform:scale(1.06);transition:transform .25s ease-out;will-change:transform;}
 .sp-bg::after{content:'';position:absolute;inset:0;
@@ -2531,7 +2533,8 @@ async function reviewPay(id, decision){
   // выключаем анимацию, когда сплэш скрыт (экономия батареи)
   const stop=()=>{ if(raf){ cancelAnimationFrame(raf); raf=null; } };
   const obs=new MutationObserver(()=>{ const s=document.getElementById('screen-splash');
-    if(!s || s.style.display==='none' || s.classList.contains('hide')) stop(); });
+    if(!s) return stop();
+    if(s.classList.contains('hidden')){ stop(); setTimeout(()=>{ s.style.display='none'; }, 500); } });
   if(sp) obs.observe(sp,{attributes:true,attributeFilter:['style','class']});
 })();
 
