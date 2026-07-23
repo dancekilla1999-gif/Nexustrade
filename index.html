@@ -2434,14 +2434,33 @@ async function submitPayment(o){
 /* ============ АДМИН-ПАНЕЛЬ ============ */
 async function renderAdmin(){
   const body=$('adminBody');
-  if(!isAdmin()){ body.innerHTML='<div class="note-box">Доступ только для владельца.</div>'; return; }
-  body.innerHTML='<div class="mut small" style="text-align:center;padding:20px;">Загружаю…</div>';
   const id=myTgId();
+  if(!isAdmin()){
+    body.innerHTML='<div class="note-box">Доступ только для владельца.<br><span class="micro">Ваш Telegram ID: '+(id||'не определён (откройте через бота)')+'</span></div>';
+    return;
+  }
+  body.innerHTML='<div class="mut small" style="text-align:center;padding:20px;">Загружаю…</div>';
   try{
-    const [st, pend]=await Promise.all([
-      fetch(API_BASE+'/api/admin?admin='+id).then(r=>r.json()),
-      fetch(API_BASE+'/api/payments?admin='+id+'&status=pending').then(r=>r.json())
-    ]);
+    const r1=await fetch(API_BASE+'/api/admin?admin='+id);
+    if(r1.status===403){
+      body.innerHTML='<div class="note-box"><b>Сервер не признаёт вас админом (403).</b><br><br>'+
+        'В Vercel не задана переменная <b>ADMIN_TG_ID</b> или её значение отличается от вашего ID.<br><br>'+
+        'Ваш ID: <b>'+id+'</b><br><br>'+
+        'Добавьте в Vercel → Settings → Environment Variables:<br>'+
+        '<span class="mono">ADMIN_TG_ID = '+id+'</span><br>затем сделайте <b>Redeploy</b>.</div>';
+      return;
+    }
+    if(r1.status===404){
+      body.innerHTML='<div class="note-box"><b>Функция /api/admin не найдена (404).</b><br>Проверьте, что файл <span class="mono">api/admin.js</span> лежит в репозитории.</div>';
+      return;
+    }
+    if(!r1.ok){
+      const t=await r1.text();
+      body.innerHTML='<div class="note-box"><b>Ошибка сервера ('+r1.status+').</b><br><span class="micro">'+t.slice(0,180)+'</span></div>';
+      return;
+    }
+    const st=await r1.json();
+    const pend=await fetch(API_BASE+'/api/payments?admin='+id+'&status=pending').then(r=>r.json()).catch(()=>({payments:[]}));
     let html='<div class="stat-grid">'+
       '<div class="stat-card"><div class="sv">'+(st.users||0)+'</div><div class="sl">Пользователей</div></div>'+
       '<div class="stat-card"><div class="sv" style="color:var(--gold);">$'+fmt(st.revenue||0,0)+'</div><div class="sl">Выручка (подтв.)</div></div>'+
@@ -2461,7 +2480,7 @@ async function renderAdmin(){
     body.innerHTML=html;
     body.querySelectorAll('[data-ok]').forEach(b=>b.addEventListener('click',()=>reviewPay(b.dataset.ok,'approved')));
     body.querySelectorAll('[data-no]').forEach(b=>b.addEventListener('click',()=>reviewPay(b.dataset.no,'rejected')));
-  }catch(e){ body.innerHTML='<div class="note-box">Не удалось загрузить. Проверьте, что бэкенд и переменная ADMIN_TG_ID настроены.</div>'; }
+  }catch(e){ body.innerHTML='<div class="note-box"><b>Нет связи с сервером.</b><br><span class="micro">'+String(e).slice(0,140)+'</span></div>'; }
 }
 async function reviewPay(id, decision){
   try{
