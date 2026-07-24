@@ -1167,8 +1167,20 @@ function tradingBlocked(){
   if(S.acc.status==='FAIL') return S.acc.failReason ? ('Счёт закрыт: '+S.acc.failReason) : 'Счёт заблокирован: нарушен лимит просадки.';
   return false;
 }
+function dayKey(){ const d=new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
+function rollDay(){
+  if(!S.acc) return;
+  const k=dayKey();
+  if(S.acc.dayKey!==k){
+    S.acc.dayKey=k;
+    S.acc.startDay=equity();       // новый отсчёт дневного лимита
+    S.acc.dayPnlPeak=0;
+    if(S.acc.status==='RUN' || S.acc.status==='PASS') persistState();
+  }
+}
 function checkChallenge(){
   if(!S.acc || S.acc.status==='FAIL') return;
+  rollDay();
   const eq=equity();
   const funded = S.acc.status==='PASS';
   const hitTotal = eq<=challengeStop();
@@ -1186,10 +1198,10 @@ function checkChallenge(){
   if(eq>=challengeTarget()){
     forceCloseAll('stage');
     if(S.acc.stage===1){
-      S.acc.stage=2; S.acc.balance=eq; S.acc.startDay=eq; S.acc.profitDays=0; S.acc.dayPnlPeak=0;
+      S.acc.stage=2; S.acc.balance=eq; S.acc.startDay=eq; S.acc.profitDays=0; S.acc.dayPnlPeak=0; S.acc.dayKey=dayKey();
       persistState(); haptic('ok'); toast('Этап 1 пройден! Открыт этап 2','🏆'); showStageModal(2);
     } else {
-      S.acc.status='PASS'; S.acc.balance=eq; S.acc.startDay=eq;
+      S.acc.status='PASS'; S.acc.balance=eq; S.acc.startDay=eq; S.acc.dayKey=dayKey();
       if(!S.acc.fundedAt) S.acc.fundedAt=Date.now();
       persistState(); haptic('ok'); toast('Челлендж пройден! Фандед-счёт активирован','👑'); showStageModal('funded');
     }
@@ -1211,7 +1223,7 @@ function showStageModal(stage){
   $('stgOk').addEventListener('click',()=>{ closeSheet(); go(funded?'wallet':'accounts'); });
 }
 function startChallenge(size, fee){
-  S.acc={ active:true, tier:size, stage:1, balance:size, startDay:size, profitDays:0, dayPnlPeak:0, status:'RUN' };
+  S.acc={ active:true, tier:size, stage:1, balance:size, startDay:size, profitDays:0, dayPnlPeak:0, status:'RUN', dayKey:dayKey() };
   S.positions=[]; S.history=[]; S.equityHist=[];
   toast(fee?`Счёт $${fmt(size,0)} активирован`:`Демо-счёт $${fmt(size,0)} активирован`,'⚡');
   haptic('ok'); go('accounts');
@@ -1688,7 +1700,13 @@ function drawTermChart(){
   if(psc!==1){ const mid=(hi+lo)/2, half=(hi-lo)/2/psc; hi=mid+half; lo=mid-half; }
   const plotL=4, plotR=W-mR, pw=Math.max(10,plotR-plotL), sw=pw/n, cw=Math.max(1.1,sw*0.6);
   const X=gi=>plotL+(gi-V.a)*sw+sw/2, Y=p=>priceBottom-(p-lo)/(hi-lo)*(priceBottom-priceTop);
-  const idxOfTimeG=t=>{ let a=0,b=k.length-1; while(a<b){ const m=(a+b)>>1; if(k[m].t<t) a=m+1; else b=m; } return a; };
+  const step0=(k.length>1)?(k[1].t-k[0].t):3.6e6;
+  const idxOfTimeG=t=>{
+    if(t<=k[0].t) return (t-k[0].t)/step0;
+    if(t>=k[k.length-1].t) return (k.length-1)+(t-k[k.length-1].t)/step0;
+    let a=0,b=k.length-1; while(a<b-1){ const m=(a+b)>>1; if(k[m].t<=t) a=m; else b=m; }
+    const d=k[b].t-k[a].t||1; return a+(t-k[a].t)/d;
+  };
   const xOfTime=t=>X(idxOfTimeG(t));
   const P=pt=>[xOfTime(pt.t), Y(pt.p)];
   S.term.layout={plotL,plotR,priceTop,priceBottom,hi,lo,sw,n,a0,b0,va:V.a,vb:V.b,W,H,mR,scaleX:plotR};
@@ -1977,10 +1995,13 @@ function drawTermChart(){
   function priceAtYv(py){ return lo + (priceBottom-py)/(priceBottom-priceTop)*(hi-lo); }
   (S.draws[drawsKey()]||[]).forEach(d=>renderDraw(d,false));
   // превью незавершённого построения
-  if(S.term.pend && S.term.pend.length && S.term.hover!=null && k[S.term.hover]){
-    const hovPt={t:k[S.term.hover].t, p:S.term.hoverP!=null?S.term.hoverP:k[S.term.hover].c};
-    renderDraw({type:S.term.tool, pts:[...S.term.pend, hovPt], txt:''}, true);
-    S.term.pend.forEach(q=>{ const [qx,qy]=P(q); x.fillStyle=CYA; x.beginPath(); x.arc(qx,qy,3.2,0,Math.PI*2); x.fill(); });
+  if(S.term.pend && S.term.pend.length){
+    const ghostPt = S.aimPt || (S.term.hover!=null && k[S.term.hover]
+      ? {t:k[S.term.hover].t, p:(S.term.hoverP!=null?S.term.hoverP:k[S.term.hover].c)} : null);
+    if(ghostPt) renderDraw({type:S.term.tool, pts:[...S.term.pend, ghostPt], txt:''}, true);
+    S.term.pend.forEach(q=>{ const [qx,qy]=P(q);
+      x.fillStyle=CYA; x.beginPath(); x.arc(qx,qy,4,0,Math.PI*2); x.fill();
+      x.strokeStyle='#04070C'; x.lineWidth=1.5; x.stroke(); });
   }
   x.restore();
   // OSC PANES
@@ -2224,7 +2245,7 @@ function chartPos(e){
 }
 function idxAtX(px){ const L=S.term.layout; if(!L) return null;
   const k=curK(); if(!k) return null;
-  const gi=Math.floor(L.va+(px-L.plotL)/L.sw);
+  const gi=Math.round(L.va+(px-L.plotL)/L.sw);
   return Math.max(0, Math.min(k.length-1, gi)); }
 function priceAtY(py){ const L=S.term.layout; if(!L) return null;
   return L.lo + (L.priceBottom-py)/(L.priceBottom-L.priceTop)*(L.hi-L.lo); }
@@ -2233,8 +2254,8 @@ function clampView(V){
   const k=curK(); if(!k) return V;
   const span=Math.max(15, Math.min(k.length*3, V.b-V.a));
   let a=V.a;
-  const minA=-span*0.5;              // можно уйти левее начала данных
-  const maxA=k.length-span*0.15;     // и правее последней свечи (пустое поле)
+  const minA=-span*0.35;             // можно уйти левее начала данных
+  const maxA=k.length-span*0.35;     // и правее последней свечи (пустое поле)
   a=Math.max(minA, Math.min(maxA, a));
   return {a, b:a+span};
 }
@@ -2376,9 +2397,15 @@ function commitDraw(type, ptsArr, txt){
   saveDraws(); haptic();
 }
 function ptAt(pos){
-  const li=idxAtX(pos.x); const k=curK(); if(!k||li==null) return null;
-  const gi=Math.min(k.length-1,(S.term.view?S.term.view.a:0)+li);
-  return {t:k[gi].t, p:priceAtY(pos.y)};
+  const k=curK(); const L=S.term.layout; if(!k||!L) return null;
+  // точная позиция во времени (может быть за пределами данных — справа)
+  const gf = L.va + (pos.x - L.plotL)/L.sw;      // дробный глобальный индекс
+  const step = (k.length>1) ? (k[1].t - k[0].t) : 3.6e6;
+  let t;
+  if(gf <= 0) t = k[0].t + gf*step;
+  else if(gf >= k.length-1) t = k[k.length-1].t + (gf-(k.length-1))*step;
+  else { const i0=Math.floor(gf), fr=gf-i0; t = k[i0].t + (k[i0+1].t-k[i0].t)*fr; }
+  return { t: Math.round(t), p: priceAtY(pos.y) };
 }
 
 let scaleDrag=null;
@@ -2406,7 +2433,7 @@ tc.addEventListener('pointerdown', e=>{
     const q=ptAt(pos); if(!q) return;
     if(td[2]==='free'){ brushing=[q]; loupePos=pos; drawTermChart(); drawLoupe(pos); return; }
     // режим прицела: точка ставится по отпусканию пальца
-    aiming={pos, q}; loupePos=pos;
+    aiming={pos, q}; loupePos=pos; S.aimPt=q;
     drawTermChart(); drawAim(pos); drawLoupe(pos);
     return;
   }
@@ -2430,7 +2457,7 @@ tc.addEventListener('pointermove', e=>{
   if(PTRS.has(e.pointerId)) PTRS.set(e.pointerId,pos);
   // кисть
   if(aiming){
-    const q=ptAt(pos); if(q){ aiming.pos=pos; aiming.q=q; loupePos=pos;
+    const q=ptAt(pos); if(q){ aiming.pos=pos; aiming.q=q; S.aimPt=q; loupePos=pos;
       drawTermChart(); drawAim(pos); drawLoupe(pos); }
     return;
   }
@@ -2475,7 +2502,7 @@ function endPtr(e){ PTRS.delete(e.pointerId);
   if(aiming){
     const T=S.term.tool, td=toolDef(T);
     S.term.pend=S.term.pend||[]; S.term.pend.push(aiming.q);
-    aiming=null; loupePos=null;
+    aiming=null; loupePos=null; S.aimPt=null;
     if(td && S.term.pend.length>=td[2]){
       let txt='';
       if(TXT_TOOLS[T]){ txt=prompt(TXT_PROMPT[T]||'Текст:')||''; if(!txt && T!=='emoji'){ S.term.pend=null; drawTermChart(); return; } }
@@ -2783,16 +2810,29 @@ const COACH_KB=[
 ];
 
 /* ============ ИИ-РАЗМЕТКА (Premium/VIP) ============ */
-function swingPoints(k, dep){
-  dep=dep||4; const sw=[];
+function swingPoints(k, dep, minPct){
+  dep=dep||4; minPct=(minPct==null?0.35:minPct);
+  const raw=[];
   for(let i=dep;i<k.length-dep;i++){
     let isH=true, isL=true;
     for(let j=i-dep;j<=i+dep;j++){ if(j===i) continue;
-      if(k[j].h>=k[i].h) isH=false; if(k[j].l<=k[i].l) isL=false; }
-    if(isH) sw.push({i, p:k[i].h, t:k[i].t, type:'H'});
-    if(isL) sw.push({i, p:k[i].l, t:k[i].t, type:'L'});
+      if(k[j].h>k[i].h) isH=false;
+      if(k[j].l<k[i].l) isL=false; }
+    if(isH){ let mn=1e18; for(let j=i-dep;j<=i+dep;j++) if(j!==i) mn=Math.min(mn,k[j].l);
+      if((k[i].h-mn)/k[i].h*100>=minPct) raw.push({i,p:k[i].h,t:k[i].t,type:'H'}); }
+    if(isL){ let mx=-1e18; for(let j=i-dep;j<=i+dep;j++) if(j!==i) mx=Math.max(mx,k[j].h);
+      if((mx-k[i].l)/k[i].l*100>=minPct) raw.push({i,p:k[i].l,t:k[i].t,type:'L'}); }
   }
-  return sw;
+  raw.sort((a,b)=>a.i-b.i);
+  // схлопываем подряд идущие одного типа — оставляем самый экстремальный
+  const out=[];
+  raw.forEach(s=>{
+    const last=out[out.length-1];
+    if(last && last.type===s.type){
+      if((s.type==='H'&&s.p>last.p)||(s.type==='L'&&s.p<last.p)) out[out.length-1]=s;
+    } else out.push(s);
+  });
+  return out;
 }
 function ctxSnapshot(k){
   const cl=k.map(o=>o.c), n=k.length;
@@ -3525,7 +3565,7 @@ function openSettings(){
       '<button class="btn btn-gold btn-block mt4" id="rsYes" style="background:var(--red);color:#fff;">Да, сбросить</button>'+
       '<button class="btn btn-ghost btn-block mt2" id="rsNo">Отмена</button></div>';
     $('rsYes').addEventListener('click',()=>{
-      S.acc={ active:true, tier:10000, stage:1, balance:10000, startDay:10000, profitDays:0, dayPnlPeak:0, status:'RUN' };
+      S.acc={ active:true, tier:10000, stage:1, balance:10000, startDay:10000, profitDays:0, dayPnlPeak:0, status:'RUN', dayKey:dayKey() };
       S.positions=[]; S.history=[]; S.equityHist=[]; S.payoutReq=[];
       persistState(); closeSheet(); haptic('ok'); toast('Демо-счёт сброшен','♻️'); go('home');
     });
@@ -4952,9 +4992,10 @@ async function tick(){
 async function init(){
   loadDraws(); loadMeta(); loadUser(); loadState(); acadLoad(); loadAlerts();
   if(S.acc && S.acc.status==='PASS' && !S.acc.fundedAt){ S.acc.fundedAt=Date.now(); }
+  if(S.acc && !S.acc.dayKey){ S.acc.dayKey=dayKey(); S.acc.startDay=S.acc.balance||S.acc.tier; }
   // миграция: демо теперь только $10k
   if(S.acc && S.acc.tier && S.acc.tier!==10000 && !S.acc.paid){
-    S.acc={ active:true, tier:10000, stage:1, balance:10000, startDay:10000, profitDays:0, dayPnlPeak:0, status:'RUN' };
+    S.acc={ active:true, tier:10000, stage:1, balance:10000, startDay:10000, profitDays:0, dayPnlPeak:0, status:'RUN', dayKey:dayKey() };
     S.positions=[]; S.equityHist=[]; persistState();
   }
   loadMarkets().then(ok=>{ if(ok && S.screen==='market') renderMarket(); }).catch(()=>{});
