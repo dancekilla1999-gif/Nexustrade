@@ -507,6 +507,50 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
 .rail-b:active{transform:scale(.9);}
 .tpos{transition:transform .16s var(--spring);}
 .viz{border-radius:10px;}
+
+.term-chart-wrap{position:relative;}
+.go-live{position:absolute;right:64px;bottom:10px;z-index:5;width:34px;height:34px;border-radius:50%;
+  background:rgba(11,18,32,.9);border:1px solid rgba(34,228,255,.45);color:var(--gold);
+  font-family:var(--mono);font-size:13px;font-weight:800;backdrop-filter:blur(8px);
+  box-shadow:0 4px 16px rgba(0,0,0,.5), 0 0 14px rgba(34,228,255,.25);animation:glPop .25s var(--spring);}
+@keyframes glPop{from{transform:scale(.6);opacity:0;}to{transform:none;opacity:1;}}
+
+.tw-cats{display:flex;gap:7px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;}
+.tw-cats::-webkit-scrollbar{display:none;}
+.tw-cat{flex-shrink:0;padding:8px 14px;border-radius:11px;background:var(--card2);border:1px solid var(--line);
+  font-size:13px;font-weight:600;color:var(--txt2);white-space:nowrap;}
+.tw-cat.active{background:var(--gold-dim);color:var(--gold);border-color:rgba(34,228,255,.45);}
+.tw-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-height:50vh;overflow-y:auto;}
+.tw-tool{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:14px 6px;
+  border-radius:13px;background:var(--card2);border:1px solid var(--line);transition:all .16s var(--spring);}
+.tw-tool:active{transform:scale(.95);}
+.tw-tool.active{background:var(--gold-dim);border-color:var(--gold);}
+.tw-ic{font-size:19px;line-height:1;color:var(--txt);}
+.tw-tool.active .tw-ic{color:var(--gold);}
+.tw-nm{font-size:10.5px;line-height:1.25;color:var(--txt2);text-align:center;}
+.tw-tool.active .tw-nm{color:var(--gold);}
+
+.coach{position:fixed;top:calc(10px + env(safe-area-inset-top));left:12px;right:12px;z-index:95;
+  display:flex;gap:11px;align-items:flex-start;padding:13px 14px;border-radius:16px;
+  background:rgba(11,18,32,.96);backdrop-filter:blur(20px);border:1px solid var(--line2);
+  box-shadow:0 16px 44px -14px rgba(0,0,0,.9), 0 0 26px -12px rgba(34,228,255,.5);
+  transform:translateY(-160%);opacity:0;transition:transform .42s var(--spring), opacity .3s;}
+.coach.show{transform:translateY(0);opacity:1;}
+.coach.warn{border-color:rgba(255,59,87,.5);box-shadow:0 16px 44px -14px rgba(0,0,0,.9), 0 0 26px -12px rgba(255,59,87,.55);}
+.coach.good{border-color:rgba(43,255,158,.5);box-shadow:0 16px 44px -14px rgba(0,0,0,.9), 0 0 26px -12px rgba(43,255,158,.5);}
+.c-ic{font-size:19px;line-height:1.2;flex-shrink:0;}
+.c-body{flex:1;min-width:0;}
+.c-t{font-family:var(--display);font-size:14px;font-weight:700;color:var(--txt);}
+.c-m{font-size:12.5px;line-height:1.55;color:var(--txt2);margin-top:3px;}
+.c-x{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--card2);
+  color:var(--txt3);font-size:11px;display:flex;align-items:center;justify-content:center;}
+
+.pat-card{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:12px;margin-bottom:8px;
+  transition:transform .16s var(--spring), border-color .2s;}
+.pat-card:active{transform:scale(.98);border-color:rgba(34,228,255,.4);}
+.chk{font-size:12.5px;line-height:1.5;padding:6px 10px;border-radius:9px;margin-bottom:5px;}
+.chk.ok{background:rgba(43,255,158,.08);color:#9FE3C0;}
+.chk.no{background:rgba(255,59,87,.07);color:#E39FAC;}
 </style>
 </head>
 <body>
@@ -658,6 +702,7 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
       <div class="term-chart-wrap" id="termChartWrap">
         <canvas id="termChart"></canvas>
         <div class="term-tt" id="termTT"></div>
+        <button class="go-live" id="goLive" style="display:none;">→|</button>
       </div>
     </div>
   </div>
@@ -1083,6 +1128,7 @@ function openPosition(side){
   const tpi=$('tpPrice'), sli=$('slPrice'); if(tpi) tpi.value=''; if(sli) sli.value=''; tpslInfo();
   persistState();
   haptic('ok'); toast(`${side} ${sym.replace('USDT','')} x${lev} открыт по ${fmt(entry, decOf(sym))}`, side==='LONG'?'🟢':'🔴');
+  setTimeout(()=>{ if(S.coachOn!==false) coachTip(true); }, 700);
   renderAll();
 }
 function closePosition(id, reason){
@@ -1385,6 +1431,7 @@ function renderTerminal(){
   $('termLive').className='badge '+(S.live?'b-green':'b-mut');
   $('termChartWrap').style.height=chartWrapH()+'px';
   const tfc=$('tfCur'); if(tfc) tfc.textContent=TF_LABEL[S.term.interval]||S.term.interval;
+  updateHint();
   const p=S.prices[sym]||{price:BASE[sym],change:0};
   $('termPrice').textContent=fmt(p.price, decOf(sym));
   const up=p.change>=0;
@@ -1616,8 +1663,10 @@ function drawTermChart(){
   const cv=$('termChart'), wrap=$('termChartWrap');
   const k=S.klines[S.term.symbol+'_'+S.term.interval]; if(!cv||!k||!k.length) return;
   let V=S.term.view;
-  if(!V || V.b>k.length || V.a<0 || V.b-V.a<10){ V=S.term.view={a:Math.max(0,k.length-90), b:k.length}; }
-  const vis=k.slice(V.a,V.b);
+  if(!V || (V.b-V.a)<10){ V=S.term.view={a:Math.max(0,k.length-90), b:k.length+12}; }
+  const span=V.b-V.a;
+  const a0=Math.max(0,Math.floor(V.a)), b0=Math.min(k.length,Math.ceil(V.b));
+  const vis=k.slice(a0,b0);
   const dpr=window.devicePixelRatio||1, rect=wrap.getBoundingClientRect();
   const W=Math.max(200,rect.width), H=Math.max(180,rect.height);
   cv.width=W*dpr; cv.height=H*dpr; cv.style.width=W+'px'; cv.style.height=H+'px';
@@ -1625,23 +1674,24 @@ function drawTermChart(){
   const oscItems=oscList(); const OH=oscH(), oscGap=10;
   const mR=58, mB=16, mT=4;
   const priceTop=mT, priceBottom=H-mB-oscItems.length*(OH+oscGap);
-  const n=vis.length;
+  const n=span;              // ширина окна в барах (может выходить за данные)
+  const vn=vis.length;       // сколько реальных баров видно
   const closesAll=k.map(o=>o.c);
   // активные оверлеи
   const ovSpecs=(S.indA||[]).map(it=>{const d=indByName(it.n); return d&&d[1]==='ov'?{n:indTitle(it),s:d[2](k,closesAll,it.p)}:null;}).filter(Boolean);
   let hi=-Infinity, lo=Infinity;
   vis.forEach(o=>{ if(o.h>hi)hi=o.h; if(o.l<lo)lo=o.l; });
-  const scan=arr=>{ for(let g=V.a;g<V.b;g++){ const v=arr[g]; if(v!=null&&isFinite(v)){ if(v>hi)hi=v; if(v<lo)lo=v; } } };
+  const scan=arr=>{ for(let g=a0;g<b0;g++){ const v=arr[g]; if(v!=null&&isFinite(v)){ if(v>hi)hi=v; if(v<lo)lo=v; } } };
   ovSpecs.forEach(o=>{ (o.s.lines||[]).forEach(L=>scan(L[0])); (o.s.fills||[]).forEach(F=>{scan(F[0]);scan(F[1]);}); (o.s.dots||[]).forEach(D=>scan(D[0])); });
   const pad=(hi-lo)*0.06||1; hi+=pad; lo-=pad;
   const psc=S.term.pScale||1;
   if(psc!==1){ const mid=(hi+lo)/2, half=(hi-lo)/2/psc; hi=mid+half; lo=mid-half; }
   const plotL=4, plotR=W-mR, pw=Math.max(10,plotR-plotL), sw=pw/n, cw=Math.max(1.1,sw*0.6);
-  const X=i=>plotL+i*sw+sw/2, Y=p=>priceBottom-(p-lo)/(hi-lo)*(priceBottom-priceTop);
+  const X=gi=>plotL+(gi-V.a)*sw+sw/2, Y=p=>priceBottom-(p-lo)/(hi-lo)*(priceBottom-priceTop);
   const idxOfTimeG=t=>{ let a=0,b=k.length-1; while(a<b){ const m=(a+b)>>1; if(k[m].t<t) a=m+1; else b=m; } return a; };
-  const xOfTime=t=>plotL+(idxOfTimeG(t)-V.a)*sw+sw/2;
+  const xOfTime=t=>X(idxOfTimeG(t));
   const P=pt=>[xOfTime(pt.t), Y(pt.p)];
-  S.term.layout={plotL,plotR,priceTop,priceBottom,hi,lo,sw,n,W,H,mR,scaleX:plotR};
+  S.term.layout={plotL,plotR,priceTop,priceBottom,hi,lo,sw,n,a0,b0,va:V.a,vb:V.b,W,H,mR,scaleX:plotR};
   // сетка
   x.strokeStyle='rgba(34,228,255,0.06)'; x.fillStyle='rgba(234,247,255,0.35)';
   x.font='10px JetBrains Mono'; x.textBaseline='middle';
@@ -1663,18 +1713,18 @@ function drawTermChart(){
   if(ctype==='line'){
     const grad=x.createLinearGradient(0,priceTop,0,priceBottom);
     grad.addColorStop(0,'rgba(34,228,255,0.20)'); grad.addColorStop(1,'rgba(34,228,255,0.01)');
-    x.beginPath(); x.moveTo(X(0),Y(vis[0].c));
-    for(let i=1;i<n;i++) x.lineTo(X(i),Y(vis[i].c));
+    if(vn){ x.beginPath(); x.moveTo(X(a0),Y(vis[0].c));
+    for(let i=1;i<vn;i++) x.lineTo(X(a0+i),Y(vis[i].c));
     x.strokeStyle='#22E4FF'; x.lineWidth=1.8; x.lineJoin='round'; x.stroke();
-    x.lineTo(X(n-1),priceBottom); x.lineTo(X(0),priceBottom); x.closePath(); x.fillStyle=grad; x.fill();
+    x.lineTo(X(a0+vn-1),priceBottom); x.lineTo(X(a0),priceBottom); x.closePath(); x.fillStyle=grad; x.fill(); }
   } else if(ctype==='bar'){
-    for(let i=0;i<n;i++){ const o=vis[i], px=X(i), u=o.c>=o.o;
+    for(let i=0;i<vn;i++){ const o=vis[i], px=X(a0+i), u=o.c>=o.o;
       x.strokeStyle=u?'#2BFF9E':'#FF3B57'; x.lineWidth=Math.max(1.1,cw*0.22);
       x.beginPath(); x.moveTo(px,Y(o.h)); x.lineTo(px,Y(o.l));
       x.moveTo(px-cw/2,Y(o.o)); x.lineTo(px,Y(o.o));
       x.moveTo(px,Y(o.c)); x.lineTo(px+cw/2,Y(o.c)); x.stroke(); }
   } else {
-    for(let i=0;i<n;i++){ const o=vis[i], px=X(i), u=o.c>=o.o;
+    for(let i=0;i<vn;i++){ const o=vis[i], px=X(a0+i), u=o.c>=o.o;
       x.strokeStyle=u?'#2BFF9E':'#FF3B57'; x.lineWidth=Math.max(1,cw*0.16);
       x.beginPath(); x.moveTo(px,Y(o.h)); x.lineTo(px,Y(o.l)); x.stroke();
       x.fillStyle=u?'#2BFF9E':'#FF3B57';
@@ -1682,17 +1732,17 @@ function drawTermChart(){
   }
   // оверлеи
   function iline(arr,color,w,dash){ x.beginPath(); let st=false;
-    for(let i=0;i<n;i++){ const v=arr[V.a+i]; if(v==null||!isFinite(v)) continue;
-      const px=X(i), py=Y(v); if(!st){ x.moveTo(px,py); st=true; } else x.lineTo(px,py); }
+    for(let g=a0;g<b0;g++){ const v=arr[g]; if(v==null||!isFinite(v)) continue;
+      const px=X(g), py=Y(v); if(!st){ x.moveTo(px,py); st=true; } else x.lineTo(px,py); }
     x.strokeStyle=color; x.lineWidth=w||1.3; x.setLineDash(dash||[]); x.stroke(); x.setLineDash([]); }
   ovSpecs.forEach(o=>{
     (o.s.fills||[]).forEach(F=>{ x.beginPath(); let st=false;
-      for(let i=0;i<n;i++){ const v=F[0][V.a+i]; if(v==null){continue;} const px=X(i),py=Y(v); if(!st){x.moveTo(px,py);st=true;} else x.lineTo(px,py); }
-      for(let i=n-1;i>=0;i--){ const v=F[1][V.a+i]; if(v==null) continue; x.lineTo(X(i),Y(v)); }
+      for(let g=a0;g<b0;g++){ const v=F[0][g]; if(v==null){continue;} const px=X(g),py=Y(v); if(!st){x.moveTo(px,py);st=true;} else x.lineTo(px,py); }
+      for(let g=b0-1;g>=a0;g--){ const v=F[1][g]; if(v==null) continue; x.lineTo(X(g),Y(v)); }
       x.closePath(); x.fillStyle=F[2]; x.fill(); });
     (o.s.lines||[]).forEach(L=>iline(L[0],L[1],L[2],L[3]));
     (o.s.dots||[]).forEach(D=>{ x.fillStyle=D[1];
-      for(let i=0;i<n;i++){ const v=D[0][V.a+i]; if(v==null||!isFinite(v)) continue; x.beginPath(); x.arc(X(i),Y(v),1.6,0,Math.PI*2); x.fill(); } });
+      for(let g=a0;g<b0;g++){ const v=D[0][g]; if(v==null||!isFinite(v)) continue; x.beginPath(); x.arc(X(g),Y(v),1.6,0,Math.PI*2); x.fill(); } });
     (o.s.hl||[]).forEach(HL=>{ const y=Y(HL[0]); if(y<priceTop||y>priceBottom) return;
       x.setLineDash([4,4]); x.strokeStyle=HL[1]; x.lineWidth=1;
       x.beginPath(); x.moveTo(plotL,y); x.lineTo(plotR,y); x.stroke(); x.setLineDash([]);
@@ -1812,13 +1862,123 @@ function drawTermChart(){
       x.fillText('⚑', tx+1, tyy-16); }
     else if(ty==='mup'||ty==='mdown'){ const [tx,tyy]=pp[0];
       x.font='13px Manrope'; x.fillStyle=ty==='mup'?'#2BFF9E':'#FF3B57'; x.fillText(ty==='mup'?'▲':'▼', tx-5, tyy); x.font='9.5px JetBrains Mono'; }
-    else if(ty==='emoji'){ const [tx,tyy]=pp[0]; x.font='15px Manrope'; x.fillText(d.txt||'🔥', tx-7, tyy); x.font='9.5px JetBrains Mono'; }
+    else if(ty==='emoji'||ty==='sign'||ty==='idea'||ty==='pin'||ty==='comment'||ty==='note'||ty==='pmark'){
+      const [tx,tyy]=pp[0]; const ic={emoji:d.txt||'🔥',sign:'★',idea:'💡',pin:'📍',comment:'🗨',note:'📝',pmark:'⚑'}[ty];
+      x.font='15px Manrope'; x.fillText(ic, tx-7, tyy);
+      if(d.txt && ty!=='emoji'){ x.font='10px Manrope'; x.fillText(d.txt, tx+10, tyy); }
+      x.font='9.5px JetBrains Mono'; }
+    else if(ty==='aup'||ty==='adown'){ const [tx,tyy]=pp[0];
+      x.font='17px Manrope'; x.fillStyle=ty==='aup'?'#2BFF9E':'#FF3B57';
+      x.fillText(ty==='aup'?'⬆':'⬇', tx-7, tyy); x.font='9.5px JetBrains Mono'; }
+    else if(ty==='angle'){ if(pp[1]){ seg(pp[0],pp[1]);
+      x.setLineDash([3,3]); x.beginPath(); x.moveTo(pp[0][0],pp[0][1]); x.lineTo(pp[1][0],pp[0][1]); x.stroke(); x.setLineDash([]);
+      const ang=Math.atan2(pp[0][1]-pp[1][1], pp[1][0]-pp[0][0])*180/Math.PI;
+      x.beginPath(); x.arc(pp[0][0],pp[0][1],26,ang>0?-ang*Math.PI/180:0, ang>0?0:-ang*Math.PI/180); x.stroke();
+      x.fillText(ang.toFixed(1)+'°', pp[0][0]+30, pp[0][1]-8); } }
+    else if(ty==='info'){ if(pp[1]){ const q=pts(d); seg(pp[0],pp[1]);
+      const dp=((q[1].p-q[0].p)/q[0].p*100).toFixed(2), bars=Math.abs(idxOfTimeG(q[1].t)-idxOfTimeG(q[0].t));
+      const bx=(pp[0][0]+pp[1][0])/2, by=(pp[0][1]+pp[1][1])/2;
+      x.fillText(dp+'% · '+bars+' бар', bx+6, by-8); } }
+    else if(ty==='regr'){ if(pp[1]){ const q=pts(d);
+      const i1=idxOfTimeG(q[0].t), i2=idxOfTimeG(q[1].t); const lo2=Math.min(i1,i2), hi2=Math.max(i1,i2);
+      let n2=0,sx=0,sy=0,sxy=0,sxx=0, dev=0;
+      for(let i=lo2;i<=hi2 && i<k.length;i++){ const yv2=k[i].c; sx+=i; sy+=yv2; sxy+=i*yv2; sxx+=i*i; n2++; }
+      if(n2>2){ const sl=(n2*sxy-sx*sy)/(n2*sxx-sx*sx), ic=(sy-sl*sx)/n2;
+        for(let i=lo2;i<=hi2 && i<k.length;i++){ const e=k[i].c-(sl*i+ic); dev+=e*e; }
+        const sd=Math.sqrt(dev/n2);
+        const yA=sl*lo2+ic, yB=sl*hi2+ic;
+        [[0,CYA],[2,'rgba(34,228,255,.5)'],[-2,'rgba(34,228,255,.5)']].forEach(o=>{
+          x.strokeStyle=o[1]; x.beginPath();
+          x.moveTo(X(lo2),Y(yA+o[0]*sd)); x.lineTo(X(hi2),Y(yB+o[0]*sd)); x.stroke(); });
+        x.strokeStyle=ghost?CYD:CYA; } } }
+    else if(ty==='flat'||ty==='divch'){ if(pp.length>=3){
+      seg(pp[0],pp[1]); const dy2=pp[2][1]-pp[1][1];
+      if(ty==='flat'){ x.beginPath(); x.moveTo(pp[0][0],pp[0][1]+dy2); x.lineTo(pp[1][0],pp[1][1]+dy2); x.stroke(); }
+      else { seg(pp[0],[pp[1][0],pp[1][1]+dy2]); }
+      x.globalAlpha=.07; x.beginPath(); x.moveTo(pp[0][0],pp[0][1]); x.lineTo(pp[1][0],pp[1][1]);
+      x.lineTo(pp[1][0],pp[1][1]+dy2); x.lineTo(pp[0][0],pp[0][1]+(ty==='flat'?dy2:0)); x.closePath(); x.fill(); x.globalAlpha=1; }
+      else if(pp[1]) seg(pp[0],pp[1]); }
+    else if(ty==='pitchin'){ if(pp.length>=3){ const m=[(pp[1][0]+pp[2][0])/2,(pp[1][1]+pp[2][1])/2];
+      const dx2=m[0]-pp[0][0], dy2=m[1]-pp[0][1];
+      seg(pp[0],[pp[0][0]+dx2*3,pp[0][1]+dy2*3]);
+      [[0.25],[0.5],[0.75]].forEach(f=>{
+        const sx2=pp[1][0]+(pp[2][0]-pp[1][0])*f[0], sy2=pp[1][1]+(pp[2][1]-pp[1][1])*f[0];
+        seg([sx2,sy2],[sx2+dx2*3,sy2+dy2*3]); }); }
+      else if(pp[1]) seg(pp[0],pp[1]); }
+    else if(ty==='fibchan'){ if(pp.length>=3){ const dy2=pp[2][1]-pp[0][1];
+      [0,0.236,0.382,0.5,0.618,0.786,1].forEach(lv=>{
+        x.strokeStyle=lv===0.618?'#B98CFF':(ghost?CYD:CYA);
+        x.setLineDash([4,3]); x.beginPath();
+        x.moveTo(pp[0][0],pp[0][1]+dy2*lv); x.lineTo(pp[1][0],pp[1][1]+dy2*lv); x.stroke(); x.setLineDash([]);
+        x.fillText((lv*100).toFixed(1)+'%', pp[1][0]-34, pp[1][1]+dy2*lv-4); });
+      x.strokeStyle=ghost?CYD:CYA; }
+      else if(pp[1]) seg(pp[0],pp[1]); }
+    else if(ty==='fibspiral'){ if(pp[1]){ const r0=Math.hypot(pp[1][0]-pp[0][0],pp[1][1]-pp[0][1])/8;
+      x.beginPath(); let ang2=0, rr=r0;
+      for(let i=0;i<180;i++){ ang2+=0.12; rr*=1.0135;
+        const px2=pp[0][0]+Math.cos(ang2)*rr, py2=pp[0][1]+Math.sin(ang2)*rr;
+        i?x.lineTo(px2,py2):x.moveTo(px2,py2); } x.stroke(); } }
+    else if(ty==='fibarc'){ if(pp[1]){ const r=Math.hypot(pp[1][0]-pp[0][0],pp[1][1]-pp[0][1]);
+      [0.382,0.5,0.618,1].forEach(lv=>{ x.beginPath(); x.arc(pp[1][0],pp[1][1],r*lv,Math.PI,Math.PI*2); x.stroke(); }); } }
+    else if(ty==='fibwedge'){ if(pp[1]){ const dx2=pp[1][0]-pp[0][0], dy2=pp[1][1]-pp[0][1];
+      [0.382,0.5,0.618,0.786,1].forEach(lv=>{ seg(pp[0],[pp[0][0]+dx2, pp[0][1]+dy2*lv]); }); } }
+    else if(ty==='gannsq'){ if(pp[1]){ const x1=Math.min(pp[0][0],pp[1][0]),x2b=Math.max(pp[0][0],pp[1][0]);
+      const y1=Math.min(pp[0][1],pp[1][1]),y2b=Math.max(pp[0][1],pp[1][1]);
+      x.strokeRect(x1,y1,x2b-x1,y2b-y1); x.setLineDash([2,3]);
+      for(let f=1;f<8;f++){ x.beginPath(); x.moveTo(x1,y1+(y2b-y1)*f/8); x.lineTo(x2b,y1+(y2b-y1)*f/8);
+        x.moveTo(x1+(x2b-x1)*f/8,y1); x.lineTo(x1+(x2b-x1)*f/8,y2b); x.stroke(); }
+      x.setLineDash([]); x.beginPath(); x.moveTo(x1,y2b); x.lineTo(x2b,y1); x.moveTo(x1,y1); x.lineTo(x2b,y2b); x.stroke(); } }
+    else if(ty==='xabcd'||ty==='cypher'||ty==='ew5'||ty==='ewabcde'||ty==='three'||ty==='hspat'){
+      const labels = ty==='ew5'?['1','2','3','4','5','']:(ty==='ewabcde'?['A','B','C','D','E','']:
+        (ty==='hspat'?['','Л','Г','П','']:['X','A','B','C','D','']));
+      pp.forEach((q,i)=>{ if(i) seg(pp[i-1],q);
+        x.beginPath(); x.arc(q[0],q[1],3.2,0,Math.PI*2); x.fill();
+        if(labels[i]) x.fillText(labels[i], q[0]+5, q[1]-6); });
+      if(pp.length>=3){ x.setLineDash([3,3]); x.beginPath(); x.moveTo(pp[0][0],pp[0][1]);
+        x.lineTo(pp[pp.length-1][0],pp[pp.length-1][1]); x.stroke(); x.setLineDash([]); } }
+    else if(ty==='abcd'||ty==='tripat'||ty==='ew3'||ty==='poly'||ty==='path'){
+      const labels = ty==='ew3'?['A','B','C','']:(ty==='abcd'?['A','B','C','D']:[]);
+      pp.forEach((q,i)=>{ if(i) seg(pp[i-1],q);
+        x.beginPath(); x.arc(q[0],q[1],3,0,Math.PI*2); x.fill();
+        if(labels[i]) x.fillText(labels[i], q[0]+5, q[1]-6); });
+      if(ty==='tripat'&&pp.length>=3){ seg(pp[pp.length-1],pp[0]); } }
+    else if(ty==='cycles'||ty==='sine'){ if(pp[1]){ const step=Math.abs(pp[1][0]-pp[0][0])||30;
+      if(ty==='cycles'){ for(let i=0;i<12;i++){ const vx=pp[0][0]+step*i; if(vx>plotR) break;
+        x.setLineDash([3,4]); x.beginPath(); x.moveTo(vx,priceTop); x.lineTo(vx,priceBottom); x.stroke(); x.setLineDash([]); } }
+      else { x.beginPath(); const amp=Math.abs(pp[1][1]-pp[0][1])||24;
+        for(let px2=pp[0][0]; px2<plotR; px2+=2){ const ph=(px2-pp[0][0])/step*Math.PI;
+          const py2=pp[0][1]+Math.sin(ph)*amp; px2===pp[0][0]?x.moveTo(px2,py2):x.lineTo(px2,py2); } x.stroke(); } } }
+    else if(ty==='forecast'||ty==='project'){ if(pp.length>=3){
+      x.globalAlpha=.1; x.beginPath(); x.moveTo(pp[0][0],pp[0][1]); x.lineTo(pp[1][0],pp[1][1]);
+      x.lineTo(pp[2][0],pp[2][1]); x.closePath(); x.fill(); x.globalAlpha=1;
+      seg(pp[0],pp[1]); x.setLineDash([4,3]); seg(pp[1],pp[2]); x.setLineDash([]);
+      arrowHead(pp[1][0],pp[1][1],pp[2][0],pp[2][1]); }
+      else if(pp[1]) seg(pp[0],pp[1]); }
+    else if(ty==='avwap'){ const gi=idxOfTimeG(pts(d)[0].t);
+      let pv=0,vv=0; x.beginPath(); let st2=false;
+      for(let i=gi;i<k.length;i++){ const tp=(k[i].h+k[i].l+k[i].c)/3, v=k[i].v||1;
+        pv+=tp*v; vv+=v; const val=vv?pv/vv:tp;
+        const px2=X(i), py2=Y(val); if(!st2){x.moveTo(px2,py2); st2=true;} else x.lineTo(px2,py2); }
+      x.strokeStyle='#EAC97A'; x.lineWidth=1.6; x.stroke(); x.strokeStyle=ghost?CYD:CYA;
+      x.fillText('AVWAP', X(gi)+4, Y(k[gi].c)-8); }
+    else if(ty==='rrect'){ if(pp.length>=3){ const ang2=Math.atan2(pp[1][1]-pp[0][1],pp[1][0]-pp[0][0]);
+      const w2=Math.hypot(pp[1][0]-pp[0][0],pp[1][1]-pp[0][1]);
+      const h2=(pp[2][1]-pp[0][1])*Math.cos(ang2)-(pp[2][0]-pp[0][0])*Math.sin(ang2);
+      x.save(); x.translate(pp[0][0],pp[0][1]); x.rotate(ang2);
+      x.globalAlpha=.1; x.fillRect(0,0,w2,h2); x.globalAlpha=1; x.strokeRect(0,0,w2,h2); x.restore(); }
+      else if(pp[1]) seg(pp[0],pp[1]); }
+    else if(ty==='arc'){ if(pp.length>=3){ x.beginPath(); x.moveTo(pp[0][0],pp[0][1]);
+      x.quadraticCurveTo(pp[2][0],pp[2][1],pp[1][0],pp[1][1]); x.stroke(); }
+      else if(pp[1]) seg(pp[0],pp[1]); }
+    else if(ty==='dcurve'){ if(pp.length>=4){ x.beginPath(); x.moveTo(pp[0][0],pp[0][1]);
+      x.bezierCurveTo(pp[1][0],pp[1][1],pp[2][0],pp[2][1],pp[3][0],pp[3][1]); x.stroke(); }
+      else if(pp[1]) seg(pp[0],pp[1]); }
   }
   function priceAtYv(py){ return lo + (priceBottom-py)/(priceBottom-priceTop)*(hi-lo); }
   (S.draws[drawsKey()]||[]).forEach(d=>renderDraw(d,false));
   // превью незавершённого построения
-  if(S.term.pend && S.term.pend.length && S.term.hover!=null && S.term.hover<n){
-    const hovPt={t:vis[S.term.hover].t, p:S.term.hoverP!=null?S.term.hoverP:vis[S.term.hover].c};
+  if(S.term.pend && S.term.pend.length && S.term.hover!=null && k[S.term.hover]){
+    const hovPt={t:k[S.term.hover].t, p:S.term.hoverP!=null?S.term.hoverP:k[S.term.hover].c};
     renderDraw({type:S.term.tool, pts:[...S.term.pend, hovPt], txt:''}, true);
     S.term.pend.forEach(q=>{ const [qx,qy]=P(q); x.fillStyle=CYA; x.beginPath(); x.arc(qx,qy,3.2,0,Math.PI*2); x.fill(); });
   }
@@ -1830,7 +1990,7 @@ function drawTermChart(){
     x.strokeStyle='rgba(34,228,255,0.10)'; x.strokeRect(plotL,top,plotR-plotL,OH);
     const spec=ind[2](k, closesAll, it.p);
     let mn=Infinity,mx=-Infinity;
-    const consider=arr=>{ for(let g=V.a;g<V.b;g++){ const v=arr[g]; if(v!=null&&isFinite(v)){ if(v<mn)mn=v; if(v>mx)mx=v; } } };
+    const consider=arr=>{ for(let g=a0;g<b0;g++){ const v=arr[g]; if(v!=null&&isFinite(v)){ if(v<mn)mn=v; if(v>mx)mx=v; } } };
     if(spec.range){ mn=spec.range[0]; mx=spec.range[1]; }
     else { (spec.lines||[]).forEach(L=>consider(L[0])); if(spec.hist) consider(spec.hist);
       if(!isFinite(mn)){mn=0;mx=1;} const pd=(mx-mn)*0.12||1; mn-=pd; mx+=pd; }
@@ -1846,20 +2006,24 @@ function drawTermChart(){
       x.beginPath(); x.moveTo(plotL,zy); x.lineTo(plotR,zy); x.stroke(); }
     if(spec.hist){ const zy=yv(Math.max(mn,Math.min(mx,0)));
       const bw=Math.max(1,(plotR-plotL)/n*0.6);
-      for(let i=0;i<n;i++){ const hv=spec.hist[V.a+i]; if(hv==null||!isFinite(hv)) continue;
+      for(let g=a0;g<b0;g++){ const hv=spec.hist[g]; if(hv==null||!isFinite(hv)) continue;
         const py=yv(hv); x.fillStyle=hv>=0?'rgba(43,255,158,.55)':'rgba(255,59,87,.55)';
-        x.fillRect(X(i)-bw/2, Math.min(py,zy), bw, Math.abs(py-zy)||1); } }
+        x.fillRect(X(g)-bw/2, Math.min(py,zy), bw, Math.abs(py-zy)||1); } }
     (spec.lines||[]).forEach(L=>{ x.beginPath(); let st=false;
-      for(let i=0;i<n;i++){ const v=L[0][V.a+i]; if(v==null||!isFinite(v)) continue;
-        const px=X(i), py=yv(v); if(!st){ x.moveTo(px,py); st=true; } else x.lineTo(px,py); }
+      for(let g=a0;g<b0;g++){ const v=L[0][g]; if(v==null||!isFinite(v)) continue;
+        const px=X(g), py=yv(v); if(!st){ x.moveTo(px,py); st=true; } else x.lineTo(px,py); }
       x.strokeStyle=L[1]; x.lineWidth=1.3; x.stroke(); });
     x.fillStyle='rgba(34,228,255,.85)'; x.fillText(spec.label||ind[0], plotL+4, top+8);
     x.fillStyle='rgba(234,247,255,0.35)'; x.font='10px JetBrains Mono';
   });
+  // кнопка возврата к актуальной цене
+  const gl=$('goLive');
+  if(gl){ const off = (V.b < k.length-2) || (V.a > k.length-8);
+    gl.style.display = off ? 'block' : 'none'; }
   // crosshair + tooltip
   const tt=$('termTT'); const hov=S.term.hover;
-  if(hov!==null && hov>=0 && hov<n){
-    const o=vis[hov], px=X(hov);
+  if(hov!==null && hov>=a0 && hov<b0){
+    const o=k[hov], px=X(hov);
     x.setLineDash([3,3]); x.strokeStyle='rgba(234,247,255,.25)'; x.lineWidth=1;
     x.beginPath(); x.moveTo(px,priceTop); x.lineTo(px,H-mB); x.stroke(); x.setLineDash([]);
     const d=new Date(o.t);
@@ -2031,6 +2195,13 @@ function openTfSheet(){
   }));
 }
 tpslInit();
+const glb=$('goLive');
+if(glb) glb.addEventListener('click',()=>{
+  const k=curK(); if(!k) return;
+  const span=Math.max(15, S.term.view? (S.term.view.b-S.term.view.a) : 90);
+  S.term.view={a:k.length-span+12, b:k.length+12};
+  S.term.pScale=1; haptic(); drawTermChart();
+});
 const sb=$('setBtn'); if(sb) sb.addEventListener('click', openSettings);
 $('levSlider').addEventListener('input', updateNotional);
 $('termMargin').addEventListener('input', updateNotional);
@@ -2052,48 +2223,150 @@ function chartPos(e){
   return { x:e.clientX-rect.left, y:e.clientY-rect.top };
 }
 function idxAtX(px){ const L=S.term.layout; if(!L) return null;
-  let i=Math.floor((px-L.plotL)/L.sw); return Math.max(0,Math.min(L.n-1,i)); }
+  const k=curK(); if(!k) return null;
+  const gi=Math.floor(L.va+(px-L.plotL)/L.sw);
+  return Math.max(0, Math.min(k.length-1, gi)); }
 function priceAtY(py){ const L=S.term.layout; if(!L) return null;
   return L.lo + (L.priceBottom-py)/(L.priceBottom-L.priceTop)*(L.hi-L.lo); }
 function curK(){ return S.klines[S.term.symbol+'_'+S.term.interval]; }
-function zoomView(factor, anchorLocal){
+function clampView(V){
+  const k=curK(); if(!k) return V;
+  const span=Math.max(15, Math.min(k.length*3, V.b-V.a));
+  let a=V.a;
+  const minA=-span*0.5;              // можно уйти левее начала данных
+  const maxA=k.length-span*0.15;     // и правее последней свечи (пустое поле)
+  a=Math.max(minA, Math.min(maxA, a));
+  return {a, b:a+span};
+}
+function zoomView(factor, anchorG){
   const k=curK(); const V=S.term.view; if(!k||!V) return;
-  const span=V.b-V.a; let ns=Math.round(span*factor);
-  ns=Math.max(15, Math.min(k.length, ns)); if(ns===span) return;
-  const anchorG=V.a+(anchorLocal!=null?anchorLocal:Math.floor(span/2));
-  const frac=Math.max(0,Math.min(1,(anchorG-V.a)/span));
-  let na=Math.round(anchorG-frac*ns);
-  na=Math.max(0, Math.min(k.length-ns, na));
-  S.term.view={a:na, b:na+ns}; drawTermChart();
+  const span=V.b-V.a; let ns=span*factor;
+  ns=Math.max(15, Math.min(k.length*3, ns));
+  if(Math.abs(ns-span)<0.5) return;
+  const ag=(anchorG!=null?anchorG:(V.a+span/2));
+  const frac=Math.max(0,Math.min(1,(ag-V.a)/span));
+  S.term.view=clampView({a: ag-frac*ns, b: ag-frac*ns+ns});
+  drawTermChart();
 }
 
 /* ========= РЕЕСТР ИНСТРУМЕНТОВ (42) ========= */
 const TOOLS=[
- // Линии
- ['cursor','Курсор',0,'Линии'],['cross','Крест',1,'Линии'],['trend','Трендовая',2,'Линии'],['ray','Луч',2,'Линии'],
- ['ext','Продлённая',2,'Линии'],['arrow','Стрелка',2,'Линии'],['hline','Горизонталь',1,'Линии'],['hray','Гор. луч',1,'Линии'],['vline','Вертикаль',1,'Линии'],
- // Каналы
- ['channel','Параллельный канал',3,'Каналы'],['pitch','Вилы Эндрюса',3,'Каналы'],['schiff','Вилы Шиффа',3,'Каналы'],['curve','Кривая',3,'Каналы'],
- // Фибоначчи
- ['fibret','Фибо коррекция',2,'Фибо'],['fibext','Фибо расширение',3,'Фибо'],['fibfan','Фибо веер',2,'Фибо'],['fibtz','Фибо тайм-зоны',2,'Фибо'],['fibcirc','Фибо окружности',2,'Фибо'],
- // Ганн
- ['gannfan','Веер Ганна',2,'Ганн'],['gannbox','Бокс Ганна',2,'Ганн'],
- // Фигуры
- ['rect','Прямоугольник',2,'Фигуры'],['ellipse','Эллипс',2,'Фигуры'],['circle','Окружность',2,'Фигуры'],['tri','Треугольник',3,'Фигуры'],
- // Аннотации
- ['text','Текст',1,'Аннотации'],['callout','Выноска',1,'Аннотации'],['plabel','Ценник',1,'Аннотации'],['flag','Флаг',1,'Аннотации'],
- ['mup','Маркер вверх',1,'Аннотации'],['mdown','Маркер вниз',1,'Аннотации'],['emoji','Эмодзи',1,'Аннотации'],
- // Позиции и измерения
- ['long','Long позиция',2,'Позиции'],['short','Short позиция',2,'Позиции'],
- ['ruler','Линейка',2,'Измерения'],['prange','Диапазон цены',2,'Измерения'],['drange','Диапазон дат',2,'Измерения'],['dprange','Дата+цена',2,'Измерения'],
- // Кисти
- ['brush','Кисть','free','Кисти'],['hlb','Маркер-хайлайт','free','Кисти'],
+ // ЛИНИИ ТРЕНДА
+ ['cursor','Курсор',0,'Линии','↖'],
+ ['trend','Линия тренда',2,'Линии','╱'],
+ ['ray','Луч',2,'Линии','➚'],
+ ['ext','Удлинённая линия',2,'Линии','⟷'],
+ ['info','Линия данных',2,'Линии','ℹ'],
+ ['angle','Угол тренда',2,'Линии','∠'],
+ ['hline','Горизонтальная линия',1,'Линии','━'],
+ ['hray','Горизонтальный луч',1,'Линии','┅'],
+ ['vline','Вертикальная линия',1,'Линии','│'],
+ ['cross','Перекрещенные линии',1,'Линии','✛'],
+ ['channel','Параллельный канал',3,'Линии','▤'],
+ ['regr','Регрессионный тренд',2,'Линии','▨'],
+ ['flat','Плоский верх/низ',3,'Линии','⊓'],
+ ['divch','Расходящийся канал',3,'Линии','◺'],
+ ['pitch','Вилы Эндрюса',3,'Линии','⋔'],
+ ['schiff','Вилы Шиффа',3,'Линии','⋔'],
+ ['pitchin','Вилы (внутрь)',3,'Линии','⋔'],
+ // ГАНН И ФИБОНАЧЧИ
+ ['fibret','Коррекция по Фибоначчи',2,'Фибо','☰'],
+ ['fibext','Расширение Фибоначчи',3,'Фибо','☴'],
+ ['fibchan','Каналы по Фибоначчи',3,'Фибо','▩'],
+ ['fibtz','Временные периоды Фибо',2,'Фибо','┃┃'],
+ ['fibfan','Веерные линии Фибо',2,'Фибо','⋰'],
+ ['fibcirc','Окружности Фибоначчи',2,'Фибо','◎'],
+ ['fibspiral','Спираль Фибоначчи',2,'Фибо','🌀'],
+ ['fibarc','Дуги сопротивления',2,'Фибо','◜'],
+ ['fibwedge','Клин по Фибоначчи',2,'Фибо','◿'],
+ ['gannfan','Веер Ганна',2,'Фибо','⋰'],
+ ['gannbox','Коробка Ганна',2,'Фибо','▦'],
+ ['gannsq','Квадрат Ганна',2,'Фибо','▩'],
+ // ПАТТЕРНЫ
+ ['xabcd','Шаблон XABCD',5,'Паттерны','Ж'],
+ ['abcd','Шаблон ABCD',4,'Паттерны','И'],
+ ['cypher','Паттерн Cypher',5,'Паттерны','Ц'],
+ ['hspat','Голова и плечи',5,'Паттерны','ᨏ'],
+ ['tripat','Шаблон «Треугольник»',4,'Паттерны','◅'],
+ ['three','Паттерн трёх движений',6,'Паттерны','ᨓ'],
+ ['ew5','Импульсная волна Эллиотта',6,'Паттерны','1-5'],
+ ['ew3','Коррекционная волна ABC',4,'Паттерны','A-C'],
+ ['ewabcde','ABCDE волна',6,'Паттерны','A-E'],
+ ['cycles','Временные циклы',2,'Паттерны','∿'],
+ ['sine','Синусоида',2,'Паттерны','∿'],
+ // ИЗМЕРЕНИЕ И ПРОГНОЗ
+ ['long','Длинная позиция',2,'Измерения','L'],
+ ['short','Короткая позиция',2,'Измерения','S'],
+ ['forecast','Прогноз',3,'Измерения','⤳'],
+ ['project','Проекция',3,'Измерения','◹'],
+ ['ruler','Линейка',2,'Измерения','📏'],
+ ['prange','Диапазон цен',2,'Измерения','↕'],
+ ['drange','Диапазон дат',2,'Измерения','↔'],
+ ['dprange','Диапазон цены и времени',2,'Измерения','⤢'],
+ ['avwap','Anchored VWAP',1,'Измерения','V'],
+ // ГЕОМЕТРИЯ
+ ['brush','Кисть','free','Фигуры','✎'],
+ ['hlb','Маркер','free','Фигуры','🖍'],
+ ['arrow','Стрелка',2,'Фигуры','↗'],
+ ['aup','Стрелка вверх',1,'Фигуры','⬆'],
+ ['adown','Стрелка вниз',1,'Фигуры','⬇'],
+ ['rect','Прямоугольник',2,'Фигуры','▭'],
+ ['rrect','Вращающийся прямоугольник',3,'Фигуры','◇'],
+ ['path','Траектория',4,'Фигуры','⤳'],
+ ['circle','Окружность',2,'Фигуры','○'],
+ ['ellipse','Эллипс',2,'Фигуры','⬭'],
+ ['poly','Ломаная линия',4,'Фигуры','⋀'],
+ ['tri','Треугольник',3,'Фигуры','△'],
+ ['arc','Дуга',3,'Фигуры','◜'],
+ ['curve','Кривая',3,'Фигуры','∿'],
+ ['dcurve','Двойная кривая',4,'Фигуры','∾'],
+ // КОММЕНТАРИИ
+ ['text','Текст',1,'Заметки','T'],
+ ['note','Заметка',1,'Заметки','📝'],
+ ['plabel','Ценовая заметка',1,'Заметки','$'],
+ ['pin','Метка',1,'Заметки','📍'],
+ ['callout','Сноска',1,'Заметки','💬'],
+ ['comment','Комментарий',1,'Заметки','🗨'],
+ ['pmark','Отметка на цене',1,'Заметки','⚑'],
+ ['sign','Знак',1,'Заметки','★'],
+ ['flag','Флаг',1,'Заметки','⚐'],
+ ['emoji','Эмодзи',1,'Заметки','😀'],
+ ['idea','Идея',1,'Заметки','💡'],
+ ['mup','Маркер вверх',1,'Заметки','▲'],
+ ['mdown','Маркер вниз',1,'Заметки','▼'],
 ];
+const TOOL_CATS=['Линии','Фибо','Паттерны','Измерения','Фигуры','Заметки'];
 function toolDef(id){ return TOOLS.find(t=>t[0]===id); }
-const TXT_TOOLS={text:1,callout:1,emoji:1};
 
 const PTRS=new Map();
-let panSt=null, pinchSt=null, brushing=null, loupePos=null;
+let panSt=null, pinchSt=null, brushing=null, loupePos=null, aiming=null;
+const TXT_TOOLS={text:1,callout:1,emoji:1,note:1,comment:1,sign:1,idea:1,pin:1,pmark:1};
+const TXT_PROMPT={emoji:'Эмодзи:',note:'Заметка:',comment:'Комментарий:',idea:'Идея:',callout:'Сноска:',pin:'Метка:',sign:'Подпись:',pmark:'Отметка:'};
+function drawAim(pos){
+  const cv=$('termChart'); if(!cv) return; const L=S.term.layout; if(!L) return;
+  const x=cv.getContext('2d');
+  x.save();
+  x.strokeStyle='rgba(34,228,255,.85)'; x.lineWidth=1; x.setLineDash([5,4]);
+  x.beginPath(); x.moveTo(L.plotL,pos.y); x.lineTo(L.plotR,pos.y);
+  x.moveTo(pos.x,L.priceTop); x.lineTo(pos.x,L.priceBottom); x.stroke(); x.setLineDash([]);
+  x.beginPath(); x.arc(pos.x,pos.y,7,0,Math.PI*2);
+  x.strokeStyle='rgba(34,228,255,1)'; x.lineWidth=2; x.shadowColor='rgba(34,228,255,.8)'; x.shadowBlur=10; x.stroke();
+  x.shadowBlur=0; x.fillStyle='rgba(34,228,255,1)';
+  x.beginPath(); x.arc(pos.x,pos.y,2.2,0,Math.PI*2); x.fill();
+  // ценник справа
+  const pr=priceAtY(pos.y); const lbl=fmt(pr, decOf(S.term.symbol));
+  x.font='10px JetBrains Mono'; const w=x.measureText(lbl).width+10;
+  x.fillStyle='rgba(34,228,255,.95)'; x.fillRect(L.plotR+2, pos.y-8, w, 16);
+  x.fillStyle='#04070C'; x.fillText(lbl, L.plotR+7, pos.y+3.5);
+  x.restore();
+}
+function updateHint(){
+  const el=$('toolCur'); if(!el) return;
+  const T=S.term.tool, td=toolDef(T);
+  if(!td || T==='cursor'){ el.textContent=''; return; }
+  const need=td[2]==='free'?0:td[2], have=(S.term.pend||[]).length;
+  el.textContent = need ? ('✎ '+td[1]+' · точка '+(have+1)+' из '+need) : ('✎ '+td[1]+' · рисуйте пальцем');
+}
 const tc=$('termChart');
 
 function commitDraw(type, ptsArr, txt){
@@ -2132,17 +2405,12 @@ tc.addEventListener('pointerdown', e=>{
     if(pos.y<L.priceTop||pos.y>L.priceBottom) return;
     const q=ptAt(pos); if(!q) return;
     if(td[2]==='free'){ brushing=[q]; loupePos=pos; drawTermChart(); drawLoupe(pos); return; }
-    S.term.pend=S.term.pend||[];
-    S.term.pend.push(q);
-    if(S.term.pend.length>=td[2]){
-      let txt='';
-      if(TXT_TOOLS[T]){ txt=prompt(T==='emoji'?'Эмодзи:':'Текст:')||''; if(!txt){ S.term.pend=null; drawTermChart(); return; } }
-      commitDraw(T, S.term.pend, txt);
-      S.term.pend=null;
-    } else { haptic(); }
-    loupePos=pos; drawTermChart(); drawLoupe(pos); return;
+    // режим прицела: точка ставится по отпусканию пальца
+    aiming={pos, q}; loupePos=pos;
+    drawTermChart(); drawAim(pos); drawLoupe(pos);
+    return;
   }
-  if(PTRS.size===1){ panSt={x:pos.x, a:S.term.view.a, b:S.term.view.b}; pinchSt=null; }
+  if(PTRS.size===1){ panSt={x:pos.x, y:pos.y, a:S.term.view.a, b:S.term.view.b, ps:S.term.pScale||1}; pinchSt=null; }
   else if(PTRS.size===2){
     const pts=[...PTRS.values()];
     pinchSt={d:Math.max(8,Math.abs(pts[0].x-pts[1].x)), a:S.term.view.a, b:S.term.view.b, mid:(pts[0].x+pts[1].x)/2};
@@ -2161,6 +2429,11 @@ tc.addEventListener('pointermove', e=>{
   }
   if(PTRS.has(e.pointerId)) PTRS.set(e.pointerId,pos);
   // кисть
+  if(aiming){
+    const q=ptAt(pos); if(q){ aiming.pos=pos; aiming.q=q; loupePos=pos;
+      drawTermChart(); drawAim(pos); drawLoupe(pos); }
+    return;
+  }
   if(brushing){ const q=ptAt(pos); if(q){ brushing.push(q);
     const kk=drawsKey(); S.draws[kk]=S.draws[kk]||[];
     S.draws[kk].push({type:S.term.tool, pts:brushing, _tmp:1});
@@ -2173,23 +2446,23 @@ tc.addEventListener('pointermove', e=>{
     const d=Math.max(8,Math.abs(pts[0].x-pts[1].x));
     const k=curK(); if(!k) return;
     const span0=pinchSt.b-pinchSt.a;
-    let ns=Math.round(span0*pinchSt.d/d);
-    ns=Math.max(15, Math.min(k.length, ns));
-    const midLocal=Math.floor((pinchSt.mid-L.plotL)/L.sw);
-    const anchorG=pinchSt.a+Math.max(0,Math.min(span0-1,midLocal));
+    let ns=span0*pinchSt.d/d;
+    ns=Math.max(15, Math.min(k.length*3, ns));
+    const anchorG=pinchSt.a+(pinchSt.mid-L.plotL)/L.sw*(span0/L.n);
     const frac=Math.max(0,Math.min(1,(anchorG-pinchSt.a)/span0));
-    let na=Math.round(anchorG-frac*ns);
-    na=Math.max(0, Math.min(k.length-ns, na));
-    S.term.view={a:na,b:na+ns}; S.term.hover=null; drawTermChart(); return;
+    S.term.view=clampView({a:anchorG-frac*ns, b:anchorG-frac*ns+ns});
+    S.term.hover=null; drawTermChart(); return;
   }
   if(panSt && PTRS.size===1 && S.term.tool==='cursor'){
     const k=curK(); if(!k) return;
-    const dx=pos.x-panSt.x;
-    const shift=Math.round(-dx/L.sw);
-    let na=panSt.a+shift;
+    const dx=pos.x-panSt.x, dy=pos.y-panSt.y;
     const span=panSt.b-panSt.a;
-    na=Math.max(0, Math.min(k.length-span, na));
-    if(na!==S.term.view.a){ S.term.view={a:na,b:na+span}; S.term.hover=null; drawTermChart(); }
+    const na=panSt.a - dx/L.sw;
+    S.term.view=clampView({a:na, b:na+span});
+    // вертикальное перетаскивание = масштаб цены
+    if(Math.abs(dy)>14){ const f=1 - dy/260;
+      S.term.pScale=Math.max(0.25, Math.min(6, (panSt.ps||1)*f)); }
+    S.term.hover=null; drawTermChart();
     return;
   }
   // hover
@@ -2199,6 +2472,20 @@ tc.addEventListener('pointermove', e=>{
   if(S.term.tool!=='cursor'){ loupePos=pos; drawLoupe(pos); }
 });
 function endPtr(e){ PTRS.delete(e.pointerId);
+  if(aiming){
+    const T=S.term.tool, td=toolDef(T);
+    S.term.pend=S.term.pend||[]; S.term.pend.push(aiming.q);
+    aiming=null; loupePos=null;
+    if(td && S.term.pend.length>=td[2]){
+      let txt='';
+      if(TXT_TOOLS[T]){ txt=prompt(TXT_PROMPT[T]||'Текст:')||''; if(!txt && T!=='emoji'){ S.term.pend=null; drawTermChart(); return; } }
+      commitDraw(T, S.term.pend, txt);
+      S.term.pend=null;
+      const tc2=$('toolCur'); if(tc2) tc2.textContent='✓ '+(td[1]);
+      setTimeout(()=>{ const e2=$('toolCur'); if(e2 && S.term.tool!=='cursor') e2.textContent='✎ '+td[1]; }, 900);
+    } else { haptic(); updateHint(); }
+    drawTermChart(); return;
+  }
   if(scaleDrag){ scaleDrag=null; haptic(); }
   if(brushing){ if(brushing.length>3) commitDraw(S.term.tool, brushing); brushing=null; drawTermChart(); }
   if(PTRS.size<2) pinchSt=null;
@@ -2208,11 +2495,16 @@ function endPtr(e){ PTRS.delete(e.pointerId);
 tc.addEventListener('pointerup', endPtr);
 tc.addEventListener('pointercancel', endPtr);
 tc.addEventListener('pointerleave', e=>{ if(!PTRS.size){ S.term.hover=null; S.term.hoverP=null; drawTermChart(); } });
-tc.addEventListener('wheel', e=>{ e.preventDefault(); zoomView(e.deltaY>0?1.15:0.87, S.term.hover); }, {passive:false});
+tc.addEventListener('wheel', e=>{ e.preventDefault();
+  const L=S.term.layout; if(!L) return;
+  const pos=chartPos(e);
+  const anchorG=L.va+(pos.x-L.plotL)/L.sw;
+  zoomView(e.deltaY>0?1.12:0.89, anchorG);
+}, {passive:false});
 tc.addEventListener('dblclick', (e)=>{
   const z=zoneAt(chartPos(e));
   if(z){ if(z.t==='price') S.term.pScale=1; else { S.term.oScale=S.term.oScale||[]; S.term.oScale[z.i]=1; } }
-  else S.term.view=null;
+  else { const k=curK(); S.term.view = k ? {a:Math.max(0,k.length-90), b:k.length+12} : null; S.term.pScale=1; }
   drawTermChart(); });
 
 /* ========= ПАНЕЛЬ ========= */
@@ -2229,11 +2521,11 @@ function buildToolRail(){
     t.innerHTML=typeSvg(S.term.type); haptic(); drawTermChart(); });
   sep();
   const cur=mk('railCursor','<svg viewBox="0 0 24 24" width="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4l7 16 2-7 7-2z"/></svg>','Курсор');
-  cur.addEventListener('click', ()=>{ S.term.tool='cursor'; S.term.pend=null; syncRail(); const tcx=$('toolCur'); if(tcx) tcx.textContent=''; drawTermChart(); haptic(); });
+  cur.addEventListener('click', ()=>{ S.term.tool='cursor'; S.term.pend=null; syncRail(); updateHint(); drawTermChart(); haptic(); });
   const dr=mk('drawBtn','<svg viewBox="0 0 24 24" width="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20l5-1L20 8a2 2 0 00-3-3L6 16l-2 4z"/></svg>','Инструменты');
   dr.addEventListener('click', openDrawSheet);
   const del=mk('delDraws','<svg viewBox="0 0 24 24" width="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/></svg>','Очистить');
-  del.addEventListener('click', ()=>{ delete S.draws[drawsKey()]; S.term.pend=null; saveDraws(); drawTermChart(); toast('Построения удалены','🧹'); });
+  del.addEventListener('click', ()=>{ delete S.draws[drawsKey()]; S.term.pend=null; saveDraws(); updateHint(); drawTermChart(); toast('Построения удалены','🧹'); });
   sep();
   const ind=mk('indBtn','<span style="font-weight:800;font-style:italic;color:var(--gold);">ƒ</span>','Индикаторы');
   ind.addEventListener('click', openIndSheet);
@@ -2244,6 +2536,8 @@ function buildToolRail(){
   ob.addEventListener('click', ()=>{ S.showOB=!S.showOB; ob.classList.toggle('active',S.showOB); haptic(); drawTermChart(); });
   const dp=mk('depthBtn','<svg viewBox="0 0 24 24" width="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h7M4 10h5M4 14h8M4 18h6"/><path d="M20 6h-4M20 10h-6M20 14h-3M20 18h-5"/></svg>','Стакан');
   dp.addEventListener('click', openDepthSheet);
+  const ai=mk('aiMarkBtn','<span style="font-size:15px;">🤖</span>','ИИ-разметка');
+  ai.addEventListener('click', aiMarkup);
   const al=mk('alertBtn','<svg viewBox="0 0 24 24" width="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>','Алерты');
   al.addEventListener('click', openAlerts);
   syncRail();
@@ -2261,23 +2555,496 @@ function syncRail(){
 buildToolRail();
 
 function openDrawSheet(){
-  const grps=[...new Set(TOOLS.map(t=>t[3]))];
-  $('sheetContent').innerHTML='<div class="h2" style="text-align:center;">Инструменты</div>'+
-    grps.map(g=>'<div class="micro mt4" style="margin-bottom:6px;">'+g+'</div>'+
-      '<div class="draw-menu">'+TOOLS.filter(t=>t[3]===g).map(t=>
-        '<button class="chip'+(S.term.tool===t[0]?' active':'')+'" data-tool="'+t[0]+'">'+t[1]+'</button>').join('')+'</div>').join('')+
-    '<button class="btn btn-gold btn-block mt5" id="drawOk">Готово</button>';
+  S.toolCat=S.toolCat||TOOL_CATS[0];
+  const draw=()=>{
+    const q=(($('twSearch')||{}).value||'').toLowerCase();
+    const list = q ? TOOLS.filter(t=>t[0]!=='cursor' && t[1].toLowerCase().includes(q))
+                   : TOOLS.filter(t=>t[3]===S.toolCat && t[0]!=='cursor');
+    $('twCats').innerHTML = TOOL_CATS.map(c=>'<button class="tw-cat'+(c===S.toolCat&&!q?' active':'')+'" data-cat="'+c+'">'+c+'</button>').join('');
+    $('twGrid').innerHTML = list.length? list.map(t=>
+      '<button class="tw-tool'+(S.term.tool===t[0]?' active':'')+'" data-tool="'+t[0]+'">'+
+      '<span class="tw-ic">'+(t[4]||'✎')+'</span><span class="tw-nm">'+t[1]+'</span></button>').join('')
+      : '<div class="mut small" style="grid-column:1/-1;text-align:center;padding:20px;">Ничего не найдено</div>';
+    $('twGrid').querySelectorAll('[data-tool]').forEach(b2=>b2.addEventListener('click',()=>{
+      S.term.tool=b2.dataset.tool; S.term.pend=null;
+      const td=toolDef(S.term.tool);
+      updateHint(); syncRail(); haptic(); closeSheet();
+      toast('Коснитесь графика и ведите палец — точка ставится при отпускании','✎');
+    }));
+    $('twCats').querySelectorAll('[data-cat]').forEach(b2=>b2.addEventListener('click',()=>{
+      S.toolCat=b2.dataset.cat; const si=$('twSearch'); if(si) si.value=''; haptic(); draw();
+    }));
+  };
+  $('sheetContent').innerHTML=
+    '<div class="row between" style="align-items:center;"><span class="h2" style="font-size:17px;">Инструменты</span>'+
+    '<button class="icon-btn" id="twClose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>'+
+    '<input class="input mt3" id="twSearch" placeholder="Поиск инструмента…">'+
+    '<div class="tw-cats mt3" id="twCats"></div>'+
+    '<div class="tw-grid mt3" id="twGrid"></div>'+
+    '<button class="btn btn-ghost btn-block mt3" id="twCursor">↖ Курсор (выключить рисование)</button>';
+  draw();
   $('sheetVeil').classList.add('open');
-  $('sheetContent').addEventListener('click', function h(e){
-    const b=e.target.closest('[data-tool]'); if(!b) return;
-    S.term.tool=b.dataset.tool; S.term.pend=null;
-    $('sheetContent').querySelectorAll('[data-tool]').forEach(el2=>el2.classList.toggle('active', el2===b.closest('[data-tool]')?el2===b:false));
-    const td=toolDef(S.term.tool);
-    const tcu=$('toolCur'); if(tcu) tcu.textContent=S.term.tool==='cursor'?'':('✎ '+td[1]);
-    syncRail();
-    haptic(); closeSheet();
-  });
-  const ok=$('drawOk'); if(ok) ok.addEventListener('click', closeSheet);
+  $('twSearch').addEventListener('input', draw);
+  $('twClose').addEventListener('click', closeSheet);
+  $('twCursor').addEventListener('click',()=>{ S.term.tool='cursor'; S.term.pend=null; updateHint(); syncRail(); closeSheet(); haptic(); });
+}
+
+
+
+/* ================= КОУЧ: ВСПЛЫВАЮЩИЕ ПОДСКАЗКИ ================= */
+let coachSeen={}, coachTimer=null, coachActive=null;
+function coachState(){
+  const k=curK(); const eq=equity();
+  const m=parseFloat(($('termMargin')||{}).value)||0;
+  const lev=parseInt(($('levSlider')||{}).value)||1;
+  const px=priceOf(S.term.symbol);
+  const tp=parseFloat(($('tpPrice')||{}).value), sl=parseFloat(($('slPrice')||{}).value);
+  let rr=null;
+  if(isFinite(tp)&&isFinite(sl)&&tp>0&&sl>0&&px) rr=Math.abs(tp-px)/Math.max(1e-9,Math.abs(px-sl));
+  const today=Date.now()-864e5;
+  const hist=(S.history||[]).filter(t=>t.closed>today);
+  let lossStreak=0;
+  for(const t of (S.history||[])){ if(t.pnl<=0) lossStreak++; else break; }
+  const dayPnl=eq-(S.acc?S.acc.startDay:eq);
+  const dayLimit=(S.acc?S.acc.startDay:eq)*RULES.dailyLoss/100;
+  const nearLiq=S.positions.some(p=>{ const lq=liqPrice(p), cur=priceOf(p.symbol);
+    return cur&&lq&&Math.abs(cur-lq)/cur<0.03; });
+  let againstTrend=false, rsi=50, flat=false;
+  if(k&&k.length>60){ const C=ctxSnapshot(k); const n=k.length;
+    rsi=C.rsi[n-1]||50;
+    const atrPct=(C.atr[n-1]/k[n-1].c)*100;
+    flat=atrPct<0.35 && Math.abs(C.e21[n-1]-C.e50[n-1])/k[n-1].c<0.004;
+  }
+  const big=S.positions.filter(p=>['BTCUSDT','ETHUSDT','SOLUSDT','BNBUSDT'].includes(p.symbol));
+  const day=new Date().getDay();
+  return {
+    riskPct: eq? (m*1.0)/eq*100 : 0,
+    lev, rr, rsi, flat,
+    openNoSL: S.positions.filter(p=>!p.sl).length,
+    ddUsedPct: dayLimit? Math.max(0,-dayPnl)/dayLimit*100 : 0,
+    todayTrades: hist.length,
+    lossStreak,
+    nearLiq,
+    weekend: day===0||day===6,
+    noPlan: (!isFinite(tp)||tp<=0)&&(!isFinite(sl)||sl<=0)&&m>0,
+    posPctEq: eq? (m*lev)/eq*100 : 0,
+    corrPos: big.length>=2,
+    againstTrend, side:'позицию'
+  };
+}
+function coachTip(force){
+  if(S.screen!=='terminal' && !force) return;
+  const st=coachState();
+  const cands=COACH_KB.filter(r=>{ try{ return r.when(st); }catch(e){ return false; } })
+    .filter(r=> force || !coachSeen[r.id] || Date.now()-coachSeen[r.id]>1000*60*8)
+    .sort((a,b)=>b.p-a.p);
+  if(!cands.length) return;
+  const r=cands[0];
+  coachSeen[r.id]=Date.now();
+  showCoach(r.t, r.m(st), r.p>=8?'warn':'info');
+}
+function showCoach(title, text, kind){
+  let box=$('coachBox');
+  if(!box){
+    box=document.createElement('div'); box.id='coachBox'; box.className='coach';
+    document.body.appendChild(box);
+  }
+  box.className='coach '+(kind||'info')+' show';
+  box.innerHTML='<div class="c-ic">'+(kind==='warn'?'⚠️':kind==='good'?'✅':'🎓')+'</div>'+
+    '<div class="c-body"><div class="c-t">'+title+'</div><div class="c-m">'+text+'</div></div>'+
+    '<button class="c-x" id="coachX">✕</button>';
+  $('coachX').addEventListener('click',()=>hideCoach());
+  box.onclick=(e)=>{ if(e.target.id!=='coachX') hideCoach(); };
+  clearTimeout(coachTimer);
+  coachTimer=setTimeout(hideCoach, kind==='warn'?11000:8000);
+  try{ if(tg&&tg.HapticFeedback) tg.HapticFeedback.notificationOccurred(kind==='warn'?'warning':'success'); }catch(e){}
+}
+function hideCoach(){ const b=$('coachBox'); if(b) b.classList.remove('show'); }
+/* подсказка по паттерну при разметке */
+function coachPattern(v){
+  const kb=v.kb;
+  const good=v.checks.filter(c=>c.ok).slice(0,3).map(c=>c.t);
+  showCoach(kb.name+' · '+v.score+'%',
+    'Подтверждений: '+v.passed+' из '+v.total+'. '+good.join(' · ')+'. '+
+    (v.broken?'Уровень активации пробит — сетап актуален.':'Ждём пробоя уровня активации.'),
+    v.score>=75?'good':'info');
+}
+
+/* ================= БАЗА ЗНАНИЙ ПАТТЕРНОВ ================= */
+const PAT_KB={
+ dbl_top:{ name:'Двойная вершина', dir:'SHORT', rel:0.72,
+  need:['Две вершины на одном уровне (расхождение <1.5%)','Между ними коррекция от 10% высоты','Вторая вершина на меньшем объёме','Пробой поддержки между вершинами'],
+  conf:['Медвежья дивергенция RSI на второй вершине','Вторая вершина чуть выше первой (ложный пробой)','Общий тренд уже нисходящий или в стадии слома','Цена ниже EMA 50 при пробое'],
+  inval:['Закрытие выше максимума второй вершины','Пробой поддержки на низком объёме'],
+  entry:'После пробоя поддержки между вершинами или на ретесте снизу',
+  stop:'За максимум второй вершины + запас на шум',
+  target:'Высота фигуры, отложенная вниз от точки пробоя',
+  note:'Фигура не подтверждена, пока поддержка не пробита. До этого — просто две вершины.' },
+ dbl_bot:{ name:'Двойное дно', dir:'LONG', rel:0.72,
+  need:['Два минимума на одном уровне','Отскок между ними от 10% высоты','Второе дно на меньшем объёме','Пробой сопротивления между минимумами'],
+  conf:['Бычья дивергенция RSI на втором дне','Второе дно чуть ниже первого (снятие ликвидности)','Цена возвращается выше EMA 50','Рост объёма на пробое'],
+  inval:['Закрытие ниже минимума второго дна'],
+  entry:'После пробоя сопротивления между минимумами или на ретесте сверху',
+  stop:'За минимум второго дна',
+  target:'Высота фигуры вверх от пробоя',
+  note:'Классика разворота, но работает только с подтверждением объёмом.' },
+ hs:{ name:'Голова и плечи', dir:'SHORT', rel:0.78,
+  need:['Голова выше обоих плеч','Плечи примерно на одном уровне (расхождение <3%)','Линия шеи проведена по двум впадинам','Пробой линии шеи'],
+  conf:['Объём на голове ниже, чем на левом плече','Правое плечо на минимальном объёме','Дивергенция RSI между головой и правым плечом','Ретест шеи снизу после пробоя'],
+  inval:['Возврат выше правого плеча','Голова не пробила уровень левого плеча'],
+  entry:'На пробое линии шеи или на ретесте',
+  stop:'За правое плечо',
+  target:'Расстояние от головы до шеи, отложенное от точки пробоя',
+  note:'Одна из самых надёжных фигур, но часто «додумывается». Без пробоя шеи сигнала нет.' },
+ ihs:{ name:'Перевёрнутая голова и плечи', dir:'LONG', rel:0.78,
+  need:['Голова ниже обоих плеч','Плечи примерно на одном уровне','Линия шеи по двум вершинам','Пробой линии шеи вверх'],
+  conf:['Рост объёма на правом плече и пробое','Бычья дивергенция на голове','Цена закрепляется выше EMA 50'],
+  inval:['Возврат ниже правого плеча'],
+  entry:'На пробое шеи или ретесте сверху',
+  stop:'За правое плечо',
+  target:'Высота от головы до шеи вверх от пробоя',
+  note:'Разворот после нисходящего тренда. Требует предшествующего снижения.' },
+ tri_asc:{ name:'Восходящий треугольник', dir:'LONG', rel:0.68,
+  need:['Горизонтальное сопротивление (2+ касания)','Восходящая линия минимумов','Сужение диапазона','Пробой сопротивления'],
+  conf:['Падение объёма внутри фигуры','Всплеск объёма на пробое','Общий тренд восходящий','Пробой в первых 2/3 фигуры'],
+  inval:['Пробой вниз восходящей линии','Выход к вершине треугольника без пробоя'],
+  entry:'По закрытию свечи выше сопротивления или на ретесте',
+  stop:'Под последний минимум внутри фигуры',
+  target:'Высота основания треугольника от точки пробоя',
+  note:'Чем ближе к вершине, тем слабее импульс пробоя.' },
+ tri_desc:{ name:'Нисходящий треугольник', dir:'SHORT', rel:0.68,
+  need:['Горизонтальная поддержка (2+ касания)','Нисходящая линия максимумов','Сужение диапазона','Пробой поддержки'],
+  conf:['Снижение объёма внутри','Рост объёма на пробое','Нисходящий общий тренд'],
+  inval:['Закрытие выше нисходящей линии'],
+  entry:'На пробое поддержки или ретесте',
+  stop:'За последний максимум внутри фигуры',
+  target:'Высота основания вниз от пробоя',
+  note:'Зеркальная версия восходящего.' },
+ flag_bull:{ name:'Бычий флаг', dir:'LONG', rel:0.7,
+  need:['Резкий импульс вверх (древко)','Откат в узком канале против тренда','Глубина отката не более 50% импульса','Падающий объём в откате'],
+  conf:['Откат удерживает EMA 21','Объём растёт на выходе из флага','Импульс сломал предыдущую структуру'],
+  inval:['Откат глубже 61.8% импульса','Флаг длится дольше самого импульса'],
+  entry:'По пробою верхней границы флага',
+  stop:'За нижнюю границу флага',
+  target:'Длина древка от точки пробоя',
+  note:'Фигура продолжения. Против сильного тренда не работает.' },
+ flag_bear:{ name:'Медвежий флаг', dir:'SHORT', rel:0.7,
+  need:['Резкий импульс вниз','Откат вверх в узком канале','Глубина не более 50%','Падающий объём'],
+  conf:['Откат упирается в EMA 21 снизу','Рост объёма на пробое вниз'],
+  inval:['Откат глубже 61.8%'],
+  entry:'По пробою нижней границы',
+  stop:'За верхнюю границу флага',
+  target:'Длина импульса вниз от пробоя',
+  note:'Зеркальный бычьему.' },
+ range:{ name:'Диапазон (флэт)', dir:'NEUTRAL', rel:0.6,
+  need:['Чёткие границы сверху и снизу','Минимум 2 касания каждой границы','Отсутствие направленного тренда'],
+  conf:['Сужение волатильности к концу','Ложные пробои границ (снятие ликвидности)'],
+  inval:['Закрепление за границей с объёмом'],
+  entry:'От границ внутрь диапазона или на пробое с ретестом',
+  stop:'За противоположную сторону границы',
+  target:'Противоположная граница или высота диапазона при пробое',
+  note:'70% времени рынок во флэте. Не пытайтесь торговать тренд внутри диапазона.' }
+};
+
+/* ================= БАЗА ЗНАНИЙ: ПРИНЦИПЫ ================= */
+const COACH_KB=[
+ {id:'risk_high', p:9, when:s=>s.riskPct>2,
+  t:'Риск слишком велик', m:s=>'Текущая позиция рискует '+s.riskPct.toFixed(1)+'% депозита. Профессиональный стандарт — 0.5–1%. При серии из 3 убытков вы потеряете '+(s.riskPct*3).toFixed(0)+'% счёта.'},
+ {id:'lev_high', p:8, when:s=>s.lev>=20,
+  t:'Опасное плечо', m:s=>'При плече x'+s.lev+' ликвидация наступит на движении всего '+(100/s.lev).toFixed(1)+'%. BTC проходит это расстояние за минуты. Снизьте плечо и увеличьте маржу — риск останется тем же, а запас прочности вырастет.'},
+ {id:'no_sl', p:10, when:s=>s.openNoSL>0,
+  t:'Позиция без стоп-лосса', m:s=>'У вас '+s.openNoSL+' позиц. без стопа. Это главная причина слитых счетов: одно резкое движение может закрыть челлендж. Установите SL прямо сейчас.'},
+ {id:'dd_close', p:10, when:s=>s.ddUsedPct>60,
+  t:'Просадка близка к лимиту', m:s=>'Использовано '+s.ddUsedPct.toFixed(0)+'% дневного лимита. Оставшийся буфер — ваша страховка на завтра, а не топливо для отыгрыша. Закройте терминал.'},
+ {id:'overtrade', p:7, when:s=>s.todayTrades>=6,
+  t:'Слишком много сделок', m:s=>'Сегодня '+s.todayTrades+' сделок. Каждый круг это ~0.1% комиссии, плюс частая торговля почти всегда означает вход без сетапа. Профессионалы делают 1–3 сделки в день.'},
+ {id:'streak', p:9, when:s=>s.lossStreak>=2,
+  t:'Серия убытков — пауза', m:s=>s.lossStreak+' стопа подряд. Статистически это нормально, но именно сейчас включается тильт. Правило: 2 стопа — пауза на час, 3 — торговый день окончен.'},
+ {id:'against_trend', p:6, when:s=>s.againstTrend,
+  t:'Сделка против тренда', m:s=>'Вы открываете '+s.side+' против направления EMA 200 на этом ТФ. Контртрендовые сделки требуют более точного входа и дают меньший процент отработки.'},
+ {id:'rsi_extreme', p:5, when:s=>s.rsi>75||s.rsi<25,
+  t:'RSI в экстремуме', m:s=>'RSI '+s.rsi.toFixed(0)+'. Важно: в сильном тренде экстремум означает силу, а не разворот. Не входите против движения только из-за RSI — нужен слом структуры.'},
+ {id:'low_rr', p:8, when:s=>s.rr!==null&&s.rr<1.5,
+  t:'Плохое соотношение риск/прибыль', m:s=>'Текущий RR 1:'+s.rr.toFixed(1)+'. При таком соотношении нужно более 40% точности плюс комиссии. Отодвиньте тейк или найдите вход ближе к стопу — цель минимум 1:2.'},
+ {id:'good_rr', p:3, when:s=>s.rr!==null&&s.rr>=2.5,
+  t:'Отличное соотношение', m:s=>'RR 1:'+s.rr.toFixed(1)+' — при таком раскладе достаточно 30% прибыльных сделок. Главное теперь: не двигать тейк ближе при первом откате.'},
+ {id:'near_liq', p:9, when:s=>s.nearLiq,
+  t:'Цена близко к ликвидации', m:s=>'До цены ликвидации меньше 3%. Либо сократите позицию, либо добавьте маржу — иначе обычный рыночный шум закроет её принудительно.'},
+ {id:'weekend', p:4, when:s=>s.weekend,
+  t:'Низкая ликвидность', m:s=>'Выходные: объёмы ниже, спред шире, ложные пробои чаще. Уровни работают хуже. Если торгуете — уменьшите объём.'},
+ {id:'flat', p:5, when:s=>s.flat,
+  t:'Рынок в диапазоне', m:s=>'Волатильность сжата, направленного движения нет. Трендовые стратегии здесь дают ложные сигналы. Либо работайте от границ, либо ждите пробоя с объёмом.'},
+ {id:'no_stop_plan', p:6, when:s=>s.noPlan,
+  t:'Нет плана выхода', m:s=>'Вы собираетесь войти без заданных TP и SL. Решение о выходе, принятое после открытия позиции, почти всегда эмоциональное. Задайте уровни заранее.'},
+ {id:'big_pos', p:7, when:s=>s.posPctEq>25,
+  t:'Крупная позиция', m:s=>'Объём позиции — '+s.posPctEq.toFixed(0)+'% от эквити. Даже при коротком стопе такая концентрация опасна: два подобных входа сразу нарушат дневной лимит.'},
+ {id:'corr', p:6, when:s=>s.corrPos,
+  t:'Коррелирующие позиции', m:s=>'Открыты позиции по нескольким крупным монетам одновременно. BTC и альткоины ходят вместе — это не диверсификация, а удвоенный риск в одном направлении.'}
+];
+
+/* ============ ИИ-РАЗМЕТКА (Premium/VIP) ============ */
+function swingPoints(k, dep){
+  dep=dep||4; const sw=[];
+  for(let i=dep;i<k.length-dep;i++){
+    let isH=true, isL=true;
+    for(let j=i-dep;j<=i+dep;j++){ if(j===i) continue;
+      if(k[j].h>=k[i].h) isH=false; if(k[j].l<=k[i].l) isL=false; }
+    if(isH) sw.push({i, p:k[i].h, t:k[i].t, type:'H'});
+    if(isL) sw.push({i, p:k[i].l, t:k[i].t, type:'L'});
+  }
+  return sw;
+}
+function ctxSnapshot(k){
+  const cl=k.map(o=>o.c), n=k.length;
+  const e21=emaArr(cl,21), e50=emaArr(cl,50), e200=emaArr(cl,200);
+  const r=rsiArr(cl,14), mac=macdArr(cl), a=atrArr(k,14);
+  const vol=k.map(o=>o.v||0), volAvg=vol.slice(-20).reduce((s,v)=>s+v,0)/20;
+  return {cl,e21,e50,e200,rsi:r,mac,atr:a,vol,volAvg,n,
+    trend: cl[n-1]>e200[n-1] ? 1 : -1,
+    trendMid: e21[n-1]>e50[n-1] ? 1 : -1};
+}
+/* Многофакторная валидация паттерна */
+function validate(kind, pts, k, C){
+  const kb=PAT_KB[kind]; if(!kb) return null;
+  const n=k.length, last=k[n-1].c;
+  const at=i=>k[Math.max(0,Math.min(n-1,i))];
+  const volOf=(i,w)=>{ let s=0,c=0; for(let j=Math.max(0,i-w);j<=Math.min(n-1,i+w);j++){ s+=(k[j].v||0); c++; } return c?s/c:0; };
+  const checks=[];
+  const add=(ok,txt,weight)=>checks.push({ok:!!ok, t:txt, w:weight||1});
+
+  const first=pts[0], mid=pts[Math.floor(pts.length/2)], last2=pts[pts.length-1];
+  const span=last2.i-first.i;
+  add(span>=8, 'Достаточная ширина фигуры ('+span+' баров)', 1.2);
+  add(span<=120, 'Фигура не растянута во времени', 0.8);
+
+  // объём
+  const vFirst=volOf(first.i,2), vLast=volOf(last2.i,2);
+  add(vLast<=vFirst*1.05, 'Объём убывает к концу фигуры', 1.3);
+  add(volOf(n-1,2)>C.volAvg*0.9, 'Текущий объём не ниже среднего', 0.9);
+
+  // тренд-контекст
+  if(kb.dir==='SHORT'){
+    add(C.trendMid<0 || last<C.e50[n-1], 'Цена ниже EMA 50 — контекст на стороне шорта', 1.4);
+    add(C.rsi[n-1]<58, 'RSI не в бычьей зоне ('+C.rsi[n-1].toFixed(0)+')', 1.0);
+    add(C.mac.hist[n-1]<C.mac.hist[n-2], 'MACD-гистограмма снижается', 1.0);
+  } else if(kb.dir==='LONG'){
+    add(C.trendMid>0 || last>C.e50[n-1], 'Цена выше EMA 50 — контекст на стороне лонга', 1.4);
+    add(C.rsi[n-1]>42, 'RSI не в медвежьей зоне ('+C.rsi[n-1].toFixed(0)+')', 1.0);
+    add(C.mac.hist[n-1]>C.mac.hist[n-2], 'MACD-гистограмма растёт', 1.0);
+  }
+
+  // дивергенция
+  if(pts.length>=3){
+    const pA=pts[0], pB=pts[pts.length-1];
+    const rA=C.rsi[pA.i], rB=C.rsi[pB.i];
+    if(rA!=null&&rB!=null){
+      if(kb.dir==='SHORT') add(pB.p>=pA.p*0.995 && rB<rA-2, 'Медвежья дивергенция RSI', 1.6);
+      if(kb.dir==='LONG')  add(pB.p<=pA.p*1.005 && rB>rA+2, 'Бычья дивергенция RSI', 1.6);
+    }
+  }
+
+  // качество формы
+  if(kind==='dbl_top'||kind==='dbl_bot'){
+    const dif=Math.abs(pts[0].p-pts[2].p)/pts[0].p;
+    add(dif<0.008, 'Вершины/дно выровнены точно (расхождение '+(dif*100).toFixed(2)+'%)', 1.5);
+    const depth=Math.abs(pts[1].p-pts[0].p)/pts[0].p;
+    add(depth>0.015, 'Коррекция между экстремумами достаточная', 1.2);
+  }
+  if(kind==='hs'||kind==='ihs'){
+    const sh=Math.abs(pts[0].p-pts[4].p)/pts[0].p;
+    add(sh<0.03, 'Плечи симметричны (расхождение '+(sh*100).toFixed(1)+'%)', 1.5);
+    const headDom=kind==='hs' ? (pts[2].p>Math.max(pts[0].p,pts[4].p)*1.01) : (pts[2].p<Math.min(pts[0].p,pts[4].p)*0.99);
+    add(headDom, 'Голова чётко доминирует над плечами', 1.4);
+    const neck=Math.abs(pts[1].p-pts[3].p)/pts[1].p;
+    add(neck<0.02, 'Линия шеи горизонтальна', 1.1);
+  }
+
+  // близость к точке входа
+  const trigger = (kind==='dbl_top'||kind==='hs') ? Math.min(...pts.filter((_,i)=>i%2===1).map(p=>p.p))
+                : (kind==='dbl_bot'||kind==='ihs') ? Math.max(...pts.filter((_,i)=>i%2===1).map(p=>p.p))
+                : null;
+  let broken=false;
+  if(trigger!=null){
+    broken = kb.dir==='SHORT' ? last<trigger : last>trigger;
+    add(broken, broken?'Уровень активации пробит':'Ожидается пробой уровня активации', 2.0);
+    const dist=Math.abs(last-trigger)/last*100;
+    add(dist<3, 'Цена рядом с точкой входа ('+dist.toFixed(1)+'%)', 1.0);
+  }
+  add(at(n-1).t - at(last2.i).t < 40*(k[1].t-k[0].t), 'Фигура свежая, не устаревшая', 1.2);
+
+  const total=checks.reduce((s,c)=>s+c.w,0);
+  const got=checks.filter(c=>c.ok).reduce((s,c)=>s+c.w,0);
+  const score=Math.round(got/total*100);
+  return {kind, kb, pts, checks, score, broken, trigger,
+    passed:checks.filter(c=>c.ok).length, total:checks.length};
+}
+function aiDetect(minScore){
+  const k=curK(); if(!k||k.length<80) return [];
+  minScore=minScore||55;
+  const C=ctxSnapshot(k);
+  const sw=swingPoints(k,4); const out=[];
+  const near=(a,b,tol)=>Math.abs(a-b)/((a+b)/2)<tol;
+
+  for(let i=0;i<sw.length-2;i++){
+    const [a,m,b]=[sw[i],sw[i+1],sw[i+2]];
+    if(a.type==='H'&&b.type==='H'&&m.type==='L'&&near(a.p,b.p,0.02)&&b.i-a.i>8){
+      const v=validate('dbl_top',[a,m,b],k,C); if(v&&v.score>=minScore) out.push(v); }
+    if(a.type==='L'&&b.type==='L'&&m.type==='H'&&near(a.p,b.p,0.02)&&b.i-a.i>8){
+      const v=validate('dbl_bot',[a,m,b],k,C); if(v&&v.score>=minScore) out.push(v); }
+  }
+  for(let i=0;i<sw.length-4;i++){
+    const p=[sw[i],sw[i+1],sw[i+2],sw[i+3],sw[i+4]];
+    if(p[0].type==='H'&&p[2].type==='H'&&p[4].type==='H'&&p[1].type==='L'&&p[3].type==='L'&&
+       p[2].p>p[0].p&&p[2].p>p[4].p&&near(p[0].p,p[4].p,0.04)){
+      const v=validate('hs',p,k,C); if(v&&v.score>=minScore) out.push(v); }
+    if(p[0].type==='L'&&p[2].type==='L'&&p[4].type==='L'&&p[1].type==='H'&&p[3].type==='H'&&
+       p[2].p<p[0].p&&p[2].p<p[4].p&&near(p[0].p,p[4].p,0.04)){
+      const v=validate('ihs',p,k,C); if(v&&v.score>=minScore) out.push(v); }
+  }
+  // треугольники и флаги — по геометрии последних свингов
+  const recent=sw.slice(-6);
+  if(recent.length>=4){
+    const hs=recent.filter(s=>s.type==='H'), ls=recent.filter(s=>s.type==='L');
+    if(hs.length>=2&&ls.length>=2){
+      const hFlat=near(hs[hs.length-1].p,hs[hs.length-2].p,0.012);
+      const lUp=ls[ls.length-1].p>ls[ls.length-2].p*1.005;
+      const lFlat=near(ls[ls.length-1].p,ls[ls.length-2].p,0.012);
+      const hDown=hs[hs.length-1].p<hs[hs.length-2].p*0.995;
+      if(hFlat&&lUp){ const v=validate('tri_asc',[ls[ls.length-2],hs[hs.length-2],ls[ls.length-1],hs[hs.length-1]],k,C); if(v&&v.score>=minScore) out.push(v); }
+      if(lFlat&&hDown){ const v=validate('tri_desc',[hs[hs.length-2],ls[ls.length-2],hs[hs.length-1],ls[ls.length-1]],k,C); if(v&&v.score>=minScore) out.push(v); }
+    }
+  }
+  out.sort((a,b)=>b.score-a.score);
+  return out.slice(0,4);
+}
+function aiLastImpulse(){
+  const k=curK(); if(!k||k.length<40) return null;
+  const sw=swingPoints(k,4); if(sw.length<2) return null;
+  const last=sw.slice(-6);
+  let best=null;
+  for(let i=0;i<last.length-1;i++){
+    for(let j=i+1;j<last.length;j++){
+      if(last[i].type===last[j].type) continue;
+      const amp=Math.abs(last[j].p-last[i].p)/last[i].p;
+      if(!best || amp>best.amp) best={a:last[i], b:last[j], amp};
+    }
+  }
+  return best;
+}
+function aiMarkup(){
+  if(tierRank(S.tier)<1){
+    $('sheetContent').innerHTML='<div style="text-align:center;padding:8px 0;">'+
+      '<div style="font-size:46px;">🤖</div><div class="h2 mt3">ИИ-аналитик графика</div>'+
+      '<div class="small mt3" style="color:var(--txt2);line-height:1.6;">Поиск паттернов с проверкой по 12–18 критериям, построение Фибоначчи, ордер-блоки и разбор каждого сетапа по базе знаний.<br><br>Доступно с подпиской <b style="color:var(--gold);">Премиум</b>.</div>'+
+      '<button class="btn btn-gold btn-block mt4" id="aiUp">Открыть Премиум · $20</button></div>';
+    $('sheetVeil').classList.add('open');
+    $('aiUp').addEventListener('click',()=>{ closeSheet(); go('signals'); S.stab='signals'; renderSignals(); });
+    return;
+  }
+  const k=curK(); if(!k||k.length<80){ toast('Мало данных для анализа','⚠️'); return; }
+  const pats=aiDetect(50), imp=aiLastImpulse();
+  const C=ctxSnapshot(k), n=k.length;
+  const trendTxt = C.trend>0 ? 'восходящий' : 'нисходящий';
+  const rsiV=C.rsi[n-1]||50;
+
+  $('sheetContent').innerHTML='<div class="row gap2" style="align-items:center;">'+
+    '<div class="acad-ic">🤖</div><div><div class="h2" style="font-size:16px;">ИИ-аналитик</div>'+
+    '<div class="micro">'+S.term.symbol.replace('USDT','')+' · '+(TF_LABEL[S.term.interval]||'')+'</div></div></div>'+
+
+    '<div class="card mt3"><div class="micro" style="color:var(--gold);margin-bottom:8px;">КОНТЕКСТ РЫНКА</div>'+
+    '<div class="st-row"><span>Тренд по EMA 200</span><b style="color:'+(C.trend>0?'var(--green)':'var(--red)')+';">'+trendTxt+'</b></div>'+
+    '<div class="st-row"><span>Среднесрочный (EMA 21/50)</span><b>'+(C.trendMid>0?'вверх':'вниз')+'</b></div>'+
+    '<div class="st-row"><span>RSI</span><b>'+rsiV.toFixed(0)+'</b></div>'+
+    '<div class="st-row"><span>Объём к среднему</span><b>'+(((k[n-1].v||0)/(C.volAvg||1))*100).toFixed(0)+'%</b></div></div>'+
+
+    '<div class="mt3">'+
+      '<button class="btn btn-gold btn-block" id="aiAll">✨ Разметить всё автоматически</button>'+
+      '<button class="btn btn-ghost btn-block mt2" id="aiFib">Фибоначчи по импульсу'+(imp?' · '+(imp.amp*100).toFixed(1)+'%':' — не найден')+'</button>'+
+      '<button class="btn btn-ghost btn-block mt2" id="aiLv">Ключевые уровни</button>'+
+      '<button class="btn btn-ghost btn-block mt2" id="aiOB">Ордер-блоки и имбалансы</button>'+
+    '</div>'+
+
+    '<div class="micro mt4" style="margin-bottom:6px;">НАЙДЕННЫЕ ПАТТЕРНЫ ('+pats.length+')</div>'+
+    (pats.length? pats.map((v,i)=>{
+      const col=v.score>=75?'var(--green)':v.score>=60?'var(--gold)':'var(--txt2)';
+      return '<div class="pat-card" data-pat="'+i+'">'+
+        '<div class="row between"><b>'+v.kb.name+'</b>'+
+        '<span class="mono" style="color:'+col+';font-weight:800;">'+v.score+'%</span></div>'+
+        '<div class="row gap2 mt2" style="align-items:center;">'+
+          '<span class="tpos-tag '+(v.kb.dir==='LONG'?'l':'s')+'">'+v.kb.dir+'</span>'+
+          '<span class="micro">'+v.passed+'/'+v.total+' подтверждений</span>'+
+          '<span class="micro" style="margin-left:auto;color:'+(v.broken?'var(--green)':'var(--txt3)')+';">'+(v.broken?'активен':'ожидание')+'</span>'+
+        '</div>'+
+        '<div class="progress mt2" style="height:5px;"><div class="fill" style="width:'+v.score+'%;background:'+col+';"></div></div>'+
+        '</div>';
+    }).join('')
+    :'<div class="note-box">Паттернов с достаточным подтверждением не найдено. Это нормально — качественные сетапы редки. Попробуйте другой таймфрейм или инструмент.</div>');
+
+  $('sheetVeil').classList.add('open');
+  const key=drawsKey();
+  const put=(d)=>{ S.draws[key]=S.draws[key]||[]; S.draws[key].push(d); };
+  const doFib=()=>{ if(!imp) return false;
+    put({type:'fibret', pts:[{t:imp.a.t,p:imp.a.p},{t:imp.b.t,p:imp.b.p}], ai:1}); return true; };
+  const doLv=()=>{ const sw=swingPoints(k,5).slice(-10);
+    const lv=[...new Set(sw.map(s=>Math.round(s.p*100)/100))].slice(-5);
+    lv.forEach(p=>put({type:'hline', pts:[{t:k[Math.max(0,n-70)].t, p}], ai:1})); return lv.length>0; };
+  const doOB=()=>{ const z=orderBlocks(k); if(!z.length) return false;
+    z.slice(-3).forEach(b=>put({type:'rect', pts:[{t:b.t,p:b.top},{t:k[n-1].t,p:b.bot}], ai:1})); return true; };
+  const drawPat=(v)=>{
+    const pts=v.pts.map(s=>({t:s.t,p:s.p}));
+    put({type:(v.kind==='hs'||v.kind==='ihs')?'hspat':'poly', pts, ai:1});
+    if(v.trigger!=null) put({type:'hline', pts:[{t:v.pts[0].t,p:v.trigger}], ai:1});
+    put({type:'text', pts:[{t:v.pts[Math.floor(v.pts.length/2)].t, p:v.pts[Math.floor(v.pts.length/2)].p}],
+      txt:v.kb.name+' '+v.score+'%', ai:1});
+  };
+  const fin=(ok,msg)=>{ if(ok){ saveDraws(); drawTermChart(); haptic('ok'); closeSheet(); toast(msg,'🤖'); }
+    else toast('Не найдено подходящих данных','⚠️'); };
+  $('aiFib').addEventListener('click',()=>fin(doFib(),'Фибоначчи построен'));
+  $('aiLv').addEventListener('click',()=>fin(doLv(),'Уровни отмечены'));
+  $('aiOB').addEventListener('click',()=>fin(doOB(),'Ордер-блоки размечены'));
+  $('aiAll').addEventListener('click',()=>{ let any=false;
+    if(doFib()) any=true; if(doLv()) any=true; if(doOB()) any=true;
+    pats.slice(0,2).forEach(v=>{ drawPat(v); any=true; });
+    if(any && pats.length) setTimeout(()=>coachPattern(pats[0]), 600);
+    fin(any,'График размечен'); });
+  $('sheetContent').querySelectorAll('[data-pat]').forEach(el=>el.addEventListener('click',()=>{
+    openPatternDetail(pats[+el.dataset.pat], drawPat);
+  }));
+}
+function openPatternDetail(v, drawPat){
+  const kb=v.kb;
+  const okList=v.checks.filter(c=>c.ok), noList=v.checks.filter(c=>!c.ok);
+  const col=v.score>=75?'var(--green)':v.score>=60?'var(--gold)':'var(--red)';
+  $('sheetContent').innerHTML=
+    '<div class="row between"><span class="h2" style="font-size:17px;">'+kb.name+'</span>'+
+    '<span class="badge" style="background:'+col+'22;color:'+col+';">'+v.score+'%</span></div>'+
+    '<div class="row gap2 mt2" style="align-items:center;">'+
+      '<span class="tpos-tag '+(kb.dir==='LONG'?'l':'s')+'">'+kb.dir+'</span>'+
+      '<span class="micro">Базовая надёжность фигуры: '+(kb.rel*100).toFixed(0)+'%</span></div>'+
+
+    '<div class="key-box mt3"><div class="micro" style="color:var(--gold);margin-bottom:5px;">ЧТО ЭТО ЗНАЧИТ</div>'+
+    '<div class="small" style="color:var(--txt2);line-height:1.6;">'+kb.note+'</div></div>'+
+
+    '<div class="micro mt4" style="margin-bottom:6px;">ПОДТВЕРЖДЕНИЯ ('+okList.length+')</div>'+
+    okList.map(c=>'<div class="chk ok">✓ '+c.t+'</div>').join('')+
+    (noList.length?'<div class="micro mt3" style="margin-bottom:6px;">НЕ ВЫПОЛНЕНО ('+noList.length+')</div>'+
+      noList.map(c=>'<div class="chk no">✕ '+c.t+'</div>').join(''):'')+
+
+    '<div class="card mt4"><div class="micro" style="color:var(--gold);margin-bottom:8px;">ПЛАН СДЕЛКИ</div>'+
+    '<div class="st-row"><span>Вход</span><b style="font-size:11.5px;text-align:right;max-width:60%;">'+kb.entry+'</b></div>'+
+    '<div class="st-row"><span>Стоп</span><b style="font-size:11.5px;text-align:right;max-width:60%;">'+kb.stop+'</b></div>'+
+    '<div class="st-row"><span>Цель</span><b style="font-size:11.5px;text-align:right;max-width:60%;">'+kb.target+'</b></div></div>'+
+
+    '<div class="micro mt3" style="margin-bottom:6px;">ОТМЕНА СЕТАПА</div>'+
+    kb.inval.map(t=>'<div class="chk no">✕ '+t+'</div>').join('')+
+
+    '<button class="btn btn-gold btn-block mt4" id="patDraw">Нанести на график</button>'+
+    '<button class="btn btn-ghost btn-block mt2" id="patBack">Назад</button>'+
+    '<div class="micro mt3" style="text-align:center;color:var(--txt3);line-height:1.5;">Автоматический разбор не является сигналом к сделке. Проверяйте контекст самостоятельно.</div>';
+  $('sheetVeil').classList.add('open');
+  $('patDraw').addEventListener('click',()=>{ drawPat(v); saveDraws(); drawTermChart(); closeSheet(); haptic('ok');
+    setTimeout(()=>coachPattern(v), 500); });
+  $('patBack').addEventListener('click',aiMarkup);
 }
 function openIndSheet(){
   const draw=()=>{
@@ -4203,6 +4970,7 @@ async function init(){
   setInterval(tick, 2000);
   setInterval(()=>{ if(rtDirty){ rtDirty=false; renderAll(); } }, 700);
   setInterval(()=>{ if(S.screen==='signals'&&(S.stab==='signals'||S.stab==='analytics')) renderSignals(); }, 20000);
+  setInterval(()=>{ if(S.screen==='terminal' && S.coachOn!==false) coachTip(); }, 25000);
   setInterval(()=>{ loadMarkets().then(()=>{ if(S.screen==='market'){
     const cur=(S.search?ASSETS.filter(a=>{const q=S.search.toLowerCase();return a.t.toLowerCase().includes(q)||a.n.toLowerCase().includes(q);}):ASSETS.slice(0,S.mktLimit||60)).map(a=>a.s).join(',');
     if(cur===_mktSig) updateMarketPrices(); else renderMarket();
