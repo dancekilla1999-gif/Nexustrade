@@ -448,6 +448,65 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
 .les-body b{color:var(--gold);}
 .key-box{background:var(--card2);border-left:3px solid var(--gold);border-radius:0 12px 12px 0;padding:12px 14px;margin-top:16px;}
 .key-box li{margin:5px 0 5px 16px;font-size:13px;color:var(--txt2);}
+.viz-wrap{margin:14px 0;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#070D15;}
+.viz{width:100%;display:block;}
+
+.tpsl-head{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--card2);
+  border:1px solid var(--line);border-radius:12px;cursor:pointer;}
+.tp-field{flex:1;min-width:0;}
+.tp-field label{display:block;margin-bottom:4px;font-weight:700;letter-spacing:.04em;}
+.mini-chip{flex:1;padding:5px 0;border-radius:8px;background:var(--card);border:1px solid var(--line);
+  font-size:10.5px;font-family:var(--mono);color:var(--txt2);}
+.mini-chip:active{background:var(--hover);}
+.gap1{gap:4px;} .mt1{margin-top:4px;}
+.tpos{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:8px;}
+.tpos-top{display:flex;align-items:center;gap:8px;}
+.tpos-tag{font-size:10px;font-weight:800;padding:3px 8px;border-radius:7px;font-family:var(--mono);}
+.tpos-tag.l{background:var(--green-dim);color:var(--green);}
+.tpos-tag.s{background:var(--red-dim);color:var(--red);}
+.tpos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:9px;}
+.tpos-grid div{font-size:10.5px;color:var(--txt2);}
+.tpos-grid b{display:block;font-family:var(--mono);font-size:12px;color:var(--txt);font-weight:700;margin-top:2px;}
+.tpos-act{display:flex;gap:6px;margin-top:9px;}
+.tpos-act button{flex:1;padding:8px 0;border-radius:9px;font-size:11.5px;font-weight:700;
+  background:var(--card2);border:1px solid var(--line);color:var(--txt2);}
+.tpos-act button.cls{border-color:rgba(255,59,87,.4);color:var(--red);}
+
+.st-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px;color:var(--txt2);}
+.st-row:last-child{border-bottom:none;}
+.st-row b{font-family:var(--mono);color:var(--txt);font-size:13px;}
+.empty-st{text-align:center;padding:34px 18px;}
+.es-ic{font-size:44px;margin-bottom:12px;opacity:.85;}
+
+/* --- финальная полировка --- */
+.screen{animation:scrFade .32s var(--ease) both;}
+@keyframes scrFade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+.tool-card{transition:transform .18s var(--spring), border-color .2s;}
+.tool-card:active{transform:scale(.97);border-color:rgba(34,228,255,.35);}
+.stat-card{transition:transform .18s var(--spring);}
+.stat-card:active{transform:scale(.98);}
+.btn{position:relative;overflow:hidden;}
+.btn:active{transform:scale(.98);}
+.badge{letter-spacing:.03em;}
+.hero-card::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(135deg,rgba(255,255,255,.045),transparent 42%);}
+.asset-row{transition:background .18s, transform .15s;}
+.asset-row:active{transform:scale(.99);background:var(--hover);}
+.sheet{max-height:88vh;overflow-y:auto;}
+.chip{transition:all .16s var(--spring);}
+.chip:active{transform:scale(.94);}
+.tabbar .tab{transition:color .2s, transform .18s var(--spring);}
+.tabbar .tab:active{transform:scale(.92);}
+.progress .fill{transition:width .5s var(--ease);}
+.equity{transition:color .3s;}
+::-webkit-scrollbar{width:0;height:0;}
+.toast{box-shadow:0 12px 40px -12px rgba(0,0,0,.8), 0 0 24px -8px rgba(34,228,255,.35);}
+.acad-les{transition:transform .16s var(--spring), border-color .2s;}
+.acad-les:active{transform:scale(.985);border-color:rgba(34,228,255,.35);}
+.rail-b{transition:all .16s var(--spring);}
+.rail-b:active{transform:scale(.9);}
+.tpos{transition:transform .16s var(--spring);}
+.viz{border-radius:10px;}
 </style>
 </head>
 <body>
@@ -483,6 +542,7 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>
         <span class="notif-dot"></span>
       </button>
+      <button class="icon-btn" id="setBtn" aria-label="Настройки"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.36.4.66.74.85.29.17.62.26.95.26H21a2 2 0 010 4h-.09c-.7 0-1.33.42-1.6 1.05z"/></svg></button>
       <button class="icon-btn" id="adminBtn" data-go="admin" style="display:none;" aria-label="Админ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg></button>
     </div>
   </div>
@@ -621,11 +681,42 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
     <div class="row between mt3 small">
       <span>Объём позиции</span><span class="mono" id="termNotional" style="color:var(--txt);font-weight:700;">$500</span>
     </div>
+
+    <div class="tpsl-head mt3" id="tpslToggle">
+      <span class="small" style="font-weight:700;">Тейк-профит / Стоп-лосс</span>
+      <span class="micro" id="tpslArrow">▾</span>
+    </div>
+    <div id="tpslBox" style="display:none;">
+      <div class="row gap2 mt2">
+        <div class="tp-field">
+          <label class="micro" style="color:var(--green);">TAKE PROFIT</label>
+          <input class="input mono" id="tpPrice" type="number" inputmode="decimal" placeholder="цена">
+          <div class="row gap1 mt1">
+            <button class="mini-chip" data-tp="1">+1%</button>
+            <button class="mini-chip" data-tp="2">+2%</button>
+            <button class="mini-chip" data-tp="5">+5%</button>
+          </div>
+        </div>
+        <div class="tp-field">
+          <label class="micro" style="color:var(--red);">STOP LOSS</label>
+          <input class="input mono" id="slPrice" type="number" inputmode="decimal" placeholder="цена">
+          <div class="row gap1 mt1">
+            <button class="mini-chip" data-sl="1">−1%</button>
+            <button class="mini-chip" data-sl="2">−2%</button>
+            <button class="mini-chip" data-sl="5">−5%</button>
+          </div>
+        </div>
+      </div>
+      <div class="micro mt2" id="tpslInfo" style="text-align:center;"></div>
+    </div>
+
     <div class="trade-btns mt4">
       <button class="btn btn-green" id="btnLong">▲ LONG</button>
       <button class="btn btn-red" id="btnShort">▼ SHORT</button>
     </div>
   </div>
+
+  <div id="termPosBox" class="mt3"></div>
 </section>
 
 <!-- ================= PORTFOLIO ================= -->
@@ -644,6 +735,7 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
   <div class="tabs2 mt5">
     <button class="tab2 active" data-ptab="pos">Позиции<span class="cnt" id="cntPos">0</span></button>
     <button class="tab2" data-ptab="hist">История<span class="cnt" id="cntHist" style="background:var(--card2);color:var(--txt2);">0</span></button>
+    <button class="tab2" data-ptab="stats">Статистика</button>
   </div>
   <div id="pfBody"></div>
 </section>
@@ -826,7 +918,7 @@ const S = {
   marketFilter:'all', search:'', coinMeta:{}, mktLimit:60, chType:'base', chSel:null, adminStat:null,
   acc:{ active:true, tier:10000, stage:1, balance:10000, startDay:10000, profitDays:0, dayPnlPeak:0, status:'RUN' },
   positions:[], history:[], nextId:1, payoutReq:[],
-  equityHist:[], ptab:'pos', stab:'signals', tier:'free', wallet:{}, chat:[], user:null,
+  equityHist:[], alerts:[], ptab:'pos', stab:'signals', tier:'free', wallet:{}, chat:[], user:null,
   indA:[{n:'EMA',p:{p:21}},{n:'RSI',p:{p:14,lo:30,hi:70}}], showOB:false, draws:{}, src:'DEMO'
 };
 
@@ -977,26 +1069,30 @@ function freeMargin(){ return Math.max(0, S.acc.balance - usedMargin()); }
 function liqPrice(p){ const dir=p.side==='LONG'?1:-1; return p.entry*(1 - dir*(1/p.lev)*0.95); }
 
 function openPosition(side){
-  if(S.acc.status!=='RUN'){ toast('Челлендж завершён — активируй новый счёт','⚠️'); haptic('err'); return; }
+  const blk=tradingBlocked();
+  if(blk){ toast(blk,'🚫'); haptic('err'); return; }
+  if(S.acc.status!=='RUN' && S.acc.status!=='PASS'){ toast('Счёт неактивен','⚠️'); haptic('err'); return; }
   const margin=parseFloat($('termMargin').value)||0;
   const lev=parseInt($('levSlider').value)||1;
   if(margin<10){ toast('Минимальная маржа — $10','⚠️'); haptic('err'); return; }
   if(margin>freeMargin()){ toast('Недостаточно свободной маржи','⚠️'); haptic('err'); return; }
   const sym=S.term.symbol, entry=priceOf(sym);
   const qty=margin*lev/entry;
-  S.positions.push({ id:S.nextId++, symbol:sym, side, margin, lev, entry, qty, opened:Date.now() });
+  const ts=readTPSL(side, entry);
+  S.positions.push({ id:S.nextId++, symbol:sym, side, margin, lev, entry, qty, opened:Date.now(), tp:ts.tp, sl:ts.sl });
+  const tpi=$('tpPrice'), sli=$('slPrice'); if(tpi) tpi.value=''; if(sli) sli.value=''; tpslInfo();
   persistState();
   haptic('ok'); toast(`${side} ${sym.replace('USDT','')} x${lev} открыт по ${fmt(entry, decOf(sym))}`, side==='LONG'?'🟢':'🔴');
   renderAll();
 }
-function closePosition(id){
+function closePosition(id, reason){
   const i=S.positions.findIndex(p=>p.id===id); if(i<0) return;
   const p=S.positions[i]; const pnl=posPnl(p); const exit=priceOf(p.symbol);
   S.acc.balance+=pnl;
-  S.history.unshift({ ...p, exit, pnl, closed:Date.now() });
+  S.history.unshift({ ...p, exit, pnl, closed:Date.now(), auto:reason||null });
   persistState();
   S.positions.splice(i,1);
-  haptic('ok'); toast(`Закрыто: ${pnl>=0?'+':''}${fUsd(pnl)}`, pnl>=0?'💰':'📉');
+  haptic('ok'); toast((reason==='TP'?'Тейк-профит: ':reason==='SL'?'Стоп-лосс: ':'Закрыто: ')+(pnl>=0?'+':'')+fUsd(pnl), pnl>=0?'💰':'📉');
   checkChallenge(); renderAll();
 }
 function closeAll(){ [...S.positions].forEach(p=>closePosition(p.id)); }
@@ -1012,18 +1108,61 @@ function challengeTarget(){ const t = S.acc.stage===1?RULES.target1:RULES.target
 function challengeStop(){ return S.acc.tier*(1-RULES.maxDD/100); }
 function dayStop(){ return S.acc.startDay*(1-RULES.dailyLoss/100); }
 
+function forceCloseAll(reason){
+  [...S.positions].forEach(p=>{
+    const pnl=posPnl(p), exit=priceOf(p.symbol);
+    S.acc.balance+=pnl;
+    S.history.unshift({ ...p, exit, pnl, closed:Date.now(), auto:reason });
+  });
+  S.positions=[];
+}
+function tradingBlocked(){
+  if(!S.acc) return false;
+  if(S.acc.status==='FAIL') return S.acc.failReason ? ('Счёт закрыт: '+S.acc.failReason) : 'Счёт заблокирован: нарушен лимит просадки.';
+  return false;
+}
 function checkChallenge(){
-  if(S.acc.status!=='RUN') return;
+  if(!S.acc || S.acc.status==='FAIL') return;
   const eq=equity();
-  if(eq<=challengeStop() || eq<=dayStop()){
-    S.acc.status='FAIL'; haptic('err'); toast('Лимит просадки нарушен — челлендж не пройден','💥'); return;
+  const funded = S.acc.status==='PASS';
+  const hitTotal = eq<=challengeStop();
+  const hitDaily = eq<=dayStop();
+  if(hitTotal || hitDaily){
+    forceCloseAll(hitTotal?'maxDD':'dailyLoss');
+    S.acc.status='FAIL';
+    S.acc.failReason = hitTotal?('превышена общая просадка −'+RULES.maxDD+'%'):('превышен дневной лимит −'+RULES.dailyLoss+'%');
+    S.acc.failedAt=Date.now();
+    persistState(); haptic('err');
+    toast(hitTotal?'Общая просадка превышена — счёт закрыт':'Дневной лимит превышен — счёт закрыт','💥');
+    renderAll(); return;
   }
+  if(funded) return;
   if(eq>=challengeTarget()){
-    if(S.acc.stage===1){ S.acc.stage=2; S.acc.startDay=eq; haptic('ok'); toast('Этап 1 пройден! Открыт этап 2 🎉','🏆'); }
-    else { S.acc.status='PASS';
-      if(!S.acc.fundedAt){ S.acc.fundedAt=Date.now(); persistState(); }
-      haptic('ok'); toast('Челлендж пройден! Капитал фирмы твой 👑','👑'); }
+    forceCloseAll('stage');
+    if(S.acc.stage===1){
+      S.acc.stage=2; S.acc.balance=eq; S.acc.startDay=eq; S.acc.profitDays=0; S.acc.dayPnlPeak=0;
+      persistState(); haptic('ok'); toast('Этап 1 пройден! Открыт этап 2','🏆'); showStageModal(2);
+    } else {
+      S.acc.status='PASS'; S.acc.balance=eq; S.acc.startDay=eq;
+      if(!S.acc.fundedAt) S.acc.fundedAt=Date.now();
+      persistState(); haptic('ok'); toast('Челлендж пройден! Фандед-счёт активирован','👑'); showStageModal('funded');
+    }
+    renderAll();
   }
+}
+function showStageModal(stage){
+  const funded = stage==='funded';
+  $('sheetContent').innerHTML='<div style="text-align:center;padding:6px 0;">'+
+    '<div style="font-size:52px;">'+(funded?'👑':'🏆')+'</div>'+
+    '<div class="h2 mt3">'+(funded?'Фандед-счёт активирован':'Этап 1 пройден')+'</div>'+
+    '<div class="small mt3" style="color:var(--txt2);line-height:1.65;">'+
+      (funded
+        ? 'Теперь вы торгуете капиталом фирмы с профит-сплитом <b style="color:var(--gold);">80%</b>.<br><br>Цели по прибыли больше нет — важна стабильность. Лимиты просадки остаются.<br><br>Первая заявка на выплату — через <b>14 дней</b>.'
+        : 'Открыт <b>этап 2</b>: цель +'+RULES.target2+'%.<br><br>Позиции закрыты, баланс зафиксирован. Лимиты просадки прежние.')+
+    '</div>'+
+    '<button class="btn btn-gold btn-block mt4" id="stgOk">'+(funded?'К кошельку':'Продолжить')+'</button></div>';
+  $('sheetVeil').classList.add('open');
+  $('stgOk').addEventListener('click',()=>{ closeSheet(); go(funded?'wallet':'accounts'); });
 }
 function startChallenge(size, fee){
   S.acc={ active:true, tier:size, stage:1, balance:size, startDay:size, profitDays:0, dayPnlPeak:0, status:'RUN' };
@@ -1561,9 +1700,16 @@ function drawTermChart(){
   });
   // позиции
   S.positions.filter(p=>p.symbol===S.term.symbol).forEach(p=>{
-    const y=Y(p.entry); if(y<priceTop||y>priceBottom) return;
-    x.setLineDash([4,4]); x.strokeStyle=p.side==='LONG'?'rgba(43,255,158,.7)':'rgba(255,59,87,.7)';
-    x.lineWidth=1.2; x.beginPath(); x.moveTo(plotL,y); x.lineTo(plotR,y); x.stroke(); x.setLineDash([]);
+    const drawL=(price,color,label)=>{
+      if(!price) return; const y=Y(price); if(y<priceTop||y>priceBottom) return;
+      x.setLineDash([4,4]); x.strokeStyle=color; x.lineWidth=1.2;
+      x.beginPath(); x.moveTo(plotL,y); x.lineTo(plotR,y); x.stroke(); x.setLineDash([]);
+      x.fillStyle=color; x.font='9px JetBrains Mono'; x.fillText(label, plotL+4, y-5);
+      x.font='10px JetBrains Mono'; x.fillStyle='rgba(234,247,255,0.35)';
+    };
+    drawL(p.entry, p.side==='LONG'?'rgba(43,255,158,.7)':'rgba(255,59,87,.7)', (p.side==='LONG'?'LONG':'SHORT')+' x'+p.lev);
+    drawL(p.tp, 'rgba(43,255,158,.85)', 'TP');
+    drawL(p.sl, 'rgba(255,59,87,.85)', 'SL');
   });
   // ПОСТРОЕНИЯ
   x.save(); x.beginPath(); x.rect(plotL,priceTop,plotR-plotL,priceBottom-priceTop+2); x.clip();
@@ -1746,6 +1892,7 @@ function renderPortfolio(){
   $('cntPos').textContent=S.positions.length;
   $('cntHist').textContent=S.history.length;
   const body=$('pfBody'); body.innerHTML='';
+  if(S.ptab==='stats'){ renderStats(body); return; }
   if(S.ptab==='pos'){
     if(!S.positions.length){ body.innerHTML='<div class="empty"><div class="big">🐂</div>Нет открытых позиций.<br>Бык ждёт твой первый трейд.</div>'; return; }
     S.positions.forEach(p=>{
@@ -1833,7 +1980,7 @@ function renderAll(){
   if(S.screen==='accounts') renderAccounts();
   if(S.screen==='market') updateMarketPrices();
   if(S.screen==='portfolio') renderPortfolio();
-  if(S.screen==='terminal') renderTerminal();
+  if(S.screen==='terminal'){ renderTerminal(); renderTermPositions(); }
 }
 
 /* ============ EVENTS ============ */
@@ -1883,6 +2030,8 @@ function openTfSheet(){
     await loadKlines(S.term.symbol, S.term.interval); drawTermChart();
   }));
 }
+tpslInit();
+const sb=$('setBtn'); if(sb) sb.addEventListener('click', openSettings);
 $('levSlider').addEventListener('input', updateNotional);
 $('termMargin').addEventListener('input', updateNotional);
 document.querySelectorAll('[data-mpct]').forEach(b=>b.addEventListener('click', ()=>{
@@ -2095,6 +2244,8 @@ function buildToolRail(){
   ob.addEventListener('click', ()=>{ S.showOB=!S.showOB; ob.classList.toggle('active',S.showOB); haptic(); drawTermChart(); });
   const dp=mk('depthBtn','<svg viewBox="0 0 24 24" width="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h7M4 10h5M4 14h8M4 18h6"/><path d="M20 6h-4M20 10h-6M20 14h-3M20 18h-5"/></svg>','Стакан');
   dp.addEventListener('click', openDepthSheet);
+  const al=mk('alertBtn','<svg viewBox="0 0 24 24" width="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>','Алерты');
+  al.addEventListener('click', openAlerts);
   syncRail();
 }
 function typeSvg(t){
@@ -2539,6 +2690,422 @@ async function pullState(){ if(!S.user) return;
       renderAll(); } }catch(e){} }
 
 
+
+
+
+
+/* ============ ЦЕНОВЫЕ АЛЕРТЫ ============ */
+function loadAlerts(){ try{ const a=localStorage.getItem('nx_alerts'); if(a) S.alerts=JSON.parse(a); }catch(e){} S.alerts=S.alerts||[]; }
+function saveAlerts(){ try{ localStorage.setItem('nx_alerts', JSON.stringify(S.alerts||[])); }catch(e){} }
+function checkAlerts(){
+  (S.alerts||[]).forEach(a=>{
+    if(a.fired) return;
+    const px=priceOf(a.sym); if(!px) return;
+    if((a.dir==='above' && px>=a.price) || (a.dir==='below' && px<=a.price)){
+      a.fired=true; a.firedAt=Date.now(); saveAlerts(); haptic('ok');
+      toast(a.sym.replace('USDT','')+' '+(a.dir==='above'?'выше':'ниже')+' '+fmt(a.price,decOf(a.sym)),'🔔');
+    }
+  });
+}
+function openAlerts(){
+  const sym=S.term.symbol, d=decOf(sym), px=priceOf(sym);
+  const list=(S.alerts||[]).filter(a=>!a.fired);
+  $('sheetContent').innerHTML='<div class="h2" style="text-align:center;">Алерты по цене</div>'+
+    '<div class="small mt2" style="text-align:center;color:var(--txt2);">'+sym.replace('USDT','')+' сейчас '+fmt(px,d)+'</div>'+
+    '<div class="prm mt4"><label>Цена</label><input class="input mono" id="alPrice" type="number" placeholder="'+fmt(px,d)+'"></div>'+
+    '<div class="row gap2"><button class="btn btn-ghost grow" id="alAbove">↑ Выше</button>'+
+    '<button class="btn btn-ghost grow" id="alBelow">↓ Ниже</button></div>'+
+    (list.length?'<div class="micro mt4" style="margin-bottom:6px;">Активные ('+list.length+')</div>'+
+      list.map((a,i)=>'<div class="st-row"><span>'+a.sym.replace('USDT','')+' '+(a.dir==='above'?'↑':'↓')+' '+fmt(a.price,decOf(a.sym))+
+      '</span><button class="micro" data-adel="'+(S.alerts.indexOf(a))+'" style="color:var(--red);font-weight:700;">Удалить</button></div>').join('')
+      :'<div class="micro mt4" style="text-align:center;color:var(--txt3);">Активных алертов нет</div>');
+  $('sheetVeil').classList.add('open');
+  const add=(dir)=>{
+    const p=parseFloat($('alPrice').value);
+    if(!isFinite(p)||p<=0){ toast('Введите цену','⚠️'); return; }
+    S.alerts=S.alerts||[]; S.alerts.push({sym, price:p, dir, fired:false, ts:Date.now()});
+    saveAlerts(); haptic('ok'); toast('Алерт создан','🔔'); openAlerts();
+  };
+  $('alAbove').addEventListener('click',()=>add('above'));
+  $('alBelow').addEventListener('click',()=>add('below'));
+  $('sheetContent').querySelectorAll('[data-adel]').forEach(b=>b.addEventListener('click',()=>{
+    S.alerts.splice(+b.dataset.adel,1); saveAlerts(); haptic(); openAlerts();
+  }));
+}
+
+/* ============ НАСТРОЙКИ ============ */
+function openSettings(){
+  const st=tradeStats();
+  $('sheetContent').innerHTML='<div class="h2" style="text-align:center;">Настройки</div>'+
+    '<div class="card mt4"><div class="st-row"><span>Аккаунт</span><b>'+(S.user?S.user.name:'Гость')+'</b></div>'+
+    '<div class="st-row"><span>Тариф</span><b style="color:var(--gold);">'+(S.tier||'free').toUpperCase()+'</b></div>'+
+    '<div class="st-row"><span>Академия</span><b>'+acadCount()+' / '+ACADEMY_TOTAL+'</b></div>'+
+    '<div class="st-row"><span>Сделок в истории</span><b>'+(st?st.total:0)+'</b></div></div>'+
+
+    '<div class="micro mt4" style="margin-bottom:6px;">ДАННЫЕ</div>'+
+    '<button class="btn btn-ghost btn-block" id="setExport">📤 Выгрузить историю сделок (CSV)</button>'+
+    '<button class="btn btn-ghost btn-block mt2" id="setClearDraws">🧹 Очистить все построения на графиках</button>'+
+    '<button class="btn btn-ghost btn-block mt2" id="setReset" style="border-color:rgba(255,59,87,.4);color:var(--red);">♻️ Сбросить демо-счёт</button>'+
+
+    '<div class="micro mt5" style="text-align:center;color:var(--txt3);line-height:1.6;">Nexus Prop · демо-режим<br>Торговля сопряжена с риском потери средств.<br>Материалы не являются инвестиционной рекомендацией.</div>';
+  $('sheetVeil').classList.add('open');
+  $('setExport').addEventListener('click',exportHistory);
+  $('setClearDraws').addEventListener('click',()=>{ S.draws={}; saveDraws(); toast('Построения очищены','🧹'); haptic(); });
+  $('setReset').addEventListener('click',()=>{
+    $('sheetContent').innerHTML='<div style="text-align:center;padding:10px;"><div style="font-size:40px;">♻️</div>'+
+      '<div class="h2 mt3">Сбросить демо-счёт?</div>'+
+      '<div class="small mt2" style="color:var(--txt2);">Баланс вернётся к $10 000, позиции и история будут удалены. Академия и настройки сохранятся.</div>'+
+      '<button class="btn btn-gold btn-block mt4" id="rsYes" style="background:var(--red);color:#fff;">Да, сбросить</button>'+
+      '<button class="btn btn-ghost btn-block mt2" id="rsNo">Отмена</button></div>';
+    $('rsYes').addEventListener('click',()=>{
+      S.acc={ active:true, tier:10000, stage:1, balance:10000, startDay:10000, profitDays:0, dayPnlPeak:0, status:'RUN' };
+      S.positions=[]; S.history=[]; S.equityHist=[]; S.payoutReq=[];
+      persistState(); closeSheet(); haptic('ok'); toast('Демо-счёт сброшен','♻️'); go('home');
+    });
+    $('rsNo').addEventListener('click',openSettings);
+  });
+}
+function exportHistory(){
+  const h=S.history||[];
+  if(!h.length){ toast('История пуста','📭'); return; }
+  const rows=[['Дата','Монета','Сторона','Плечо','Вход','Выход','Маржа','PnL','Закрытие']];
+  h.forEach(t=>rows.push([new Date(t.closed).toLocaleString('ru-RU'), t.symbol, t.side, 'x'+t.lev,
+    t.entry, t.exit, t.margin, t.pnl.toFixed(2), t.auto||'вручную']));
+  const csv=rows.map(r=>r.join(';')).join('\n');
+  try{
+    const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
+    const url=URL.createObjectURL(blob); const a=document.createElement('a');
+    a.href=url; a.download='nexus-trades.csv'; a.click(); URL.revokeObjectURL(url);
+    toast('Файл выгружен','📤'); haptic('ok');
+  }catch(e){ toast('Не удалось выгрузить','⚠️'); }
+}
+
+/* ============ ОНБОРДИНГ ============ */
+const ONB=[
+ {ic:'🎯', t:'Пройди челлендж', d:'Два этапа: +5% и +8% прибыли при лимите просадки. Пройдёшь — получишь фандед-счёт с профит-сплитом 80%.'},
+ {ic:'📊', t:'Профессиональный терминал', d:'47 индикаторов, 42 инструмента разметки, стакан, ордер-блоки, TP/SL. Всё как в TradingView, но в Telegram.'},
+ {ic:'🎓', t:'Академия с наставником', d:'11 модулей от основ до Smart Money, интерактивные тесты и ИИ-наставник, который подскажет на каждом шаге.'},
+ {ic:'💰', t:'Реальные выплаты', d:'После фандед-счёта и 14 дней стабильной торговли — заявка на вывод прибыли в стейблкоинах.'}
+];
+function maybeOnboarding(){
+  try{ if(localStorage.getItem('nx_onb')) return; }catch(e){ return; }
+  let i=0;
+  const show=()=>{
+    const o=ONB[i];
+    $('sheetContent').innerHTML='<div style="text-align:center;padding:6px 0;">'+
+      '<div style="font-size:52px;">'+o.ic+'</div>'+
+      '<div class="h2 mt3">'+o.t+'</div>'+
+      '<div class="small mt3" style="color:var(--txt2);line-height:1.65;">'+o.d+'</div>'+
+      '<div class="row gap1 mt4" style="justify-content:center;">'+ONB.map((_,j)=>'<span style="width:'+(j===i?'20px':'6px')+';height:6px;border-radius:99px;background:'+(j===i?'var(--gold)':'var(--line2)')+';transition:all .3s;"></span>').join('')+'</div>'+
+      '<button class="btn btn-gold btn-block mt4" id="onbNext">'+(i<ONB.length-1?'Далее':'Начать')+'</button>'+
+      (i<ONB.length-1?'<button class="btn btn-ghost btn-block mt2" id="onbSkip">Пропустить</button>':'')+'</div>';
+    $('sheetVeil').classList.add('open');
+    $('onbNext').addEventListener('click',()=>{
+      if(i<ONB.length-1){ i++; haptic(); show(); }
+      else { try{ localStorage.setItem('nx_onb','1'); }catch(e){} closeSheet(); haptic('ok'); }
+    });
+    const sk=$('onbSkip'); if(sk) sk.addEventListener('click',()=>{ try{ localStorage.setItem('nx_onb','1'); }catch(e){} closeSheet(); });
+  };
+  setTimeout(show, 900);
+}
+
+/* ============ СТАТИСТИКА ТРЕЙДЕРА ============ */
+function tradeStats(){
+  const h=S.history||[];
+  if(!h.length) return null;
+  const wins=h.filter(t=>t.pnl>0), losses=h.filter(t=>t.pnl<=0);
+  const gp=wins.reduce((s,t)=>s+t.pnl,0), gl=Math.abs(losses.reduce((s,t)=>s+t.pnl,0));
+  const rs=h.map(t=>t.margin?t.pnl/t.margin:0);
+  let cur=0, best=0, worst=0, cw=0, cl=0;
+  h.slice().reverse().forEach(t=>{
+    if(t.pnl>0){ cw++; cl=0; if(cw>best) best=cw; } else { cl++; cw=0; if(cl>worst) worst=cl; }
+  });
+  const bySym={}; h.forEach(t=>{ bySym[t.symbol]=(bySym[t.symbol]||0)+t.pnl; });
+  const bestSym=Object.entries(bySym).sort((a,b)=>b[1]-a[1])[0];
+  const worstSym=Object.entries(bySym).sort((a,b)=>a[1]-b[1])[0];
+  return {
+    total:h.length, wins:wins.length, losses:losses.length,
+    winrate: h.length? wins.length/h.length*100 : 0,
+    pf: gl>0 ? gp/gl : (gp>0?99:0),
+    net: gp-gl,
+    avgWin: wins.length? gp/wins.length : 0,
+    avgLoss: losses.length? gl/losses.length : 0,
+    avgR: rs.length? rs.reduce((a,b)=>a+b,0)/rs.length : 0,
+    bestTrade: Math.max(...h.map(t=>t.pnl)),
+    worstTrade: Math.min(...h.map(t=>t.pnl)),
+    streakW:best, streakL:worst,
+    bestSym: bestSym?bestSym[0].replace('USDT',''):'—', bestSymPnl: bestSym?bestSym[1]:0,
+    worstSym: worstSym?worstSym[0].replace('USDT',''):'—', worstSymPnl: worstSym?worstSym[1]:0,
+    autoSL: h.filter(t=>t.auto==='SL').length, autoTP: h.filter(t=>t.auto==='TP').length
+  };
+}
+function renderStats(body){
+  const s=tradeStats();
+  if(!s){ body.innerHTML='<div class="empty-st"><div class="es-ic">📊</div><div class="h3">Статистики пока нет</div>'+
+    '<div class="small mt2" style="color:var(--txt2);">Закройте несколько сделок — здесь появится анализ вашей торговли: винрейт, профит-фактор, серии и лучшие инструменты.</div>'+
+    '<button class="btn btn-gold btn-block mt4" data-go="market">Перейти к торговле</button></div>'; return; }
+  const grade = s.pf>=2 && s.winrate>=45 ? ['Отличная статистика','var(--green)'] :
+                s.pf>=1.3 ? ['Рабочая статистика','var(--gold)'] :
+                s.pf>=1 ? ['На грани безубытка','var(--gold)'] : ['Стратегия убыточна','var(--red)'];
+  body.innerHTML=
+   '<div class="hero-card"><div class="row between"><span class="micro">ОЦЕНКА ТОРГОВЛИ</span>'+
+   '<span class="badge" style="background:'+grade[1]+'22;color:'+grade[1]+';">'+grade[0]+'</span></div>'+
+   '<div class="equity mt2" style="color:'+(s.net>=0?'var(--green)':'var(--red)')+';">'+(s.net>=0?'+':'')+fUsd(s.net)+'</div>'+
+   '<div class="small mt2" style="color:var(--txt2);">чистый результат за '+s.total+' сделок</div></div>'+
+
+   '<div class="stat-grid mt3">'+
+   '<div class="stat-card"><div class="sv" style="color:'+(s.winrate>=50?'var(--green)':'var(--gold)')+';">'+s.winrate.toFixed(0)+'%</div><div class="sl">Винрейт · '+s.wins+'W / '+s.losses+'L</div></div>'+
+   '<div class="stat-card"><div class="sv" style="color:'+(s.pf>=1.5?'var(--green)':s.pf>=1?'var(--gold)':'var(--red)')+';">'+(s.pf>=99?'∞':s.pf.toFixed(2))+'</div><div class="sl">Профит-фактор</div></div>'+
+   '<div class="stat-card"><div class="sv">'+(s.avgR>=0?'+':'')+(s.avgR*100).toFixed(1)+'%</div><div class="sl">Средний результат</div></div>'+
+   '<div class="stat-card"><div class="sv" style="color:var(--green);">'+s.streakW+'</div><div class="sl">Лучшая серия побед</div></div>'+
+   '</div>'+
+
+   '<div class="card mt3"><div class="h3" style="font-size:14px;">Разбор сделок</div>'+
+   '<div class="st-row mt3"><span>Средняя прибыль</span><b style="color:var(--green);">+'+fUsd(s.avgWin)+'</b></div>'+
+   '<div class="st-row"><span>Средний убыток</span><b style="color:var(--red);">−'+fUsd(s.avgLoss)+'</b></div>'+
+   '<div class="st-row"><span>Лучшая сделка</span><b style="color:var(--green);">+'+fUsd(s.bestTrade)+'</b></div>'+
+   '<div class="st-row"><span>Худшая сделка</span><b style="color:var(--red);">'+fUsd(s.worstTrade)+'</b></div>'+
+   '<div class="st-row"><span>Худшая серия убытков</span><b>'+s.streakL+'</b></div>'+
+   '<div class="st-row"><span>Закрыто по TP / SL</span><b>'+s.autoTP+' / '+s.autoSL+'</b></div>'+
+   '</div>'+
+
+   '<div class="card mt3"><div class="h3" style="font-size:14px;">Инструменты</div>'+
+   '<div class="st-row mt3"><span>Лучший</span><b style="color:var(--green);">'+s.bestSym+' · +'+fUsd(Math.abs(s.bestSymPnl))+'</b></div>'+
+   '<div class="st-row"><span>Худший</span><b style="color:var(--red);">'+s.worstSym+' · '+fUsd(s.worstSymPnl)+'</b></div>'+
+   '</div>'+
+
+   '<div class="key-box mt3"><div class="micro" style="color:var(--gold);margin-bottom:6px;">СОВЕТ НАСТАВНИКА</div>'+
+   '<div class="small" style="color:var(--txt2);line-height:1.6;">'+statsAdvice(s)+'</div></div>';
+}
+function statsAdvice(s){
+  if(s.total<10) return 'Пока мало данных для выводов. Наберите хотя бы 20–30 сделок, прежде чем оценивать систему — меньшая выборка это случайность, а не статистика.';
+  if(s.pf<1) return 'Профит-фактор ниже 1 — стратегия теряет деньги. Проверьте: соблюдаете ли соотношение риск/прибыль 1:2 и не режете ли прибыль раньше времени. Разберите убыточные сделки: сколько из них были вне правил?';
+  if(s.avgLoss>s.avgWin*1.2) return 'Средний убыток больше средней прибыли — классический признак того, что прибыль фиксируется рано, а убытки пересиживаются. Ставьте тейк минимум в 2 раза дальше стопа и не двигайте его ближе.';
+  if(s.winrate<35) return 'Низкий винрейт. При соотношении 1:3 это допустимо, но проверьте качество входов: возможно, вы входите без подтверждения или против старшего тренда.';
+  if(s.streakL>=5) return 'Была серия из '+s.streakL+' убытков подряд. Такие серии нормальны, но именно в них теряют счета. Убедитесь, что после 2–3 стопов подряд вы делаете паузу, а не увеличиваете риск.';
+  if(s.pf>=2) return 'Отличные показатели. Главная задача теперь — не менять систему и не повышать риск после успеха. Именно это чаще всего разрушает хорошую статистику.';
+  return 'Статистика рабочая. Продолжайте вести журнал и следить, чтобы средняя прибыль оставалась выше среднего убытка.';
+}
+
+/* ============ TP / SL ============ */
+function tpslInit(){
+  const tg=$('tpslToggle');
+  if(tg) tg.addEventListener('click',()=>{
+    const b=$('tpslBox'); const open=b.style.display!=='none';
+    b.style.display=open?'none':'block'; $('tpslArrow').textContent=open?'▾':'▴'; haptic();
+  });
+  document.querySelectorAll('[data-tp]').forEach(b=>b.addEventListener('click',()=>{
+    const px=priceOf(S.term.symbol), pct=+b.dataset.tp/100;
+    $('tpPrice').value=(px*(1+pct)).toFixed(decOf(S.term.symbol)); tpslInfo(); haptic();
+  }));
+  document.querySelectorAll('[data-sl]').forEach(b=>b.addEventListener('click',()=>{
+    const px=priceOf(S.term.symbol), pct=+b.dataset.sl/100;
+    $('slPrice').value=(px*(1-pct)).toFixed(decOf(S.term.symbol)); tpslInfo(); haptic();
+  }));
+  ['tpPrice','slPrice'].forEach(id=>{ const el=$(id); if(el) el.addEventListener('input', tpslInfo); });
+}
+function tpslInfo(){
+  const el=$('tpslInfo'); if(!el) return;
+  const px=priceOf(S.term.symbol);
+  const tp=parseFloat($('tpPrice').value), sl=parseFloat($('slPrice').value);
+  const m=parseFloat($('termMargin').value)||0, l=parseInt($('levSlider').value)||1;
+  const notional=m*l, qty=notional/px;
+  let s=[];
+  if(isFinite(tp)&&tp>0){ const p=(tp-px)*qty; s.push('<span style="color:var(--green);">TP: '+(p>=0?'+':'')+fUsd(p)+'</span>'); }
+  if(isFinite(sl)&&sl>0){ const p=(sl-px)*qty; s.push('<span style="color:var(--red);">SL: '+fUsd(p)+'</span>'); }
+  if(isFinite(tp)&&isFinite(sl)&&tp>0&&sl>0){
+    const rr=Math.abs(tp-px)/Math.abs(px-sl);
+    s.push('<span style="color:var(--gold);">RR 1:'+rr.toFixed(1)+'</span>');
+  }
+  el.innerHTML=s.join(' · ');
+}
+function readTPSL(side, entry){
+  let tp=parseFloat($('tpPrice').value), sl=parseFloat($('slPrice').value);
+  if(!isFinite(tp)||tp<=0) tp=null;
+  if(!isFinite(sl)||sl<=0) sl=null;
+  // валидация направления
+  if(side==='LONG'){ if(tp&&tp<=entry) tp=null; if(sl&&sl>=entry) sl=null; }
+  else { if(tp&&tp>=entry) tp=null; if(sl&&sl<=entry) sl=null; }
+  return {tp,sl};
+}
+function checkTPSL(){
+  if(!S.positions.length) return;
+  [...S.positions].forEach(p=>{
+    const px=priceOf(p.symbol); if(!px) return;
+    let hit=null;
+    if(p.side==='LONG'){
+      if(p.tp && px>=p.tp) hit='TP';
+      else if(p.sl && px<=p.sl) hit='SL';
+    } else {
+      if(p.tp && px<=p.tp) hit='TP';
+      else if(p.sl && px>=p.sl) hit='SL';
+    }
+    if(hit){ closePosition(p.id, hit); }
+  });
+}
+/* ============ ПОЗИЦИИ В ТЕРМИНАЛЕ ============ */
+function renderTermPositions(){
+  const box=$('termPosBox'); if(!box) return;
+  const list=S.positions;
+  if(!list.length){ box.innerHTML=''; return; }
+  const d=decOf(S.term.symbol);
+  box.innerHTML='<div class="row between" style="margin:4px 2px 8px;"><span class="h3" style="font-size:14px;">Открытые позиции ('+list.length+')</span>'+
+    (list.length>1?'<button class="micro" id="tCloseAll" style="color:var(--red);font-weight:700;">Закрыть все</button>':'')+'</div>'+
+    list.map(p=>{
+      const pnl=posPnl(p), pct=pnl/p.margin*100, up=pnl>=0;
+      const dd=decOf(p.symbol);
+      return '<div class="tpos"><div class="tpos-top">'+
+        '<span class="tpos-tag '+(p.side==='LONG'?'l':'s')+'">'+(p.side==='LONG'?'▲ LONG':'▼ SHORT')+' x'+p.lev+'</span>'+
+        '<b style="font-size:13px;">'+p.symbol.replace('USDT','')+'</b>'+
+        '<span class="mono" style="margin-left:auto;font-weight:800;color:'+(up?'var(--green)':'var(--red)')+';">'+
+        (up?'+':'')+fUsd(pnl)+' <span style="font-size:11px;">('+(up?'+':'')+pct.toFixed(1)+'%)</span></span></div>'+
+        '<div class="tpos-grid">'+
+          '<div>ВХОД<b>'+fmt(p.entry,dd)+'</b></div>'+
+          '<div>ТЕЙК<b style="color:'+(p.tp?'var(--green)':'var(--txt3)')+';">'+(p.tp?fmt(p.tp,dd):'—')+'</b></div>'+
+          '<div>СТОП<b style="color:'+(p.sl?'var(--red)':'var(--txt3)')+';">'+(p.sl?fmt(p.sl,dd):'—')+'</b></div>'+
+        '</div>'+
+        '<div class="tpos-act">'+
+          '<button data-edit="'+p.id+'">TP/SL</button>'+
+          '<button class="cls" data-close="'+p.id+'">Закрыть</button>'+
+        '</div></div>';
+    }).join('');
+  box.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>closePosition(+b.dataset.close)));
+  box.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>editTPSL(+b.dataset.edit)));
+  const ca=$('tCloseAll'); if(ca) ca.addEventListener('click',()=>{ closeAll(); haptic(); });
+}
+function editTPSL(id){
+  const p=S.positions.find(x=>x.id===id); if(!p) return;
+  const d=decOf(p.symbol), px=priceOf(p.symbol);
+  $('sheetContent').innerHTML='<div class="h2" style="text-align:center;">TP / SL · '+p.symbol.replace('USDT','')+'</div>'+
+    '<div class="small mt2" style="text-align:center;color:var(--txt2);">'+p.side+' x'+p.lev+' · вход '+fmt(p.entry,d)+' · сейчас '+fmt(px,d)+'</div>'+
+    '<div class="prm mt4"><label style="color:var(--green);">Тейк-профит</label><input class="input mono" id="eTp" type="number" value="'+(p.tp||'')+'" placeholder="цена"></div>'+
+    '<div class="prm"><label style="color:var(--red);">Стоп-лосс</label><input class="input mono" id="eSl" type="number" value="'+(p.sl||'')+'" placeholder="цена"></div>'+
+    '<div class="micro" id="eInfo" style="text-align:center;"></div>'+
+    '<button class="btn btn-gold btn-block mt3" id="eSave">Сохранить</button>'+
+    '<button class="btn btn-ghost btn-block mt2" id="eClear">Убрать TP/SL</button>';
+  $('sheetVeil').classList.add('open');
+  const info=()=>{
+    const tp=parseFloat($('eTp').value), sl=parseFloat($('eSl').value); let s=[];
+    if(isFinite(tp)&&tp>0){ const pr=(p.side==='LONG'?(tp-p.entry):(p.entry-tp))*p.qty; s.push('<span style="color:var(--green);">TP '+(pr>=0?'+':'')+fUsd(pr)+'</span>'); }
+    if(isFinite(sl)&&sl>0){ const pr=(p.side==='LONG'?(sl-p.entry):(p.entry-sl))*p.qty; s.push('<span style="color:var(--red);">SL '+fUsd(pr)+'</span>'); }
+    $('eInfo').innerHTML=s.join(' · ');
+  };
+  ['eTp','eSl'].forEach(i=>$(i).addEventListener('input',info)); info();
+  $('eSave').addEventListener('click',()=>{
+    let tp=parseFloat($('eTp').value), sl=parseFloat($('eSl').value);
+    if(!isFinite(tp)||tp<=0) tp=null; if(!isFinite(sl)||sl<=0) sl=null;
+    if(p.side==='LONG'){ if(tp&&tp<=p.entry){toast('TP должен быть выше входа','⚠️');return;} if(sl&&sl>=p.entry){toast('SL должен быть ниже входа','⚠️');return;} }
+    else { if(tp&&tp>=p.entry){toast('TP должен быть ниже входа','⚠️');return;} if(sl&&sl<=p.entry){toast('SL должен быть выше входа','⚠️');return;} }
+    p.tp=tp; p.sl=sl; persistState(); closeSheet(); haptic('ok'); toast('TP/SL сохранены','✅');
+    renderTermPositions(); drawTermChart();
+  });
+  $('eClear').addEventListener('click',()=>{ p.tp=null; p.sl=null; persistState(); closeSheet(); renderTermPositions(); drawTermChart(); });
+}
+
+/* ============ ACADEMY VISUALS (SVG-схемы) ============ */
+function svgCandles(data, opts){
+  opts=opts||{}; const W=opts.w||300, H=opts.h||150, pad=10;
+  const hi=Math.max(...data.map(d=>d[1])), lo=Math.min(...data.map(d=>d[2]));
+  const rng=(hi-lo)||1, sw=(W-pad*2)/data.length;
+  const Y=p=>pad+(hi-p)/rng*(H-pad*2);
+  let s='';
+  data.forEach((d,i)=>{
+    const [o,h,l,c]=d, x=pad+i*sw+sw/2, up=c>=o, col=up?'#2BFF9E':'#FF3B57';
+    const bw=Math.max(3,sw*0.55);
+    s+='<line x1="'+x+'" y1="'+Y(h)+'" x2="'+x+'" y2="'+Y(l)+'" stroke="'+col+'" stroke-width="1.4"/>';
+    s+='<rect x="'+(x-bw/2)+'" y="'+Math.min(Y(o),Y(c))+'" width="'+bw+'" height="'+Math.max(2,Math.abs(Y(c)-Y(o)))+'" fill="'+col+'" rx="1"/>';
+  });
+  (opts.lines||[]).forEach(L=>{ // [y1,y2,color,dash,label]
+    s+='<line x1="'+pad+'" y1="'+Y(L[0])+'" x2="'+(W-pad)+'" y2="'+Y(L[1])+'" stroke="'+L[2]+'" stroke-width="1.5" '+(L[3]?'stroke-dasharray="4 3"':'')+'/>';
+    if(L[4]) s+='<text x="'+(pad+4)+'" y="'+(Y(L[0])-5)+'" fill="'+L[2]+'" font-size="9" font-family="monospace">'+L[4]+'</text>';
+  });
+  (opts.zones||[]).forEach(Z=>{ // [top,bot,color,label,fromIdx]
+    const x0=pad+(Z[4]||0)*sw;
+    s+='<rect x="'+x0+'" y="'+Y(Z[0])+'" width="'+(W-pad-x0)+'" height="'+Math.abs(Y(Z[1])-Y(Z[0]))+'" fill="'+Z[2]+'" opacity="0.18"/>';
+    s+='<rect x="'+x0+'" y="'+Y(Z[0])+'" width="'+(W-pad-x0)+'" height="'+Math.abs(Y(Z[1])-Y(Z[0]))+'" fill="none" stroke="'+Z[2]+'" stroke-width="1" opacity="0.6"/>';
+    if(Z[3]) s+='<text x="'+(x0+4)+'" y="'+(Y(Z[0])+11)+'" fill="'+Z[2]+'" font-size="9" font-weight="700" font-family="monospace">'+Z[3]+'</text>';
+  });
+  (opts.marks||[]).forEach(M=>{ // [idx,price,text,color,dy]
+    const x=pad+M[0]*sw+sw/2;
+    s+='<text x="'+x+'" y="'+(Y(M[1])+(M[4]||0))+'" fill="'+(M[3]||'#22E4FF')+'" font-size="9.5" font-weight="700" text-anchor="middle" font-family="monospace">'+M[2]+'</text>';
+  });
+  (opts.arrows||[]).forEach(A=>{ // [i1,p1,i2,p2,color]
+    const x1=pad+A[0]*sw+sw/2, y1=Y(A[1]), x2=pad+A[2]*sw+sw/2, y2=Y(A[3]);
+    s+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+(A[4]||'#22E4FF')+'" stroke-width="1.6" stroke-dasharray="3 3"/>';
+    s+='<circle cx="'+x2+'" cy="'+y2+'" r="3" fill="'+(A[4]||'#22E4FF')+'"/>';
+  });
+  return '<svg class="viz" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet">'+(opts.bg!==false?'<rect width="'+W+'" height="'+H+'" fill="#070D15" rx="10"/>':'')+s+'</svg>';
+}
+function gen(n, start, drift, vol, seed){
+  let p=start, out=[], s=seed||7;
+  const rnd=()=>{ s=(s*9301+49297)%233280; return s/233280; };
+  for(let i=0;i<n;i++){ const o=p, ch=(rnd()-0.5)*vol+drift; const c=o+ch;
+    const h=Math.max(o,c)+rnd()*vol*0.45, l=Math.min(o,c)-rnd()*vol*0.45;
+    out.push([o,h,l,c]); p=c; }
+  return out;
+}
+/* Библиотека схем: id -> html */
+const VIZ_LIB={
+ pin_bull:()=>svgCandles([[100,101,99,100.4],[100.4,101,96,100.2],[100.2,101.5,99.8,101.2],[101.2,103,101,102.8]],
+   {marks:[[1,95.6,'ПИН-БАР','#22E4FF',12]], h:140}),
+ engulf_bull:()=>svgCandles([[102,102.4,101,101.2],[101.2,101.6,100.2,100.5],[100.4,103.4,100.1,103.2],[103.2,104.4,102.9,104.2]],
+   {marks:[[2,104,'ПОГЛОЩЕНИЕ','#2BFF9E',-4]], h:140}),
+ doji:()=>svgCandles([[100,100.6,99.4,100.05],[100.05,102,99.9,100],[100,100.4,99.5,99.6]],
+   {marks:[[1,102.5,'ДОДЖИ · равновесие','#EAC97A',-2]], h:140}),
+ hs:()=>svgCandles(
+   [[100,101,99.6,100.8],[100.8,103,100.5,102.6],[102.6,103.2,101,101.3],[101.3,106,101,105.6],[105.6,106,102,102.4],
+    [102.4,103.6,102,103.2],[103.2,103.8,100.4,100.8],[100.8,101.4,98,98.4],[98.4,99,95.6,96]],
+   {lines:[[101.2,101.2,'#FF3B57',true,'ЛИНИЯ ШЕИ']], marks:[[1,103.6,'Л','#7FA0BC',-2],[3,106.6,'ГОЛОВА','#EAC97A',-2],[5,104.2,'П','#7FA0BC',-2]], h:170}),
+ dbl_top:()=>svgCandles(
+   [[100,103,99.8,102.8],[102.8,105.4,102.4,105],[105,105.4,102,102.4],[102.4,103,101,101.4],[101.4,105.2,101.2,105],
+    [105,105.3,101.6,102],[102,102.4,99,99.4],[99.4,100,97,97.4]],
+   {lines:[[101,101,'#FF3B57',true,'ПОДДЕРЖКА']], marks:[[1,105.9,'ВЕРШИНА 1','#FF3B57',-2],[4,105.9,'ВЕРШИНА 2','#FF3B57',-2]], h:170}),
+ triangle:()=>svgCandles(
+   [[100,106,99.6,105.6],[105.6,106,100.6,101],[101,104.6,100.8,104.4],[104.4,104.8,101.6,102],[102,103.8,101.8,103.6],
+    [103.6,103.9,102.3,102.6],[102.6,103.3,102.4,103.1],[103.1,106.4,103,106.2]],
+   {lines:[[106.2,103.2,'#FF3B57',false,'СОПРОТИВЛЕНИЕ'],[99.8,102.8,'#2BFF9E',false,'ПОДДЕРЖКА']],
+    marks:[[7,107,'ПРОБОЙ','#2BFF9E',-2]], h:170}),
+ flag:()=>svgCandles(
+   [[100,100.4,99.6,100.2],[100.2,105.6,100,105.4],[105.4,106,104.4,104.6],[104.6,105.2,103.8,104],[104,104.6,103.2,103.4],
+    [103.4,104,102.8,103],[103,108.4,102.9,108.2]],
+   {lines:[[106.2,104.2,'#EAC97A',true,''],[104.6,102.6,'#EAC97A',true,'ФЛАГ']],
+    marks:[[1,106.6,'ИМПУЛЬС','#2BFF9E',-2],[6,108.9,'ПРОДОЛЖЕНИЕ','#2BFF9E',-2]], h:170}),
+ fib:()=>{ const d=[[100,100.4,99.8,100.2],[100.2,108,100,107.8],[107.8,108.1,105.6,105.8],[105.8,106.2,103.8,104],
+   [104,104.6,103.6,104.4],[104.4,108.6,104.2,108.4]];
+   return svgCandles(d,{lines:[[108,108,'#7FA0BC',true,'1.0 (100%)'],[106,106,'#2BFF9E',true,'0.236'],
+     [105,105,'#EAC97A',true,'0.382'],[104,104,'#22E4FF',true,'0.5'],[103,103,'#B98CFF',true,'0.618 — золотая'],[100,100,'#7FA0BC',true,'0']],
+     marks:[[3,102.6,'ЗОНА ВХОДА','#B98CFF',14]], h:190}); },
+ ob:()=>svgCandles(
+   [[100,100.6,99.4,100.2],[100.2,100.6,99.2,99.4],[99.4,99.8,98.6,99.6],[99.6,104.4,99.5,104.2],[104.2,104.8,103.4,104.6],
+    [104.6,105.2,102.2,102.6],[102.6,103.4,99.6,103.2],[103.2,106.4,103,106.2]],
+   {zones:[[99.6,98.6,'#2BFF9E','ORDER BLOCK',2]], marks:[[6,99,'РЕТЕСТ → ВХОД','#2BFF9E',14]], h:175}),
+ fvg:()=>svgCandles(
+   [[100,100.6,99.4,100.4],[100.4,101,100,100.8],[101.6,105.4,101.4,105.2],[105.2,105.8,104.4,104.8],
+    [104.8,105,102.2,102.4],[102.4,102.6,101.2,101.6],[101.6,106,101.4,105.8]],
+   {zones:[[101.4,101,'#22E4FF','FVG (имбаланс)',1]], marks:[[5,100.4,'ЗАПОЛНЕНИЕ','#22E4FF',12]], h:175}),
+ liq:()=>svgCandles(
+   [[100,103.6,99.8,103.4],[103.4,103.8,101.6,102],[102,103.7,101.8,103.5],[103.5,103.9,102,102.4],
+    [102.4,105.4,102.2,102.8],[102.8,103.2,99.6,100],[100,100.4,97.4,97.8]],
+   {lines:[[103.7,103.7,'#EAC97A',true,'СКОПЛЕНИЕ СТОПОВ']],
+    marks:[[4,105.9,'СНЯТИЕ ЛИКВИДНОСТИ','#FF3B57',-2],[6,97,'РАЗВОРОТ','#FF3B57',12]], h:175}),
+ bos:()=>svgCandles(
+   [[100,102.6,99.8,102.4],[102.4,102.8,100.8,101.2],[101.2,104.6,101,104.4],[104.4,104.8,102.6,103],
+    [103,105.8,102.8,105.6],[105.6,106,103.4,103.8],[103.8,104.2,101,101.4],[101.4,101.8,99,99.4]],
+   {lines:[[102.6,102.6,'#FF3B57',true,'CHoCH — слом структуры']],
+    marks:[[0,102.9,'HL','#2BFF9E',-2],[2,104.9,'HH','#2BFF9E',-2],[4,106.1,'HH','#2BFF9E',-2],[7,98.6,'ТРЕНД СЛОМАН','#FF3B57',12]], h:180}),
+ structure:()=>svgCandles(
+   [[100,101.6,99.6,101.4],[101.4,101.8,100.2,100.6],[100.6,103.6,100.4,103.4],[103.4,103.8,102,102.4],
+    [102.4,105.6,102.2,105.4],[105.4,105.8,104,104.4],[104.4,107.6,104.2,107.4]],
+   {marks:[[0,101.9,'H','#2BFF9E',-2],[1,99.9,'L','#EAC97A',12],[2,103.9,'HH','#2BFF9E',-2],[3,101.7,'HL','#EAC97A',12],
+     [4,105.9,'HH','#2BFF9E',-2],[5,103.7,'HL','#EAC97A',12]], h:175}),
+ rr:()=>svgCandles(gen(10,100,0.35,1.2,3),
+   {zones:[[104.5,102.6,'#2BFF9E','ТЕЙК · 2R',0],[102.2,101.4,'#FF3B57','СТОП · 1R',0]],
+    marks:[[5,102.5,'ВХОД','#EAC97A',-3]], h:165}),
+ mtf:()=>svgCandles(gen(14,100,0.28,1.4,11),
+   {lines:[[99,104.6,'#EAC97A',true,'ТРЕНД СТАРШЕГО ТФ']], marks:[[9,101.2,'ОТКАТ → ВХОД','#2BFF9E',14]], h:165})
+};
+function viz(id){ const f=VIZ_LIB[id]; return f? '<div class="viz-wrap">'+f()+'</div>' : ''; }
+
 /* ================= АКАДЕМИЯ ================= */
 const ACADEMY=[
 {id:'m1', t:'Основы рынка', ic:'📚', free:true, lessons:[
@@ -2595,7 +3162,7 @@ BTC ходит на 2% несколько раз в день. С плечом x5
 
 <b>Главное правило:</b> одна свеча ничего не значит. Значение имеет свеча <b>в контексте</b> — на уровне, после импульса, на объёме.`, k:['Тени показывают, где цену отбили','Одиночная свеча без контекста — не сигнал','Смотрите свечу на уровне, а не саму по себе']},
 
- {t:'Структура рынка: тренд простыми словами', c:`Тренд определяется не индикатором, а последовательностью экстремумов.
+ {v:'structure', t:'Структура рынка: тренд простыми словами', c:`Тренд определяется не индикатором, а последовательностью экстремумов.
 
 <b>Восходящий тренд:</b> каждый следующий максимум выше предыдущего, каждый минимум выше предыдущего (HH/HL).
 <b>Нисходящий:</b> максимумы ниже, минимумы ниже (LH/LL).
@@ -2618,7 +3185,7 @@ BTC ходит на 2% несколько раз в день. С плечом x5
 
 <b>Ошибка новичка:</b> рисовать десятки линий. Оставьте 2–4 ключевые зоны на рабочем таймфрейме.`, k:['Уровень — зона, а не тонкая линия','Пробитый уровень меняет роль','Ретест даёт лучшее соотношение риска']},
 
- {t:'Мультитаймфрейм: три экрана', c:`Одна из самых полезных привычек — смотреть три таймфрейма перед сделкой.
+ {v:'mtf', t:'Мультитаймфрейм: три экрана', c:`Одна из самых полезных привычек — смотреть три таймфрейма перед сделкой.
 
 <b>Старший (1D / 4H)</b> — куда идёт рынок в целом. Определяет, лонг вы ищете или шорт.
 <b>Рабочий (1H / 15м)</b> — где ключевые уровни и структура. Здесь план сделки.
@@ -2702,7 +3269,7 @@ BTC ходит на 2% несколько раз в день. С плечом x5
 
 <b>Никогда наоборот:</b> не выбирайте плечо, а потом ставьте стоп «куда влезет».`, k:['Стоп определяется графиком, не желанием','Риск на сделку 0.5–1% депозита','Объём = (Депозит × Риск) / Дистанция до стопа']},
 
- {t:'Соотношение риск/прибыль', c:`RR (risk/reward) — сколько вы получаете на единицу риска.
+ {v:'rr', t:'Соотношение риск/прибыль', c:`RR (risk/reward) — сколько вы получаете на единицу риска.
 
 При RR 1:2 достаточно <b>34% прибыльных сделок</b>, чтобы не терять.
 При RR 1:3 достаточно 25%.
@@ -2882,16 +3449,407 @@ BTC ходит на 2% несколько раз в день. С плечом x5
 <b>Неделя 4.</b> Если 80% сделок были по правилам и результат в плюсе по R — можно брать челлендж.
 
 <b>Если нет</b> — повторите неделю 2. Это не потеря времени, это экономия оплаты челленджа.`, k:['Неделя наблюдения без сделок','Демо с обязательным журналом','Челлендж только после 80% дисциплины']}
+]},
+{id:'m8', t:'Свечные паттерны', ic:'🕯', lessons:[
+ {v:'pin_bull', t:'Пин-бар: отказ от цены', c:`Свеча с длинной тенью и маленьким телом. Тень показывает, что цену увели в одну сторону, но рынок её вернул.
+
+<b>Бычий пин-бар</b> — длинная нижняя тень: продавцы продавили, покупатели выкупили.
+<b>Медвежий</b> — длинная верхняя тень: покупателей встретили продажами.
+
+<b>Критерии качества:</b>
+• тень минимум в 2 раза длиннее тела,
+• закрытие в верхней (для бычьего) трети свечи,
+• формируется <b>на уровне</b>, а не в пустоте,
+• предыдущее движение было направлено в сторону тени.
+
+<b>Вход:</b> по пробою вершины пин-бара. <b>Стоп:</b> за кончик тени.
+
+Пин-бар в середине диапазона — шум. Работает только на границах.`, k:['Тень минимум 2× тела','Только на уровне, не в пустоте','Стоп за кончик тени']},
+
+ {v:'engulf_bull', t:'Поглощение', c:`Свеча полностью перекрывает тело предыдущей и закрывается в противоположную сторону. Это смена контроля.
+
+<b>Бычье поглощение:</b> после падения зелёная свеча накрывает красную. Покупатели забрали инициативу.
+<b>Медвежье:</b> зеркально на вершине.
+
+<b>Что усиливает сигнал:</b>
+• поглощение на объёме выше среднего,
+• появление на уровне поддержки/сопротивления,
+• перекрытие нескольких предыдущих свечей сразу.
+
+<b>Вход:</b> по закрытию свечи поглощения или на небольшом откате.
+<b>Стоп:</b> за экстремум паттерна.
+
+Слабый вариант: поглощение внутри флэта — там оно ничего не значит.`, k:['Смена контроля покупателей/продавцов','Нужен объём и уровень','Стоп за экстремум паттерна']},
+
+ {v:'doji', t:'Доджи и неопределённость', c:`Доджи — открытие и закрытие почти совпадают. Это <b>пауза</b>, а не сигнал.
+
+<b>Как читать:</b>
+• Доджи после сильного тренда на уровне — импульс выдохся, возможен разворот.
+• Доджи в середине движения — просто передышка, торговать нечего.
+• Серия доджи — рынок в равновесии, готовится импульс.
+
+<b>Правило:</b> доджи сам по себе не даёт входа. Он даёт <b>предупреждение</b>. Входить нужно по следующей свече, которая покажет, кто победил.
+
+Это общее правило для всех однобарных паттернов: сигналом является не свеча, а её подтверждение.`, k:['Доджи = пауза, не разворот','Ждите подтверждающую свечу','На тренде без уровня — игнорировать']}
+]},
+
+{id:'m9', t:'Графические фигуры', ic:'📐', lessons:[
+ {v:'hs', t:'Голова и плечи', c:`Классическая фигура разворота: три вершины, средняя выше боковых, соединённые линией шеи.
+
+<b>Логика:</b> покупатели трижды пробовали продолжить рост. Второй раз получилось выше, третий — уже нет. Сила иссякла.
+
+<b>Как торговать:</b>
+• Сигнал возникает <b>только при пробое линии шеи</b>, а не при виде фигуры.
+• Часто после пробоя цена возвращается к шее — ретест даёт лучший вход с коротким стопом.
+• <b>Цель</b>: расстояние от головы до шеи, отложенное вниз от точки пробоя.
+• <b>Стоп</b>: за правым плечом.
+
+<b>Перевёрнутая</b> версия работает так же на развороте вниз-вверх.
+
+Не ищите фигуру там, где её нет — это самая «додумываемая» модель.`, k:['Вход только после пробоя шеи','Цель = высота головы от шеи','Стоп за правое плечо']},
+
+ {v:'dbl_top', t:'Двойная вершина и дно', c:`Цена дважды упирается в один уровень и не может его пройти.
+
+<b>Что это значит:</b> на уровне стоит крупный продавец (для вершины). Второй неудачный тест подтверждает, что предложение сильнее спроса.
+
+<b>Правила работы:</b>
+• Вторая вершина может быть чуть выше первой — это «ложный пробой», часто даже более сильный сигнал.
+• Вход — по пробою поддержки между вершинами.
+• Цель — высота фигуры вниз от пробоя.
+• Стоп — за максимум второй вершины.
+
+<b>Частая ошибка:</b> шортить прямо на второй вершине без подтверждения. Пока поддержка не пробита, тренд формально не сломан.`, k:['Подтверждение — пробой середины','Вторая вершина выше = ложный пробой','Не входить до пробоя уровня']},
+
+ {v:'triangle', t:'Треугольники и сжатие', c:`Диапазон сужается: максимумы ниже, минимумы выше. Волатильность падает — значит скоро будет импульс.
+
+<b>Виды:</b>
+• <b>Восходящий</b> (плоская вершина, растущие лои) — чаще пробой вверх.
+• <b>Нисходящий</b> (плоское дно, падающие хаи) — чаще вниз.
+• <b>Симметричный</b> — направление даёт старший тренд.
+
+<b>Как торговать:</b>
+• Не угадывать заранее — ждать пробоя с ростом объёма.
+• Ложные пробои часты: надёжнее входить по закрытию свечи за границей или на ретесте.
+• Цель — высота основания треугольника от точки пробоя.
+
+<b>Важно:</b> чем ближе к вершине треугольника, тем слабее импульс. Лучшие пробои — в первых двух третях фигуры.`, k:['Ждать пробой, а не угадывать','Пробой без объёма часто ложный','Цель = высота основания']},
+
+ {v:'flag', t:'Флаг: продолжение тренда', c:`После сильного импульса цена откатывает в узком наклонном канале — это флаг. Одна из самых надёжных фигур продолжения.
+
+<b>Почему работает:</b> импульс двигают крупные деньги. Откат — фиксация части прибыли мелкими участниками, а не разворот.
+
+<b>Критерии:</b>
+• резкий импульс (древко),
+• откат неглубокий: обычно не более 38–50% импульса,
+• откат идёт против направления тренда, на падающем объёме,
+• длится недолго — если затянулся, это уже разворот.
+
+<b>Вход:</b> по пробою верхней границы флага (для бычьего).
+<b>Стоп:</b> за нижнюю границу.
+<b>Цель:</b> длина древка от точки пробоя.`, k:['Откат на падающем объёме','Глубина отката до 50%','Цель = длина импульса']}
+]},
+
+{id:'m10', t:'Фибоначчи', ic:'🌀', lessons:[
+ {v:'fib', t:'Уровни коррекции', c:`Фибоначчи — не магия, а способ измерить глубину отката в процентах. Работает потому, что этими уровнями пользуются миллионы участников.
+
+<b>Как строить:</b> от начала импульса до его конца (снизу вверх в лонге). Сетка покажет уровни отката.
+
+<b>Ключевые уровни:</b>
+• <b>0.382</b> — неглубокий откат, признак сильного тренда,
+• <b>0.5</b> — не число Фибоначчи, но психологически важно,
+• <b>0.618</b> — «золотое сечение», самая рабочая зона входа,
+• <b>0.786</b> — глубокий откат, тренд под вопросом.
+
+<b>Зона 0.5–0.618</b> — основная область поиска входа по тренду.
+
+<b>Главное правило:</b> Фибоначчи — не сигнал сам по себе. Ищите <b>совпадение</b>: уровень Фибо + горизонтальный уровень + реакция свечой. Три подтверждения вместо одного.`, k:['Строить строго по импульсу','Рабочая зона 0.5–0.618','Работает только в связке с уровнем']},
+
+ {t:'Расширения и цели', c:`Если коррекция отвечает на вопрос «где входить», то расширения — «где выходить».
+
+<b>Ключевые уровни расширения:</b>
+• <b>1.272</b> и <b>1.414</b> — ближние цели, часто там первая фиксация,
+• <b>1.618</b> — основная цель движения,
+• <b>2.618</b> — цель сильного трендового импульса.
+
+<b>Как использовать на практике:</b>
+• Первая частичная фиксация — на 1.272,
+• основная — на 1.618,
+• остаток вести трейлингом.
+
+<b>Совпадение уровней</b> (кластер) — когда расширение одного импульса совпадает с коррекцией другого или с историческим уровнем. Такие зоны отрабатывают чаще всего.
+
+<b>Не усложняйте:</b> веера, дуги и временные зоны Фибо новичку не нужны. Коррекция + расширение закрывают 90% задач.`, k:['1.618 — основная цель','Частичная фиксация на 1.272','Кластер уровней сильнее одиночного']}
+]},
+
+{id:'m11', t:'Smart Money', ic:'💠', lessons:[
+ {v:'liq', t:'Ликвидность: за чем охотится рынок', c:`Крупному участнику нужен объём для входа. Взять его можно только там, где много встречных заявок — то есть там, где стоят <b>стопы толпы</b>.
+
+<b>Где скапливается ликвидность:</b>
+• за очевидными максимумами и минимумами,
+• за круглыми числами (60 000, 65 000),
+• за границами долгих диапазонов,
+• под равными лоями / над равными хаями.
+
+<b>Типичный сценарий:</b> цена резко выносит уровень, собирает стопы, разворачивается и идёт в противоположную сторону. Для новичка это «пробой», для крупного игрока — набор позиции.
+
+<b>Практика:</b> не входите сразу на пробое очевидного уровня. Дождитесь возврата цены обратно за уровень — это и есть подтверждение снятия ликвидности.`, k:['Стопы толпы = топливо для крупных','Резкий вынос уровня часто ложный','Возврат за уровень = подтверждение']},
+
+ {v:'ob', t:'Ордер-блок', c:`Ордер-блок — последняя противоположная свеча перед сильным импульсом. Логика: именно там крупный участник набрал позицию, поэтому при возврате туда он будет защищать свою цену.
+
+<b>Как найти бычий ордер-блок:</b>
+1. Найдите резкое движение вверх, сломавшее структуру.
+2. Отметьте <b>последнюю красную свечу</b> перед этим движением.
+3. Её тело — ваша зона интереса.
+
+<b>Как торговать:</b>
+• Ждём возврата цены в зону.
+• Ищем реакцию: пин-бар, поглощение, слом микроструктуры на младшем ТФ.
+• Стоп — за границу блока. Он короткий, поэтому RR получается высоким.
+
+<b>Качество блока выше</b>, если импульс из него сломал структуру и оставил имбаланс (следующий урок).`, k:['Последняя свеча перед импульсом','Обязательна реакция при возврате','Стоп за границу блока → высокий RR']},
+
+ {v:'fvg', t:'Имбаланс (FVG)', c:`Fair Value Gap — разрыв в цене, когда движение было настолько резким, что между тенями соседних свечей осталась «пустота».
+
+<b>Как определить:</b> берём три свечи подряд. Если тень первой и тень третьей <b>не перекрываются</b> — между ними имбаланс.
+
+<b>Почему важно:</b> в этой зоне сделок почти не было, рынок стремится вернуться и «заполнить» её, чтобы найти справедливую цену.
+
+<b>Как использовать:</b>
+• зона имбаланса — цель для отката,
+• вход при возврате в имбаланс по направлению тренда,
+• усиление, если имбаланс совпадает с ордер-блоком — это самая сильная связка.
+
+<b>Важно:</b> не каждый имбаланс заполняется. Работайте только по направлению старшего тренда, а не против него.`, k:['Разрыв между тенями 1-й и 3-й свечи','Цена стремится заполнить зону','FVG + ордер-блок = сильнейшая связка']},
+
+ {v:'bos', t:'BOS и CHoCH', c:`Два термина, которые описывают, жив тренд или сломан.
+
+<b>BOS (Break of Structure)</b> — пробой структуры <b>по тренду</b>. В восходящем тренде цена обновляет максимум. Это подтверждение: тренд продолжается.
+
+<b>CHoCH (Change of Character)</b> — первый пробой <b>против</b> тренда. В восходящем тренде цена впервые обновила предыдущий минимум. Это первый признак, что контроль меняется.
+
+<b>Как использовать связку:</b>
+1. CHoCH на рабочем ТФ — сигнал искать разворот.
+2. Ждём возврат к ордер-блоку или имбалансу, откуда пришёл слом.
+3. Реакция → вход, стоп за экстремум.
+
+<b>Важно:</b> CHoCH — это сигнал <b>внимания</b>, не входа. Многие сломы оказываются ложными, особенно на младших таймфреймах.`, k:['BOS — тренд продолжается','CHoCH — первый признак разворота','Вход только после реакции в зоне']},
+
+ {t:'Как собрать всё вместе', c:`Полный алгоритм сделки по Smart Money — последовательность, а не набор терминов.
+
+<b>1. Старший ТФ (4H/1D):</b> определяем направление и ключевые зоны ликвидности.
+<b>2. Ждём снятие ликвидности:</b> цена выносит очевидный уровень и возвращается.
+<b>3. Рабочий ТФ (1H/15м):</b> ищем CHoCH — подтверждение смены контроля.
+<b>4. Находим зону:</b> ордер-блок или имбаланс, откуда пришёл слом.
+<b>5. Ждём возврат</b> цены в эту зону — не догоняем.
+<b>6. Младший ТФ (5м):</b> реакция — пин-бар, поглощение, микро-CHoCH.
+<b>7. Вход,</b> стоп за зону, цель — следующая ликвидность (противоположный экстремум).
+
+<b>Если хотя бы один пункт пропущен — сделки нет.</b> Именно последовательность делает подход работающим, а не знание терминов.`, k:['Ликвидность → CHoCH → зона → реакция','Всегда ждать возврат, не догонять','Цель — следующая зона ликвидности']}
 ]}
 ];
 const ACADEMY_TOTAL = ACADEMY.reduce((s,m)=>s+m.lessons.length,0);
 
 
+
+
+/* ============ ИИ-НАСТАВНИК АКАДЕМИИ (offline) ============ */
+const TUTOR_KB=[
+ {k:['плечо','леверидж','x10','x50','ликвидац','заликвид'],
+  a:'Плечо не увеличивает прибыль — оно сокращает расстояние до ликвидации.\n\nПри x10 вас вынесет движение в 10%, при x50 — всего 2%. BTC проходит 2% за минуты.\n\n<b>Правильный порядок:</b> сначала стоп по графику → потом объём по формуле → плечо получается само.\n\nСмотрите модуль «Основы рынка», урок 2.'},
+ {k:['размер позиц','объём','сколько заходить','формула','риск на сделку'],
+  a:'<b>Объём = (Депозит × Риск%) / Дистанция до стопа в %</b>\n\nПример: депозит $10 000, риск 1% = $100, стоп в 2% → объём $5 000.\n\nРиск на сделку: 0.5–1%. Никогда не подбирайте стоп под желаемый объём — только наоборот.\n\nМодуль «Риск-менеджмент», урок 2.'},
+ {k:['стоп','stop','где ставить стоп','стоп-лосс'],
+  a:'Стоп ставится <b>за структуру</b>, а не на комфортном расстоянии.\n\n• В лонге — за минимум отката или за границу зоны входа\n• Плюс небольшой запас на шум\n• Никогда не за очевидным круглым уровнем — туда идёт охота за ликвидностью\n\nПосле прохода 1R переносите стоп в безубыток. Двигать стоп против себя — запрещено.'},
+ {k:['rr','риск прибыль','соотношен','тейк'],
+  a:'RR — сколько получаете на единицу риска.\n\n• RR 1:2 → достаточно 34% прибыльных сделок\n• RR 1:3 → достаточно 25%\n• RR 1:1 → нужно больше 50% плюс комиссии — тяжело\n\n<b>Фильтр:</b> если до логичной цели меньше 2 рисков — сделки нет.'},
+ {k:['rsi','перекуплен','перепродан'],
+  a:'RSI выше 70 — это <b>не сигнал на продажу</b>. В сильном тренде он может держаться там неделями.\n\nЧто работает:\n• Зона 40–60 как фильтр тренда\n• Дивергенция — предупреждение о слабости, но не точка входа\n\nВход стройте от уровня и структуры, RSI — только подтверждение.'},
+ {k:['ema','скользящ','средн','ma','мувинг'],
+  a:'Рабочая схема со скользящими:\n\n• <b>EMA 200</b> — глобальный фильтр: выше = ищем лонги\n• <b>EMA 50</b> — среднесрочный тренд, динамическая поддержка\n• <b>EMA 21</b> — краткосрочный, от неё отбои в сильном тренде\n\nВход на <b>откате к EMA</b>, а не на пересечении — пересечения запаздывают.'},
+ {k:['фибо','fib','0.618','коррекц','золот'],
+  a:'Строится от начала импульса до его конца.\n\n<b>Рабочая зона входа: 0.5–0.618</b> (золотое сечение).\nЦели по расширениям: 1.272 — частичная фиксация, 1.618 — основная.\n\n<b>Важно:</b> Фибо сам по себе не сигнал. Нужно совпадение с горизонтальным уровнем плюс реакция свечой.'},
+ {k:['ордер блок','order block','ob','орде'],
+  a:'Ордер-блок — <b>последняя противоположная свеча перед импульсом</b>, сломавшим структуру.\n\nАлгоритм:\n1. Найти резкое движение со сломом структуры\n2. Отметить последнюю красную свечу перед ним (для бычьего)\n3. Ждать возврат цены в эту зону\n4. Реакция → вход, стоп за границу блока\n\nСильнее всего работает в связке с имбалансом (FVG).'},
+ {k:['fvg','имбаланс','гэп','разрыв'],
+  a:'FVG — разрыв между тенью первой и третьей свечи при резком движении.\n\nВ этой зоне почти не было сделок, поэтому цена стремится вернуться и «заполнить» её.\n\n<b>Как торговать:</b> вход при возврате в имбаланс по направлению старшего тренда. FVG + ордер-блок — самая сильная связка Smart Money.'},
+ {k:['choch','bos','структур','слом'],
+  a:'<b>BOS</b> — пробой структуры по тренду, подтверждение продолжения.\n<b>CHoCH</b> — первый пробой против тренда, признак смены контроля.\n\nПоследовательность: CHoCH → ждём возврат к ордер-блоку/FVG → реакция → вход.\n\nCHoCH — сигнал внимания, а не входа. На младших ТФ много ложных сломов.'},
+ {k:['ликвидн','стопы толпы','снятие','вынос'],
+  a:'Крупному игроку нужен объём — он берёт его там, где стоят стопы толпы: за очевидными хаями/лоями и круглыми числами.\n\n<b>Сценарий:</b> резкий вынос уровня → сбор стопов → разворот.\n\nПоэтому не входите на пробое очевидного уровня. Дождитесь возврата цены обратно — это подтверждение снятия ликвидности.'},
+ {k:['пин','пинбар','молот','тень'],
+  a:'Пин-бар — отказ от цены: длинная тень, маленькое тело.\n\n<b>Критерии:</b> тень минимум 2× тела, закрытие в противоположной трети, формируется <b>на уровне</b>.\n\nВход по пробою вершины пин-бара, стоп за кончик тени. В середине диапазона пин-бар — шум.'},
+ {k:['поглощ','engulf'],
+  a:'Поглощение — свеча полностью перекрывает тело предыдущей и закрывается в другую сторону. Это смена контроля.\n\nУсиливают сигнал: объём выше среднего и расположение на уровне. Стоп — за экстремум паттерна.'},
+ {k:['голова','плеч','h&s'],
+  a:'Голова и плечи — три вершины, средняя выше боковых.\n\n<b>Сигнал возникает только при пробое линии шеи</b>, не раньше. Часто бывает ретест шеи — он даёт лучший вход.\n\nЦель: высота головы от шеи вниз. Стоп: за правое плечо.'},
+ {k:['треугольник','сжатие','клин'],
+  a:'Треугольник — сужение волатильности перед импульсом.\n\nНе угадывайте направление заранее — ждите пробой с ростом объёма. Лучшие пробои происходят в первых двух третях фигуры. Цель — высота основания.'},
+ {k:['флаг','вымпел'],
+  a:'Флаг — неглубокий откат (до 50%) после импульса, на падающем объёме. Фигура продолжения.\n\nВход по пробою границы флага, стоп за противоположную границу, цель — длина импульса от точки пробоя.'},
+ {k:['объём','volume','обьем'],
+  a:'Объём отвечает: движение настоящее или пустое.\n\n• Импульс на растущем объёме — участвуют крупные деньги\n• Пробой на падающем объёме — часто ложный\n• Всплеск без продолжения — крупный набирает позицию против движения'},
+ {k:['таймфрейм','тф','мультитайм','какой таймфрейм'],
+  a:'Три экрана:\n\n• <b>Старший (4H/1D)</b> — направление\n• <b>Рабочий (1H/15м)</b> — уровни и план\n• <b>Младший (5м)</b> — точка входа и короткий стоп\n\nЕсли старший и рабочий противоречат — сделки нет.'},
+ {k:['психолог','тильт','эмоц','отыгр','страх','fomo','фомо'],
+  a:'Убыток ощущается вдвое сильнее прибыли — отсюда тильт и FOMO.\n\n<b>Механика вместо силы воли:</b>\n• Все решения принимаются <b>до</b> входа\n• Два стопа подряд — пауза на час\n• Три — торговый день окончен\n• Не видели сетап заранее — не входите\n\nПропущенное движение это не убыток, а несделанная ошибка.'},
+ {k:['журнал','дневник','записыв'],
+  a:'Журнал — главный инструмент роста.\n\nЗаписывайте: монету, причину входа, вход/стоп/тейк, результат <b>в R</b>, эмоцию, и была ли сделка по системе.\n\nРаз в неделю разбор. Обычно 80% убытков дают сделки вне правил — журнал это показывает.'},
+ {k:['челлендж','этап','просадк','пройти челлендж','фандед'],
+  a:'Задача — дойти до цели, не нарушив лимиты.\n\nПри риске 1% и RR 1:2 нужно всего ~5 чистых сделок для +5%.\n\n<b>Правила выживания:</b>\n• Максимум 2 стопа в день\n• BTC и ETH — это один риск, не два\n• −3% за день → закрыть терминал\n\nНа фандеде снижайте риск до 0.5%. Первая выплата — через 14 дней.'},
+ {k:['выплат','вывод','payout','когда деньги'],
+  a:'После прохождения обоих этапов вы выходите на фандед-счёт с профит-сплитом 80%.\n\n<b>Период удержания — 14 дней</b> с момента выхода на фандед. Затем в разделе «Кошелёк» появится кнопка заявки на выплату.\n\nЛимиты просадки на фандеде остаются навсегда.'},
+ {k:['система','стратег','с чего начать','план','новичок'],
+  a:'Система — письменные ответы на 6 вопросов: что торгую, когда, условия входа, где стоп, где выход, какой риск.\n\n<b>План первых 30 дней:</b>\n1 неделя — только разметка, ноль сделок\n2 неделя — демо строго по чек-листу\n3 неделя — разбор журнала\n4 неделя — челлендж, если 80% сделок были по правилам'},
+ {k:['комисси','фандинг','спред','издержк'],
+  a:'Круг сделки ≈0.1% комиссии. Десять сделок в день — около 1% депозита ежедневно.\n\nФандинг списывается каждые 8 часов при удержании позиции. Спред на неликвидных монетах бывает больше комиссии.\n\nВывод: чем чаще торгуете, тем большую часть прибыли отдаёте бирже.'},
+ {k:['сколько зарабат','доход','процент в месяц','реально'],
+  a:'Профессиональный уровень — <b>3–10% в месяц стабильно</b>.\n\nОбещания «100% за неделю» означают либо огромный риск, либо обман.\n\nСерии из 5–7 убыточных сделок подряд нормальны даже для прибыльной системы. Стабильность обычно приходит через 1–2 года практики с журналом.'}
+];
+function tutorAnswer(q){
+  const s=(q||'').toLowerCase();
+  if(!s.trim()) return null;
+  let best=null, bestScore=0;
+  TUTOR_KB.forEach(item=>{
+    let sc=0; item.k.forEach(w=>{ if(s.includes(w)) sc+=w.length; });
+    if(sc>bestScore){ bestScore=sc; best=item; }
+  });
+  if(best && bestScore>=3) return best.a;
+  return null;
+}
+function tutorHint(mi,li){
+  const m=ACADEMY[mi]; const ls=m.lessons[li];
+  return '<b>'+ls.t+'</b> — на что обратить внимание:\n\n• '+ls.k.join('\n• ')+
+    '\n\nЗадайте вопрос своими словами — отвечу по материалам курса.';
+}
+function openTutor(ctx){
+  S.tchat=S.tchat||[];
+  const render=()=>{
+    const log=S.tchat.map(m=>'<div class="msg '+(m.r==='u'?'me':'ai')+'">'+m.t.replace(/\n/g,'<br>')+'</div>').join('');
+    $('sheetContent').innerHTML=
+      '<div class="row gap2" style="align-items:center;"><div class="acad-ic">🎓</div>'+
+      '<div><div class="h2" style="font-size:16px;">ИИ-наставник</div><div class="micro">по материалам академии</div></div></div>'+
+      '<div class="chat-log mt3" id="tLog" style="max-height:46vh;">'+(log||'<div class="mut small" style="text-align:center;padding:18px;">Спросите о плече, стопах, Фибоначчи, ордер-блоках, психологии — отвечу по курсу.</div>')+'</div>'+
+      '<div class="ai-chips mt3">'+['Как считать объём позиции?','Где ставить стоп?','Что такое ордер-блок?','Как пройти челлендж?'].map(c=>'<button class="chip" data-tq="'+c+'">'+c+'</button>').join('')+'</div>'+
+      '<div class="chat-in mt3"><input class="input" id="tInput" placeholder="Ваш вопрос…"><button class="btn btn-gold" id="tSend">→</button></div>';
+    $('sheetVeil').classList.add('open');
+    const lg=$('tLog'); if(lg) lg.scrollTop=lg.scrollHeight;
+    const ask=(text)=>{
+      if(!text.trim()) return;
+      S.tchat.push({r:'u',t:text});
+      const ans=tutorAnswer(text);
+      S.tchat.push({r:'a',t: ans || 'В курсе есть ответ на смежные темы. Уточните вопрос — например: «размер позиции», «где ставить стоп», «что такое FVG», «как проходить челлендж».\n\nПолный разбор — в модулях академии.'});
+      render();
+    };
+    $('tSend').addEventListener('click',()=>ask($('tInput').value));
+    $('tInput').addEventListener('keydown',e=>{ if(e.key==='Enter') ask($('tInput').value); });
+    $('sheetContent').querySelectorAll('[data-tq]').forEach(b=>b.addEventListener('click',()=>ask(b.dataset.tq)));
+  };
+  if(ctx && ctx.length===2 && !S.tchat.length) S.tchat.push({r:'a',t:tutorHint(ctx[0],ctx[1])});
+  render();
+}
+
+/* ============ КВИЗЫ ПО МОДУЛЯМ ============ */
+const QUIZ={
+ m1:[{q:'Депозит $10 000, плечо x50. Какое движение против позиции вас ликвидирует?',
+      a:['Около 2%','Около 10%','Около 50%'],c:0,e:'При x50 ликвидация наступает примерно при движении в 2% против позиции. BTC проходит это за минуты.'},
+     {q:'Вы совершаете 10 сделок в день. Сколько съедают комиссии при 0.05%?',
+      a:['0.1% депозита','Около 1% депозита','Комиссии не важны'],c:1,e:'Круг сделки ≈0.1%. Десять сделок = около 1% депозита ежедневно только на комиссиях.'}],
+ m2:[{q:'Что означает последовательность HH/HL?',
+      a:['Восходящий тренд','Нисходящий тренд','Флэт'],c:0,e:'Higher High / Higher Low — каждый максимум и минимум выше предыдущего. Это восходящий тренд.'},
+     {q:'Цена пробила уровень сопротивления на падающем объёме. Действие?',
+      a:['Входить сразу — это пробой','Ждать: пробой без объёма часто ложный','Открыть шорт против пробоя'],c:1,e:'Движение без роста объёма обычно не поддержано крупными деньгами. Надёжнее дождаться ретеста.'}],
+ m3:[{q:'RSI показывает 78 в сильном восходящем тренде. Что делать?',
+      a:['Сразу продавать — перекупленность','Это признак силы тренда, не сигнал на вход в шорт','Закрыть все лонги'],c:1,e:'В сильном тренде RSI может держаться выше 70 неделями. «Перекупленность» ≠ сигнал на разворот.'},
+     {q:'Для чего лучше всего использовать EMA 200?',
+      a:['Как точку входа','Как глобальный фильтр направления','Как уровень тейк-профита'],c:1,e:'EMA 200 определяет, ищете вы лонги или шорты. Входы строятся от структуры и уровней.'}],
+ m4:[{q:'Депозит $10 000, риск 1%, стоп 2% от входа. Размер позиции?',
+      a:['$1 000','$5 000','$10 000'],c:1,e:'Объём = (10000 × 0.01) / 0.02 = $5 000. Тогда стоп заберёт ровно $100.'},
+     {q:'Вы потеряли 50% депозита. Сколько нужно заработать для возврата?',
+      a:['50%','75%','100%'],c:2,e:'Восстановление нелинейно: с половины депозита нужно удвоение. Поэтому просадку важнее контролировать, чем прибыль.'},
+     {q:'Два стопа подряд, эмоции на пределе. Правильное действие?',
+      a:['Увеличить объём и отыграться','Пауза минимум на час','Сменить стратегию прямо сейчас'],c:1,e:'Отыгрыш — главная причина слитых счетов. После серии убытков нужна пауза, а не увеличение риска.'}],
+ m5:[{q:'Вы пропустили движение на 20%. Что это для трейдера?',
+      a:['Потерянные деньги — надо догонять','Несделанная ошибка — вход в конце движения опасен','Повод увеличить риск в следующей сделке'],c:1,e:'Вход после сильного движения даёт худшую точку и плохой стоп. Пропущенное движение — не убыток.'},
+     {q:'Какой результат считается профессиональным?',
+      a:['100% в месяц','3–10% в месяц стабильно','Удвоение депозита за неделю'],c:1,e:'Стабильные 3–10% в месяц — отличный профессиональный результат. Обещания больше обычно означают огромный риск.'}],
+ m6:[{q:'В вашем сетапе 5 условий, выполнено 4. Что делать?',
+      a:['Входить — почти всё сошлось','Пропустить сделку','Уменьшить объём и войти'],c:1,e:'«Почти» не считается. Именно частичные сетапы дают основную часть убытков.'},
+     {q:'Сколько сделок нужно для адекватного бэктеста?',
+      a:['5–10','50–100','Достаточно посмотреть график'],c:1,e:'Меньше 50 сделок — это случайность, а не статистика. Нужна выборка и подсчёт максимальной серии убытков.'}],
+ m7:[{q:'Цель этапа +5%, риск 1% на сделку, RR 1:2. Сколько нужно чистых удачных сделок?',
+      a:['Около 5','Около 20','Одна крупная'],c:0,e:'При RR 1:2 каждая удачная сделка даёт +2%. Пяти чистых сделок достаточно с запасом на убытки.'},
+     {q:'За день вы в минусе 3% при лимите 5%. Действие?',
+      a:['Торговать дальше — лимит не достигнут','Закрыть терминал до завтра','Увеличить риск, чтобы отбить'],c:1,e:'Оставшийся буфер нужен на завтра. Торговля в минусе почти всегда переходит в тильт.'}],
+ m8:[{q:'Пин-бар сформировался в середине диапазона. Насколько он значим?',
+      a:['Сильный сигнал','Шум — работает только на уровне','Нужно входить против него'],c:1,e:'Все свечные паттерны работают в контексте. Вне уровня пин-бар не несёт информации.'},
+     {q:'Что показывает бычье поглощение?',
+      a:['Продавцы усилились','Покупатели забрали контроль','Рынок в равновесии'],c:1,e:'Зелёная свеча перекрывает тело красной и закрывается выше — инициатива перешла к покупателям.'}],
+ m9:[{q:'Когда возникает сигнал по фигуре «голова и плечи»?',
+      a:['Когда видна вся фигура','При пробое линии шеи','На формировании головы'],c:1,e:'До пробоя шеи фигура не подтверждена. Многие «головы и плечи» так и не срабатывают.'},
+     {q:'Флаг после импульса — это фигура...',
+      a:['разворота','продолжения тренда','неопределённости'],c:1,e:'Флаг — неглубокий откат на падающем объёме внутри тренда. Обычно движение продолжается.'}],
+ m10:[{q:'Какая зона Фибоначчи считается основной для входа по тренду?',
+      a:['0.236–0.382','0.5–0.618','0.786–1.0'],c:1,e:'Зона 0.5–0.618 — рабочая область отката. 0.618 называют золотым сечением.'},
+      {q:'Уровень Фибо сам по себе даёт сигнал на вход?',
+       a:['Да, достаточно коснуться','Нет, нужно совпадение с уровнем и реакция','Только на дневном ТФ'],c:1,e:'Фибо работает как фильтр. Нужны совпадение с горизонтальным уровнем и подтверждение свечой.'}],
+ m11:[{q:'Цена резко вынесла очевидный максимум и вернулась обратно. Что произошло?',
+       a:['Начался新 тренд вверх','Снятие ликвидности — вероятен разворот','Ничего значимого'],c:1,e:'Вынос уровня с быстрым возвратом — классический сбор стопов перед движением в обратную сторону.'},
+      {q:'Что такое CHoCH?',
+       a:['Пробой структуры по тренду','Первый пробой против тренда','Индикатор объёма'],c:1,e:'Change of Character — первый слом структуры против тренда. Сигнал внимания, но не вход.'},
+      {q:'Где искать бычий ордер-блок?',
+       a:['Последняя красная свеча перед импульсом вверх','Первая зелёная свеча импульса','На максимуме движения'],c:0,e:'Ордер-блок — последняя противоположная свеча перед движением, сломавшим структуру.'}]
+};
+function quizKey(mid){ return 'q_'+mid; }
+function openQuiz(mi){
+  const m=ACADEMY[mi]; const qs=QUIZ[m.id]; if(!qs) return;
+  let idx=0, score=0, answered=false;
+  const render=()=>{
+    const q=qs[idx];
+    $('sheetContent').innerHTML=
+      '<div class="micro" style="color:var(--gold);">ПРОВЕРКА · '+m.t.toUpperCase()+'</div>'+
+      '<div class="row between mt2"><span class="h2" style="font-size:16px;">Вопрос '+(idx+1)+' из '+qs.length+'</span>'+
+      '<span class="badge b-mut">'+score+' / '+qs.length+'</span></div>'+
+      '<div class="les-body mt3">'+q.q+'</div>'+
+      '<div class="mt3" id="qOpts">'+q.a.map((a,i)=>'<button class="btn btn-ghost btn-block mt2 qopt" data-i="'+i+'" style="text-align:left;">'+a+'</button>').join('')+'</div>'+
+      '<div id="qExp"></div>';
+    $('sheetVeil').classList.add('open');
+    $('qOpts').querySelectorAll('.qopt').forEach(b=>b.addEventListener('click',()=>{
+      if(answered) return; answered=true;
+      const i=+b.dataset.i, ok=i===q.c;
+      if(ok){ score++; b.classList.add('btn-gold'); haptic('ok'); }
+      else { b.style.borderColor='var(--red)'; b.style.color='var(--red)';
+        $('qOpts').querySelectorAll('.qopt')[q.c].classList.add('btn-gold'); haptic('err'); }
+      $('qExp').innerHTML='<div class="key-box"><div class="micro" style="color:'+(ok?'var(--green)':'var(--gold)')+';margin-bottom:5px;">'+(ok?'✓ ВЕРНО':'ПОЯСНЕНИЕ')+'</div>'+
+        '<div class="small" style="color:var(--txt2);">'+q.e+'</div></div>'+
+        '<button class="btn btn-gold btn-block mt3" id="qNext">'+(idx<qs.length-1?'Следующий вопрос':'Показать результат')+'</button>';
+      $('qNext').addEventListener('click',()=>{
+        if(idx<qs.length-1){ idx++; answered=false; render(); }
+        else{
+          const pct=Math.round(score/qs.length*100);
+          const pass=pct>=70;
+          if(pass){ acadDone()[quizKey(m.id)]=true; acadSave(); }
+          $('sheetContent').innerHTML='<div style="text-align:center;padding:8px 0;">'+
+            '<div style="font-size:44px;">'+(pass?'🏆':'📖')+'</div>'+
+            '<div class="h2 mt3">'+(pass?'Модуль зачтён':'Стоит повторить')+'</div>'+
+            '<div class="equity mt3" style="color:'+(pass?'var(--green)':'var(--gold)')+';">'+score+' / '+qs.length+'</div>'+
+            '<div class="small mt2" style="color:var(--txt2);">'+(pass?'Отличный результат. Переходите к следующему модулю.':'Нужно 70% верных ответов. Перечитайте уроки и попробуйте снова.')+'</div>'+
+            '<button class="btn btn-gold btn-block mt4" id="qDone">Понятно</button>'+
+            '<button class="btn btn-ghost btn-block mt2" id="qAgain">Пройти заново</button></div>';
+          $('qDone').addEventListener('click',()=>{ closeSheet(); renderAcademy(); });
+          $('qAgain').addEventListener('click',()=>{ idx=0; score=0; answered=false; render(); });
+        }
+      });
+    }));
+  };
+  render();
+}
+
 /* ============ ACADEMY UI ============ */
 function acadDone(){ S.acadDone=S.acadDone||{}; return S.acadDone; }
 function acadSave(){ try{ localStorage.setItem('nx_acad', JSON.stringify(S.acadDone||{})); }catch(e){} }
 function acadLoad(){ try{ const d=localStorage.getItem('nx_acad'); if(d) S.acadDone=JSON.parse(d); }catch(e){} }
-function acadCount(){ return Object.keys(acadDone()).filter(k=>acadDone()[k]).length; }
+function acadCount(){ return Object.keys(acadDone()).filter(k=>acadDone()[k] && k.charAt(0)==='l').length; }
+function quizCount(){ return Object.keys(acadDone()).filter(k=>acadDone()[k] && k.startsWith('q_')).length; }
 function acadUnlocked(){ return tierRank(S.tier)>=1; }
 
 function renderAcademy(){
@@ -2900,7 +3858,7 @@ function renderAcademy(){
   let html='<div class="hero-card"><div class="row between"><span class="micro">ВАШ ПРОГРЕСС</span>'+
     '<span class="badge '+(acadUnlocked()?'b-green':'b-mut')+'">'+(acadUnlocked()?'ДОСТУП ОТКРЫТ':'FREE')+'</span></div>'+
     '<div class="equity mt2">'+done+' / '+ACADEMY_TOTAL+'</div>'+
-    '<div class="small mt2" style="color:var(--txt2);">уроков пройдено</div>'+
+    '<div class="small mt2" style="color:var(--txt2);">уроков пройдено · тестов сдано: '+quizCount()+' / '+Object.keys(QUIZ).length+'</div>'+
     '<div class="progress mt3" style="height:8px;"><div class="fill" style="width:'+Math.max(2,pct)+'%"></div></div>'+
     (done>=ACADEMY_TOTAL?'<div class="small mt3" style="color:var(--green);">🎓 Курс пройден полностью. Переходите к демо-счёту и журналу сделок.</div>':'')+
     '</div>';
@@ -2924,13 +3882,21 @@ function renderAcademy(){
         (locked?'<span style="font-size:13px;">🔒</span>':'<svg viewBox="0 0 24 24" width="16" fill="none" stroke="var(--txt3)" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>')+
         '</div>';
     });
+    if(QUIZ[m.id] && !locked){
+      const qd=acadDone()['q_'+m.id];
+      html+='<button class="btn '+(qd?'btn-ghost':'btn-gold')+' btn-block mt3" data-quiz="'+mi+'">'+
+        (qd?'✓ Тест пройден · повторить':'🎯 Пройти тест по модулю')+'</button>';
+    }
     html+='</div>';
   });
+  html+='<button class="btn btn-ghost btn-block mt4" id="acadTutor">🎓 ИИ-наставник · задать вопрос</button>';
   html+='<div class="micro mt4" style="text-align:center;color:var(--txt3);line-height:1.6;">Материалы носят образовательный характер и не являются инвестиционной рекомендацией. Торговля сопряжена с риском потери средств.</div>';
   body.innerHTML=html;
   body.querySelectorAll('[data-les]').forEach(el=>el.addEventListener('click',()=>{
     const [mi,li]=el.dataset.les.split('_').map(Number); openLesson(mi,li);
   }));
+  body.querySelectorAll('[data-quiz]').forEach(el=>el.addEventListener('click',()=>openQuiz(+el.dataset.quiz)));
+  const at=$('acadTutor'); if(at) at.addEventListener('click',()=>openTutor(null));
 }
 
 function openLesson(mi,li){
@@ -2940,10 +3906,11 @@ function openLesson(mi,li){
   $('sheetContent').innerHTML=
     '<div class="micro" style="color:var(--gold);">'+m.ic+' '+m.t.toUpperCase()+' · УРОК '+(li+1)+'</div>'+
     '<div class="h2 mt2">'+ls.t+'</div>'+
-    '<div class="les-body mt4" style="max-height:56vh;overflow-y:auto;">'+ls.c.replace(/\n/g,'<br>')+
+    '<div class="les-body mt4" style="max-height:56vh;overflow-y:auto;">'+(ls.v?viz(ls.v):'')+ls.c.replace(/\n/g,'<br>')+
     '<div class="key-box"><div class="micro" style="color:var(--gold);margin-bottom:6px;">ГЛАВНОЕ</div><ul>'+
       ls.k.map(x=>'<li>'+x+'</li>').join('')+'</ul></div></div>'+
     '<button class="btn btn-gold btn-block mt4" id="lesDone">'+(acadDone()[key]?'Пройдено ✓':'Отметить пройденным')+'</button>'+
+    '<button class="btn btn-ghost btn-block mt2" id="lesTutor">🎓 Спросить наставника</button>'+
     (nextExists?'<button class="btn btn-ghost btn-block mt2" id="lesNext">Следующий урок →</button>':'');
   $('sheetVeil').classList.add('open');
   $('lesDone').addEventListener('click',()=>{
@@ -2952,6 +3919,7 @@ function openLesson(mi,li){
     if(acadCount()>=ACADEMY_TOTAL) toast('🎓 Курс пройден! Отличная работа','🏆');
     renderAcademy();
   });
+  $('lesTutor').addEventListener('click',()=>{ S.tchat=[]; openTutor([mi,li]); });
   const nb=$('lesNext');
   if(nb) nb.addEventListener('click',()=>{
     acadDone()[key]=true; acadSave(); renderAcademy();
@@ -3209,11 +4177,13 @@ async function tick(){
   const eq=equity(), dayPnl=eq-S.acc.startDay;
   if(dayPnl>S.acc.dayPnlPeak) S.acc.dayPnlPeak=dayPnl;
   if(S.acc.status==='RUN' && dayPnl>=50 && S.acc.profitDays<1) S.acc.profitDays=1;
+  checkTPSL();
+  checkAlerts();
   checkChallenge();
   renderAll();
 }
 async function init(){
-  loadDraws(); loadMeta(); loadUser(); loadState(); acadLoad();
+  loadDraws(); loadMeta(); loadUser(); loadState(); acadLoad(); loadAlerts();
   if(S.acc && S.acc.status==='PASS' && !S.acc.fundedAt){ S.acc.fundedAt=Date.now(); }
   // миграция: демо теперь только $10k
   if(S.acc && S.acc.tier && S.acc.tier!==10000 && !S.acc.paid){
@@ -3229,7 +4199,7 @@ async function init(){
   await loadTickers();
   await Promise.all(ASSETS.slice(0,4).map(a=>loadKlines(a.s,'1h')));
   S.equityHist.push(equity());
-  renderHome(); renderMarket();
+  renderHome(); renderMarket(); maybeOnboarding();
   setInterval(tick, 2000);
   setInterval(()=>{ if(rtDirty){ rtDirty=false; renderAll(); } }, 700);
   setInterval(()=>{ if(S.screen==='signals'&&(S.stab==='signals'||S.stab==='analytics')) renderSignals(); }, 20000);
