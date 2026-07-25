@@ -556,6 +556,39 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
   background:rgba(43,255,158,.1);border:1px solid rgba(43,255,158,.35);font-size:12.5px;color:var(--green);}
 .promo-ok span{flex:1;line-height:1.4;}
 .promo-ok button{width:22px;height:22px;border-radius:50%;background:rgba(43,255,158,.15);color:var(--green);font-size:11px;flex-shrink:0;}
+
+.acc-strip{display:flex;gap:8px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:none;}
+.acc-strip::-webkit-scrollbar{display:none;}
+.acc-chip{flex-shrink:0;min-width:112px;display:flex;flex-direction:column;gap:3px;padding:11px 13px;
+  border-radius:14px;background:var(--card2);border:1px solid var(--line);text-align:left;transition:all .18s var(--spring);}
+.acc-chip.on{border-color:var(--gold);background:linear-gradient(160deg,var(--gold-dim),transparent);
+  box-shadow:0 0 18px -6px rgba(34,228,255,.4);}
+.acc-chip.dead{opacity:.5;}
+.acc-chip.add{align-items:center;justify-content:center;min-width:88px;color:var(--gold);border-style:dashed;}
+.acc-chip:active{transform:scale(.96);}
+.ac-l{font-size:11.5px;color:var(--txt2);font-weight:600;}
+.ac-v{font-family:var(--mono);font-size:15px;font-weight:800;color:var(--txt);}
+.acc-chip.on .ac-v{color:var(--gold);}
+.ac-b{font-size:9px;font-weight:800;letter-spacing:.04em;color:var(--txt3);}
+.acc-chip.on .ac-b{color:var(--gold);}
+
+.bm{text-align:center;padding:6px 0;}
+.bm-ic{font-size:56px;line-height:1;animation:bmPop .55s var(--spring) both;}
+@keyframes bmPop{0%{transform:scale(.3) rotate(-14deg);opacity:0;}60%{transform:scale(1.14) rotate(5deg);}100%{transform:none;opacity:1;}}
+.bm-t{font-family:var(--display);font-size:23px;font-weight:700;margin-top:12px;color:var(--txt);
+  animation:bmUp .5s .1s var(--spring) both;}
+.bm-big{font-family:var(--mono);font-size:38px;font-weight:800;color:var(--acc);margin-top:10px;
+  text-shadow:0 0 26px var(--acc);animation:bmUp .5s .18s var(--spring) both;}
+.bm-sub{font-size:14px;line-height:1.6;color:var(--txt2);margin-top:12px;animation:bmUp .5s .26s var(--spring) both;}
+@keyframes bmUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}
+.bm-rows{margin-top:20px;background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:4px 14px;
+  animation:bmUp .5s .34s var(--spring) both;}
+.bm-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px;color:var(--txt2);}
+.bm-row:last-child{border-bottom:none;}
+.bm-row b{font-family:var(--mono);font-size:13px;}
+.bm-note{margin-top:16px;padding:13px 15px;border-radius:13px;background:var(--card2);
+  border-left:3px solid var(--acc);text-align:left;font-size:12.5px;line-height:1.65;color:var(--txt2);
+  animation:bmUp .5s .42s var(--spring) both;}
 </style>
 </head>
 <body>
@@ -599,7 +632,7 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
   <div class="hero-card hero-bull" id="homeHero">
     <div class="row between">
       <span class="badge b-gold" id="homeStageBadge">ЭТАП 1 / 2</span>
-      <span class="badge b-mut">ДЕМО-СЧЁТ</span>
+      <span class="badge b-mut" id="homeAccBadge">ДЕМО-СЧЁТ</span>
     </div>
     <div class="equity mt3" id="homeEquity">$10,000.00</div>
     <div class="mono mt2" style="font-size:13px;font-weight:700;" id="homePnl"><span class="up">+$0.00 (0.00%)</span></div>
@@ -758,6 +791,7 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
         </div>
       </div>
       <div class="micro mt2" id="tpslInfo" style="text-align:center;"></div>
+      <div class="micro mt1" style="text-align:center;color:var(--txt3);">% указан от маржи с учётом плеча</div>
     </div>
 
     <div class="trade-btns mt4">
@@ -981,7 +1015,7 @@ const S = {
   term:{ symbol:'BTCUSDT', interval:'1h', hover:null, tool:'cursor', pend:null, layout:null, view:null, type:'candle', pScale:1, oScale:[1,1,1,1], priceH:300, oscH:70 },
   marketFilter:'all', search:'', coinMeta:{}, mktLimit:60, chType:'base', chSel:null, adminStat:null, activePromo:null,
   acc:{ active:true, tier:10000, stage:1, balance:10000, startDay:10000, profitDays:0, dayPnlPeak:0, status:'RUN' },
-  positions:[], history:[], nextId:1, payoutReq:[],
+  accounts:[], activeAccId:null, positions:[], history:[], nextId:1, payoutReq:[],
   equityHist:[], alerts:[], ptab:'pos', stab:'signals', tier:'free', wallet:{}, chat:[], user:null,
   indA:[{n:'EMA',p:{p:21}},{n:'RSI',p:{p:14,lo:30,hi:70}}], showOB:false, draws:{}, src:'DEMO'
 };
@@ -1129,7 +1163,7 @@ function startWS(){
 }
 function priceOf(sym){ return S.prices[sym] ? S.prices[sym].price : (BASE[sym]||100); }
 function posPnl(p){ const cur=priceOf(p.symbol); const dir=p.side==='LONG'?1:-1; return (cur-p.entry)*p.qty*dir; }
-function equity(){ return S.acc.balance + S.positions.reduce((s,p)=>s+posPnl(p),0); }
+function equity(){ const a=S.acc||{balance:0}; return (a.balance||0) + (S.positions||[]).reduce((s,p)=>s+posPnl(p),0); }
 function usedMargin(){ return S.positions.reduce((s,p)=>s+p.margin,0); }
 function freeMargin(){ return Math.max(0, S.acc.balance - usedMargin()); }
 function liqPrice(p){ const dir=p.side==='LONG'?1:-1; return p.entry*(1 - dir*(1/p.lev)*0.95); }
@@ -1145,6 +1179,7 @@ function openPosition(side){
   const sym=S.term.symbol, entry=priceOf(sym);
   const qty=margin*lev/entry;
   const ts=readTPSL(side, entry);
+  bindAcc();
   S.positions.push({ id:S.nextId++, symbol:sym, side, margin, lev, entry, qty, opened:Date.now(), tp:ts.tp, sl:ts.sl });
   const tpi=$('tpPrice'), sli=$('slPrice'); if(tpi) tpi.value=''; if(sli) sli.value=''; tpslInfo();
   persistState();
@@ -1171,11 +1206,22 @@ function payoutUnlockAt(){ const f=fundedSince(); return f ? f + PAYOUT_HOLD_DAY
 function payoutDaysLeft(){ const u=payoutUnlockAt(); if(!u) return null;
   return Math.max(0, Math.ceil((u-Date.now())/864e5)); }
 function payoutReady(){ const u=payoutUnlockAt(); return !!u && Date.now()>=u; }
+function checkPayoutUnlock(){
+  const a=S.acc; if(!a||a.status!=='PASS'||a._payNotified) return;
+  if(!payoutReady()) return;
+  const eq=equity(), amt=Math.max(0,(eq-a.tier))*0.8;
+  if(amt<=0) return;
+  a._payNotified=1; persistState();
+  showCoach('Выплата доступна',
+    'Период удержания 14 дней пройден. Доступно к выводу '+fUsd(amt)+' (80% профита). Заявку можно подать в разделе «Кошелёк».','good');
+  tgNotify('payout_ready', {amount:amt});
+}
 function challengeTarget(){ const t = S.acc.stage===1?RULES.target1:RULES.target2; return S.acc.tier*(1+t/100); }
 function challengeStop(){ return S.acc.tier*(1-RULES.maxDD/100); }
 function dayStop(){ return S.acc.startDay*(1-RULES.dailyLoss/100); }
 
 function forceCloseAll(reason){
+  bindAcc();
   [...S.positions].forEach(p=>{
     const pnl=posPnl(p), exit=priceOf(p.symbol);
     S.acc.balance+=pnl;
@@ -1188,6 +1234,253 @@ function tradingBlocked(){
   if(S.acc.status==='FAIL') return S.acc.failReason ? ('Счёт закрыт: '+S.acc.failReason) : 'Счёт заблокирован: нарушен лимит просадки.';
   return false;
 }
+
+
+
+/* ============ УВЕДОМЛЕНИЯ О ЧЕЛЛЕНДЖЕ ============ */
+function tgNotify(type, data){
+  if(!S.user || !/^tg_/.test(S.user.id)) return;
+  fetch(API_BASE+'/api/notify',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({user:S.user.id, type, data:Object.assign({name:S.user.name}, data||{})})}).catch(()=>{});
+}
+function confettiBurst(){
+  const c=document.createElement('canvas');
+  c.style.cssText='position:fixed;inset:0;z-index:120;pointer-events:none;';
+  document.body.appendChild(c);
+  const x=c.getContext('2d'), dpr=Math.min(2,window.devicePixelRatio||1);
+  const W=c.width=innerWidth*dpr, H=c.height=innerHeight*dpr;
+  const cols=['#22E4FF','#2BFF9E','#EAC97A','#B98CFF','#FF3B57'];
+  const P=[]; for(let i=0;i<90;i++) P.push({
+    x:W/2+(Math.random()-0.5)*W*0.4, y:H*0.42,
+    vx:(Math.random()-0.5)*14*dpr, vy:(Math.random()-1.15)*15*dpr,
+    r:(Math.random()*5+3)*dpr, c:cols[i%cols.length], a:1, rot:Math.random()*6.28, vr:(Math.random()-0.5)*0.3 });
+  let t0=performance.now();
+  (function loop(now){
+    const dt=Math.min(32,now-t0)/16; t0=now;
+    x.clearRect(0,0,W,H); let alive=false;
+    P.forEach(p=>{
+      p.vy+=0.55*dpr*dt; p.x+=p.vx*dt; p.y+=p.vy*dt; p.rot+=p.vr*dt; p.a-=0.011*dt;
+      if(p.a<=0) return; alive=true;
+      x.save(); x.globalAlpha=Math.max(0,p.a); x.translate(p.x,p.y); x.rotate(p.rot);
+      x.fillStyle=p.c; x.fillRect(-p.r/2,-p.r/2,p.r,p.r*1.6); x.restore();
+    });
+    if(alive) requestAnimationFrame(loop); else c.remove();
+  })(t0);
+}
+/* Универсальное праздничное/поддерживающее окно */
+function bigModal(o){
+  const acc=o.accent||'var(--gold)';
+  $('sheetContent').innerHTML=
+    '<div class="bm" style="--acc:'+acc+';">'+
+      '<div class="bm-ic">'+o.icon+'</div>'+
+      '<div class="bm-t">'+o.title+'</div>'+
+      (o.big?'<div class="bm-big">'+o.big+'</div>':'')+
+      (o.sub?'<div class="bm-sub">'+o.sub+'</div>':'')+
+      (o.rows?'<div class="bm-rows">'+o.rows.map(r=>
+        '<div class="bm-row"><span>'+r[0]+'</span><b style="color:'+(r[2]||'var(--txt)')+';">'+r[1]+'</b></div>').join('')+'</div>':'')+
+      (o.note?'<div class="bm-note">'+o.note+'</div>':'')+
+      '<button class="btn btn-gold btn-block mt4" id="bmOk">'+(o.cta||'Понятно')+'</button>'+
+      (o.cta2?'<button class="btn btn-ghost btn-block mt2" id="bmOk2">'+o.cta2+'</button>':'')+
+    '</div>';
+  $('sheetVeil').classList.add('open');
+  $('bmOk').addEventListener('click',()=>{ closeSheet(); if(o.onOk) o.onOk(); });
+  const b2=$('bmOk2'); if(b2) b2.addEventListener('click',()=>{ closeSheet(); if(o.onOk2) o.onOk2(); });
+  if(o.confetti) setTimeout(confettiBurst, 250);
+}
+/* --- Этап 1 пройден --- */
+function modalStage1(a, eq){
+  const pct=(eq-a.tier)/a.tier*100;
+  bigModal({
+    icon:'🏆', accent:'var(--green)', confetti:true,
+    title:'Этап 1 пройден!',
+    big:'+'+pct.toFixed(2)+'%',
+    sub:'Вы сделали то, на чём останавливается большинство. Теперь — второй этап.',
+    rows:[['Счёт','$'+fmt(a.tier,0)],
+          ['Баланс',fUsd(eq),'var(--green)'],
+          ['Цель этапа 2','+'+RULES.target2+'%','var(--gold)'],
+          ['Дневной лимит','−'+RULES.dailyLoss+'%','var(--red)']],
+    note:'Позиции закрыты, баланс зафиксирован. Не меняйте риск — именно прежний подход вас сюда привёл.',
+    cta:'Продолжить', onOk:()=>go('accounts')
+  });
+  tgNotify('stage1', {tier:a.tier, pct, target2:RULES.target2, daily:RULES.dailyLoss, maxdd:RULES.maxDD});
+}
+/* --- Фандед --- */
+function modalFunded(a, eq){
+  bigModal({
+    icon:'👑', accent:'var(--gold)', confetti:true,
+    title:'Челлендж пройден!',
+    big:'$'+fmt(a.tier,0),
+    sub:'Вы получили капитал фирмы. Профит-сплит — 80% вам.',
+    rows:[['Статус','ФАНДЕД','var(--gold)'],
+          ['Ваша доля прибыли','80%','var(--green)'],
+          ['Первая выплата','через 14 дней'],
+          ['Лимиты','остаются','var(--red)']],
+    note:'Целей по прибыли больше нет — теперь важна стабильность. Совет: снизьте риск до 0.5% на сделку. Большинство теряет фандед не на плохой сделке, а на повышении риска после успеха.',
+    cta:'К кошельку', onOk:()=>go('wallet'),
+    cta2:'К счетам', onOk2:()=>go('accounts')
+  });
+  tgNotify('funded', {tier:a.tier});
+}
+/* --- Провал --- */
+function modalFail(a, reason){
+  const st=tradeStats();
+  bigModal({
+    icon:'📉', accent:'var(--red)',
+    title:'Челлендж не пройден',
+    sub:reason,
+    rows:[['Счёт','$'+fmt(a.tier,0)],
+          ['Сделок',(a.history||[]).length],
+          st?['Винрейт', st.winrate.toFixed(0)+'%']:null,
+          st?['Профит-фактор', (st.pf>=99?'∞':st.pf.toFixed(2))]:null].filter(Boolean),
+    note:'<b style="color:var(--gold);">Но это не конец — это статистика.</b><br><br>'+
+      'Через это проходят почти все: челлендж с первой попытки проходят менее 10% трейдеров. Разница между теми, кто в итоге получает капитал, и теми, кто уходит — только в одном: первые разбирают ошибки и возвращаются.<br><br>'+
+      '<b>Что сделать сейчас:</b><br>'+
+      '1. Откройте статистику — посмотрите, где реально теряли<br>'+
+      '2. Посчитайте, сколько сделок были вне вашей системы<br>'+
+      '3. Отработайте слабое место на демо — он бесплатный<br><br>'+
+      'Рынок никуда не денется. Возвращайтесь подготовленным.',
+    cta:'Открыть статистику', onOk:()=>{ S.ptab='stats'; go('portfolio'); },
+    cta2:'Перейти на демо', onOk2:()=>{ const d=accList().find(x=>x.kind==='demo'); if(d) switchAcc(d.id); go('accounts'); }
+  });
+  tgNotify('fail', {tier:a.tier, reason});
+}
+/* --- Веха: половина пути --- */
+function checkMilestone(a, eq){
+  if(a.kind!=='challenge' || a.status!=='RUN') return;
+  const target=a.tier*(1+(a.stage===1?RULES.target1:RULES.target2)/100);
+  const need=target-a.tier, done=eq-a.tier;
+  if(need<=0) return;
+  const p=done/need;
+  a._ms=a._ms||{};
+  if(p>=0.5 && !a._ms.half){
+    a._ms.half=1; persistState();
+    const left=(target-eq)/a.tier*100;
+    showCoach('Половина пути пройдена',
+      'До цели этапа осталось '+left.toFixed(2)+'%. Самая частая ошибка сейчас — увеличить риск, чтобы «добить быстрее». Именно так теряют уже заработанное.','good');
+    tgNotify('milestone', {tier:a.tier, left});
+  }
+  if(p>=0.85 && !a._ms.near){
+    a._ms.near=1; persistState();
+    showCoach('Цель совсем близко',
+      'Осталось меньше 15% до прохождения этапа. Не форсируйте: одна импульсивная сделка может отбросить назад. Дождитесь своего сетапа.','good');
+  }
+}
+
+/* ============ АКТИВАЦИЯ КУПЛЕННЫХ СЧЕТОВ ============ */
+async function checkMyPayments(silent){
+  if(!S.user) return;
+  try{
+    const r=await fetch(API_BASE+'/api/payments?user='+encodeURIComponent(S.user.id)+'&status=approved');
+    if(!r.ok) return;
+    const d=await r.json();
+    const list=(d.payments||[]).filter(p=>!p.applied);
+    S.appliedPays=S.appliedPays||[];
+    for(const p of list){
+      if(S.appliedPays.includes(p.id)) continue;
+      if(p.kind==='subscription'){
+        const t=/vip|вип/i.test(p.plan)?'vip':'prem';
+        S.tier=t; saveMeta();
+        toast('Подписка '+(t==='vip'?'ВИП':'Премиум')+' активирована','⭐');
+      } else if(p.kind==='challenge'){
+        if(paidAccounts().length>=MAX_PAID_ACC){
+          if(!silent) toast('Достигнут лимит счетов ('+MAX_PAID_ACC+')','⚠️');
+          continue;
+        }
+        const size=(p.meta&&p.meta.size) || parseChallengeSize(p.plan);
+        const stages=(p.meta&&p.meta.stages) || (/ускорен/i.test(p.plan)?1:2);
+        const a=addChallengeAcc(size, p.plan.split('·')[0].trim(), stages);
+        if(a){ haptic('ok'); showAccActivated(a); }
+      }
+      S.appliedPays.push(p.id);
+      fetch(API_BASE+'/api/payments',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action:'applied', user:S.user.id, id:p.id})}).catch(()=>{});
+    }
+    if(list.length){ persistState(); renderAll(); }
+  }catch(e){}
+}
+function parseChallengeSize(plan){
+  const s=String(plan||'');
+  let m=s.match(/(\d+(?:[.,]\d+)?)\s*K/i);
+  if(m) return Math.round(parseFloat(m[1].replace(',','.'))*1000);
+  m=s.match(/\$?\s*(\d[\d\s]{2,})/);
+  if(m) return parseInt(m[1].replace(/\s/g,''),10)||10000;
+  return 10000;
+}
+function showAccActivated(a){
+  $('sheetContent').innerHTML='<div style="text-align:center;padding:6px 0;">'+
+    '<div style="font-size:52px;">💼</div>'+
+    '<div class="h2 mt3">Счёт активирован</div>'+
+    '<div class="equity mt3" style="color:var(--gold);">$'+fmt(a.tier,0)+'</div>'+
+    '<div class="small mt3" style="color:var(--txt2);line-height:1.6;">'+a.label+'<br><br>'+
+      'Цель этапа 1: <b style="color:var(--green);">+'+RULES.target1+'%</b> · дневной лимит −'+RULES.dailyLoss+'% · общая просадка −'+RULES.maxDD+'%<br><br>'+
+      'Счёт добавлен в раздел «Счета» — переключайтесь между ним и демо в любой момент.</div>'+
+    '<button class="btn btn-gold btn-block mt4" id="accOk">Начать торговать</button></div>';
+  $('sheetVeil').classList.add('open');
+  $('accOk').addEventListener('click',()=>{ closeSheet(); go('accounts'); });
+}
+
+/* ============ СИСТЕМА СЧЕТОВ (демо + до 3 платных) ============ */
+const MAX_PAID_ACC = 3;
+function newAcc(o){
+  return Object.assign({
+    id: 'a'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
+    kind: 'demo',              // 'demo' | 'challenge'
+    label: 'Демо-счёт',
+    tier: 10000, stage:1, balance:10000, startDay:10000,
+    profitDays:0, dayPnlPeak:0, status:'RUN',
+    dayKey: dayKey(), createdAt: Date.now(),
+    positions:[], history:[], equityHist:[]
+  }, o||{});
+}
+function accList(){ S.accounts=S.accounts||[]; return S.accounts; }
+function paidAccounts(){ return accList().filter(a=>a.kind==='challenge'); }
+function activeAcc(){
+  const l=accList();
+  let a=l.find(x=>x.id===S.activeAccId);
+  if(!a){ a=l[0]; if(a) S.activeAccId=a.id; }
+  return a||null;
+}
+/* синхронизация: S.acc / S.positions / S.history — «окно» в активный счёт */
+function bindAcc(){
+  const a=activeAcc(); if(!a) return;
+  S.acc=a;
+  S.positions=a.positions=a.positions||[];
+  S.history=a.history=a.history||[];
+  S.equityHist=a.equityHist=a.equityHist||[];
+}
+function switchAcc(id){
+  const a=accList().find(x=>x.id===id); if(!a) return;
+  S.activeAccId=id; bindAcc(); persistState(); haptic('ok');
+  toast('Счёт: '+a.label, a.kind==='demo'?'🎮':'💼');
+  renderAll();
+}
+function addChallengeAcc(size, planName, stages){
+  if(paidAccounts().length>=MAX_PAID_ACC) return null;
+  const a=newAcc({
+    kind:'challenge',
+    label: planName || ('Челлендж $'+fmt(size,0)),
+    tier:size, balance:size, startDay:size, stage:1, status:'RUN',
+    stages: stages||2
+  });
+  accList().push(a); S.activeAccId=a.id; bindAcc(); persistState();
+  return a;
+}
+function migrateAccounts(){
+  S.accounts=S.accounts||[];
+  if(!S.accounts.length){
+    // переносим старый одиночный счёт
+    const old=S.acc&&S.acc.tier ? S.acc : null;
+    const demo=newAcc(old?{
+      tier:old.tier||10000, balance:old.balance||10000, startDay:old.startDay||old.balance||10000,
+      stage:old.stage||1, status:old.status||'RUN', profitDays:old.profitDays||0,
+      dayPnlPeak:old.dayPnlPeak||0, dayKey:old.dayKey||dayKey(), fundedAt:old.fundedAt||null,
+      positions:(S.positions||[]).slice(), history:(S.history||[]).slice(), equityHist:(S.equityHist||[]).slice()
+    }:{});
+    if(old && old.tier && old.tier!==10000){ demo.kind='challenge'; demo.label='Челлендж $'+fmt(old.tier,0); }
+    S.accounts=[demo]; S.activeAccId=demo.id;
+  }
+  bindAcc();
+}
 function dayKey(){ const d=new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
 function rollDay(){
   if(!S.acc) return;
@@ -1199,6 +1492,14 @@ function rollDay(){
     if(S.acc.status==='RUN' || S.acc.status==='PASS') persistState();
   }
 }
+function checkAllAccounts(){
+  const saveId=S.activeAccId;
+  accList().forEach(a=>{
+    if(a.status==='FAIL') return;
+    S.activeAccId=a.id; bindAcc(); checkChallenge();
+  });
+  S.activeAccId=saveId; bindAcc();
+}
 function checkChallenge(){
   if(!S.acc || S.acc.status==='FAIL') return;
   rollDay();
@@ -1206,42 +1507,40 @@ function checkChallenge(){
   const funded = S.acc.status==='PASS';
   const hitTotal = eq<=challengeStop();
   const hitDaily = eq<=dayStop();
+  // предупреждение при 70% дневного лимита
+  if(!hitTotal && !hitDaily && S.acc.kind==='challenge'){
+    const used=(S.acc.startDay-eq)/(S.acc.startDay*RULES.dailyLoss/100)*100;
+    S.acc._w=S.acc._w||{};
+    if(used>=70 && !S.acc._w.d70){ S.acc._w.d70=1; persistState();
+      showCoach('Осторожно: '+used.toFixed(0)+'% дневного лимита',
+        'Оставшийся буфер — страховка на завтра, а не топливо для отыгрыша. Лучшее решение сейчас — закрыть терминал.','warn');
+      tgNotify('warn',{tier:S.acc.tier, used}); }
+  }
   if(hitTotal || hitDaily){
     forceCloseAll(hitTotal?'maxDD':'dailyLoss');
     S.acc.status='FAIL';
     S.acc.failReason = hitTotal?('превышена общая просадка −'+RULES.maxDD+'%'):('превышен дневной лимит −'+RULES.dailyLoss+'%');
     S.acc.failedAt=Date.now();
     persistState(); haptic('err');
-    toast(hitTotal?'Общая просадка превышена — счёт закрыт':'Дневной лимит превышен — счёт закрыт','💥');
+    if(S.acc.kind==='challenge') modalFail(S.acc, S.acc.failReason);
+    else toast(hitTotal?'Общая просадка превышена — счёт закрыт':'Дневной лимит превышен — счёт закрыт','💥');
     renderAll(); return;
   }
+  checkMilestone(S.acc, eq);
+  checkPayoutUnlock();
   if(funded) return;
   if(eq>=challengeTarget()){
     forceCloseAll('stage');
     if(S.acc.stage===1){
       S.acc.stage=2; S.acc.balance=eq; S.acc.startDay=eq; S.acc.profitDays=0; S.acc.dayPnlPeak=0; S.acc.dayKey=dayKey();
-      persistState(); haptic('ok'); toast('Этап 1 пройден! Открыт этап 2','🏆'); showStageModal(2);
+      persistState(); haptic('ok'); modalStage1(S.acc, eq);
     } else {
       S.acc.status='PASS'; S.acc.balance=eq; S.acc.startDay=eq; S.acc.dayKey=dayKey();
       if(!S.acc.fundedAt) S.acc.fundedAt=Date.now();
-      persistState(); haptic('ok'); toast('Челлендж пройден! Фандед-счёт активирован','👑'); showStageModal('funded');
+      persistState(); haptic('ok'); modalFunded(S.acc, eq);
     }
     renderAll();
   }
-}
-function showStageModal(stage){
-  const funded = stage==='funded';
-  $('sheetContent').innerHTML='<div style="text-align:center;padding:6px 0;">'+
-    '<div style="font-size:52px;">'+(funded?'👑':'🏆')+'</div>'+
-    '<div class="h2 mt3">'+(funded?'Фандед-счёт активирован':'Этап 1 пройден')+'</div>'+
-    '<div class="small mt3" style="color:var(--txt2);line-height:1.65;">'+
-      (funded
-        ? 'Теперь вы торгуете капиталом фирмы с профит-сплитом <b style="color:var(--gold);">80%</b>.<br><br>Цели по прибыли больше нет — важна стабильность. Лимиты просадки остаются.<br><br>Первая заявка на выплату — через <b>14 дней</b>.'
-        : 'Открыт <b>этап 2</b>: цель +'+RULES.target2+'%.<br><br>Позиции закрыты, баланс зафиксирован. Лимиты просадки прежние.')+
-    '</div>'+
-    '<button class="btn btn-gold btn-block mt4" id="stgOk">'+(funded?'К кошельку':'Продолжить')+'</button></div>';
-  $('sheetVeil').classList.add('open');
-  $('stgOk').addEventListener('click',()=>{ closeSheet(); go(funded?'wallet':'accounts'); });
 }
 function startChallenge(size, fee){
   S.acc={ active:true, tier:size, stage:1, balance:size, startDay:size, profitDays:0, dayPnlPeak:0, status:'RUN', dayKey:dayKey() };
@@ -1258,8 +1557,10 @@ function renderHome(){
   $('homePnl').innerHTML=`<span class="${pnl>=0?'up':'down'}">${pnl>=0?'+':''}${fUsd(pnl)} (${pnl>=0?'+':''}${pct.toFixed(2)}%)</span>`;
   if(S.acc.status==='PASS'){
     const dl=payoutDaysLeft();
-    $('homeStageBadge').textContent = (dl!==null && dl>0) ? ('FUNDED 👑 · вывод через '+dl+' дн.') : 'FUNDED 👑 · вывод доступен';
-  } else $('homeStageBadge').textContent = S.acc.status==='FAIL' ? 'ПРОВАЛЕН' : `ЭТАП ${S.acc.stage} / 2`;
+    $('homeStageBadge').textContent = (dl!==null && dl>0) ? ('FUNDED · вывод через '+dl+' дн.') : 'FUNDED · вывод доступен';
+  } else $('homeStageBadge').textContent = S.acc.status==='FAIL' ? 'СЧЁТ ЗАКРЫТ' : ('ЭТАП '+S.acc.stage+' / '+(S.acc.stages||2));
+  const hb=$('homeAccBadge');
+  if(hb) hb.textContent = S.acc.kind==='demo' ? 'ДЕМО-СЧЁТ' : ('ЧЕЛЛЕНДЖ $'+fmt(S.acc.tier,0));
   const t1=Math.max(0,Math.min(100,(eq-start)/(challengeTarget()-start)*100));
   if(S.acc.stage===1){ $('stageFill1').style.width=(S.acc.status==='RUN'?t1:100)+'%'; $('stageFill2').style.width='0%'; }
   else { $('stageFill1').style.width='100%'; $('stageDot2').classList.add('done');
@@ -1271,70 +1572,80 @@ function renderHome(){
 
 /* ============ RENDER: ACCOUNTS ============ */
 function renderAccounts(){
-  const body=$('accountsBody');
-  if(!S.acc.active){ body.innerHTML=''; renderTiers(body); return; }
-  const eq=equity(), start=S.acc.tier;
-  const target=challengeTarget(), stop=challengeStop(), dstop=dayStop();
-  const prog=Math.max(0,Math.min(100,(eq-stop)/(target-stop)*100));
-  const dayPnl=eq-S.acc.startDay;
-  const statusBadge = S.acc.status==='PASS' ? '<span class="badge b-green">ПРОЙДЕН 👑</span>'
-    : S.acc.status==='FAIL' ? '<span class="badge b-red">ПРОВАЛЕН</span>'
-    : `<span class="badge b-gold">ЭТАП ${S.acc.stage} / 2</span>`;
+  const body=$('accountsBody'); if(!body) return;
+  const list=accList(); const cur=activeAcc();
+  if(!list.length){ body.innerHTML=''; renderTiers(body); return; }
 
-  body.innerHTML = `
-    <div class="hero-card">
-      <div class="row between">${statusBadge}<span class="badge b-mut">ДЕМО · $${fmt(start,0)}</span></div>
-      <div class="micro mt3">Торговый баланс</div>
-      <div class="equity mt2" style="color:var(--green);">${fUsd(eq)}</div>
-      <div class="row between small mt3">
-        <span>🛑 стоп ${fUsd(stop)}</span><span>🎯 цель ${fUsd(target)}</span>
-      </div>
-      <div class="progress mt2"><div class="fill" style="width:${prog}%"></div></div>
-    </div>
+  let html='<div class="acc-strip">';
+  list.forEach(a=>{
+    const on=cur&&a.id===cur.id;
+    const eqv=accEquity(a);
+    const badge = a.status==='PASS'?'FUNDED':a.status==='FAIL'?'ЗАКРЫТ':(a.kind==='demo'?'ДЕМО':'ЭТАП '+a.stage);
+    html+='<button class="acc-chip'+(on?' on':'')+(a.status==='FAIL'?' dead':'')+'" data-acc="'+a.id+'">'+
+      '<span class="ac-l">'+(a.kind==='demo'?'🎮 Демо':'💼 $'+fmt(a.tier,0))+'</span>'+
+      '<span class="ac-v">'+fUsd(eqv)+'</span>'+
+      '<span class="ac-b">'+badge+'</span></button>';
+  });
+  if(paidAccounts().length<MAX_PAID_ACC)
+    html+='<button class="acc-chip add" data-go="challenges"><span style="font-size:20px;">+</span><span class="ac-b">Купить счёт</span></button>';
+  html+='</div>';
 
-    <div class="card mt3">
-      <div class="row between"><span class="h3">Кривая счёта</span>
-        <span class="badge ${S.live?'b-green':'b-mut'}">${S.live?'LIVE':'DEMO'}</span></div>
-      <canvas class="eq-chart mt3" id="eqChart"></canvas>
-    </div>
+  if(!cur){ body.innerHTML=html; return; }
+  const a=cur;
+  const eq=accEquity(a), start=a.tier;
+  const stages=a.stages||2;
+  const target=a.tier*(1+(a.stage===1?RULES.target1:RULES.target2)/100);
+  const stop=a.tier*(1-RULES.maxDD/100), dstop=a.startDay*(1-RULES.dailyLoss/100);
+  const prog=Math.max(0,Math.min(100,(eq-stop)/((target-stop)||1)*100));
+  const dayPnl=eq-a.startDay;
+  const statusBadge = a.status==='PASS' ? '<span class="badge b-green">ФАНДЕД 👑</span>'
+    : a.status==='FAIL' ? '<span class="badge b-red">ЗАКРЫТ</span>'
+    : '<span class="badge b-gold">ЭТАП '+a.stage+' / '+stages+'</span>';
 
-    <div class="metric-grid mt3">
-      <div class="card">
-        <div class="row between"><span class="micro">Дневная просадка</span>
-          <div class="ring" style="width:34px;height:34px;"><svg width="34" height="34" viewBox="0 0 34 34">
-            <circle class="bgc" cx="17" cy="17" r="13" stroke-width="3.4"/>
-            <circle class="fgc" cx="17" cy="17" r="13" stroke-width="3.4" stroke-dasharray="81.7"
-              style="stroke:${dayPnl<0?'var(--red)':'var(--line2)'};stroke-dashoffset:${81.7-Math.min(1,Math.max(0,-dayPnl/(S.acc.startDay*RULES.dailyLoss/100)))*81.7};"/></svg></div>
-        </div>
-        <div class="mono mt2" style="font-weight:800;font-size:17px;">${fUsd(Math.max(0,-dayPnl))} <span class="small">/ ${fUsd(S.acc.startDay*RULES.dailyLoss/100)}</span></div>
-        <div class="small mt2">🛑 дневной стоп ${fUsd(dstop)}</div>
-      </div>
-      <div class="card">
-        <div class="row between"><span class="micro">Дневной доход</span>
-          <div class="ring" style="width:34px;height:34px;"><svg width="34" height="34" viewBox="0 0 34 34">
-            <circle class="bgc" cx="17" cy="17" r="13" stroke-width="3.4"/>
-            <circle class="fgc" cx="17" cy="17" r="13" stroke-width="3.4" stroke-dasharray="81.7"
-              style="stroke-dashoffset:${81.7-Math.min(1,Math.max(0,dayPnl/50))*81.7};"/></svg></div>
-        </div>
-        <div class="mono mt2" style="font-weight:800;font-size:17px;" class="up">${dayPnl>=0?'+':''}${fUsd(dayPnl)}</div>
-        <div class="small mt2">профитный день от +$50</div>
-      </div>
-      <div class="card">
-        <div class="micro">Профитные дни</div>
-        <div class="mono mt2" style="font-weight:800;font-size:20px;">${S.acc.profitDays} <span class="small">из ${RULES.profitDays}</span></div>
-      </div>
-      <div class="card">
-        <div class="micro">Профит-сплит</div>
-        <div class="mono mt2" style="font-weight:800;font-size:20px;color:var(--gold);">${RULES.split}%</div>
-        <div class="small mt2">твоя доля прибыли</div>
-      </div>
-    </div>
+  html += '<div class="hero-card mt3">'+
+    '<div class="row between">'+statusBadge+'<span class="badge b-mut">'+(a.kind==='demo'?'ДЕМО':'ЧЕЛЛЕНДЖ')+' · $'+fmt(start,0)+'</span></div>'+
+    '<div class="micro mt3">Торговый баланс</div>'+
+    '<div class="equity mt2" style="color:'+(eq>=start?'var(--green)':'var(--red)')+';">'+fUsd(eq)+'</div>'+
+    (a.status==='FAIL'&&a.failReason?'<div class="small mt2" style="color:var(--red);">'+a.failReason+'</div>':'')+
+    '<div class="row between small mt3"><span>🛑 стоп '+fUsd(stop)+'</span><span>🎯 цель '+fUsd(target)+'</span></div>'+
+    '<div class="progress mt2"><div class="fill" style="width:'+prog+'%"></div></div>'+
+    (a.kind==='challenge'&&a.status!=='FAIL'?'<div class="micro mt3" style="color:var(--txt2);">Профит-сплит 80% · выплата через 14 дней после фандеда</div>':'')+
+    '</div>';
 
-    <button class="btn btn-gold btn-block mt4" data-go="market">Торговать →</button>
-    ${S.acc.status!=='RUN' ? '<button class="btn btn-ghost btn-block mt3" id="restartBtn">Начать новый челлендж</button>' : ''}
-  `;
-  drawEquityChart();
-  const rb=$('restartBtn'); if(rb) rb.addEventListener('click', ()=>{ S.acc.active=false; renderAccounts(); });
+  html += '<div class="card mt3"><div class="row between"><span class="h3">Кривая счёта</span>'+
+    '<span class="badge '+(S.live?'b-green':'b-mut')+'">'+(S.live?'LIVE':'DEMO')+'</span></div>'+
+    '<canvas class="eq-chart mt3" id="eqChart"></canvas></div>';
+
+  html += '<div class="metric-grid mt3">'+
+    '<div class="card"><div class="row between"><span class="micro">Дневная просадка</span>'+
+    '<span class="mono small" style="color:'+(dayPnl<0?'var(--red)':'var(--green)')+';">'+(dayPnl>=0?'+':'')+fUsd(dayPnl)+'</span></div>'+
+    '<div class="progress mt2"><div class="fill" style="width:'+Math.max(0,Math.min(100,(-dayPnl)/(a.startDay*RULES.dailyLoss/100)*100))+'%;background:var(--red);"></div></div>'+
+    '<div class="micro mt2">лимит '+fUsd(dstop)+'</div></div>'+
+    '<div class="card"><div class="row between"><span class="micro">Открытых позиций</span>'+
+    '<span class="mono small">'+(a.positions||[]).length+'</span></div>'+
+    '<div class="row between mt3"><span class="micro">Сделок в истории</span>'+
+    '<span class="mono small">'+(a.history||[]).length+'</span></div></div></div>';
+
+  if(a.status==='FAIL'){
+    html+='<div class="note-box mt3">Счёт закрыт по правилам риск-менеджмента. Демо можно сбросить в настройках, новый челлендж — в разделе «Челлендж».</div>';
+  }
+  if(a.kind==='demo'){
+    html+='<button class="btn btn-ghost btn-block mt3" id="resetDemo">♻️ Сбросить демо-счёт</button>';
+  }
+
+  body.innerHTML=html;
+  body.querySelectorAll('[data-acc]').forEach(b=>b.addEventListener('click',()=>switchAcc(b.dataset.acc)));
+  const rd=$('resetDemo');
+  if(rd) rd.addEventListener('click',()=>{
+    const d=activeAcc(); if(!d||d.kind!=='demo') return;
+    Object.assign(d,{tier:10000,balance:10000,startDay:10000,stage:1,status:'RUN',profitDays:0,dayPnlPeak:0,dayKey:dayKey(),failReason:null,positions:[],history:[],equityHist:[]});
+    bindAcc(); persistState(); haptic('ok'); toast('Демо сброшен','♻️'); renderAll();
+  });
+  drawEqChart();
+}
+function accEquity(a){
+  if(!a) return 0;
+  return a.balance + (a.positions||[]).reduce((s,p)=>s+posPnl(p),0);
 }
 function renderTiers(body){
   const wrap=document.createElement('div');
@@ -3574,15 +3885,23 @@ async function authProvider(kind, email){
 function loadUser(){ try{ const u=localStorage.getItem('nx_user'); if(u) S.user=JSON.parse(u); }catch(e){} }
 
 /* ============ STATE SYNC (cloud + local) ============ */
-function snapshot(){ return { acc:S.acc, positions:S.positions, history:S.history, tier:S.tier, wallet:S.wallet, chat:S.chat, equityHist:S.equityHist, payoutReq:S.payoutReq }; }
+function snapshot(){ return { accounts:S.accounts, activeAccId:S.activeAccId, acc:S.acc, positions:S.positions, history:S.history, tier:S.tier, wallet:S.wallet, chat:S.chat, equityHist:S.equityHist, payoutReq:S.payoutReq, appliedPays:S.appliedPays }; }
 function persistState(){ try{ localStorage.setItem('nx_state', JSON.stringify(snapshot())); }catch(e){} pushState(); }
 function loadState(){ try{ const s=localStorage.getItem('nx_state'); if(s){ const o=JSON.parse(s);
   if(o.acc)S.acc=o.acc; if(o.positions)S.positions=o.positions; if(o.history)S.history=o.history;
-  if(o.tier)S.tier=o.tier; if(o.wallet)S.wallet=o.wallet; if(o.chat)S.chat=o.chat; if(o.equityHist)S.equityHist=o.equityHist; if(o.payoutReq)S.payoutReq=o.payoutReq; } }catch(e){} }
+  if(o.tier)S.tier=o.tier; if(o.wallet)S.wallet=o.wallet; if(o.chat)S.chat=o.chat; if(o.equityHist)S.equityHist=o.equityHist; if(o.payoutReq)S.payoutReq=o.payoutReq;
+  if(o.accounts&&o.accounts.length){ S.accounts=o.accounts; S.activeAccId=o.activeAccId||o.accounts[0].id; }
+  if(o.appliedPays)S.appliedPays=o.appliedPays; } }catch(e){} }
+function pingUser(){
+  if(!S.user) return;
+  fetch(API_BASE+'/api/state',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({user:S.user.id, name:S.user.name||null, via:S.user.via||'demo', state:snapshot()})
+  }).catch(()=>{});
+}
 let pushT=null;
 function pushState(){ if(!S.user) return; clearTimeout(pushT); pushT=setTimeout(()=>{
   fetch(API_BASE+'/api/state',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({user:S.user.id, state:snapshot()})}).catch(()=>{}); }, 1200); }
+    body:JSON.stringify({user:S.user.id, name:S.user.name||null, via:S.user.via||'demo', state:snapshot()})}).catch(()=>{}); }, 1200); }
 async function pullState(){ if(!S.user) return;
   try{ const res=await fetch(API_BASE+'/api/state?user='+encodeURIComponent(S.user.id));
     if(!res.ok) return; const data=await res.json(); if(data && data.state){ const o=data.state;
@@ -3795,13 +4114,16 @@ function tpslInit(){
     const b=$('tpslBox'); const open=b.style.display!=='none';
     b.style.display=open?'none':'block'; $('tpslArrow').textContent=open?'▾':'▴'; haptic();
   });
+  // проценты считаются ОТ МАРЖИ с учётом плеча: +5% при x5 = движение цены 1%
   document.querySelectorAll('[data-tp]').forEach(b=>b.addEventListener('click',()=>{
-    const px=priceOf(S.term.symbol), pct=+b.dataset.tp/100;
-    $('tpPrice').value=(px*(1+pct)).toFixed(decOf(S.term.symbol)); tpslInfo(); haptic();
+    const px=priceOf(S.term.symbol), lev=parseInt(($('levSlider')||{}).value)||1;
+    const move=(+b.dataset.tp/100)/lev;
+    $('tpPrice').value=(px*(1+move)).toFixed(decOf(S.term.symbol)); tpslInfo(); haptic();
   }));
   document.querySelectorAll('[data-sl]').forEach(b=>b.addEventListener('click',()=>{
-    const px=priceOf(S.term.symbol), pct=+b.dataset.sl/100;
-    $('slPrice').value=(px*(1-pct)).toFixed(decOf(S.term.symbol)); tpslInfo(); haptic();
+    const px=priceOf(S.term.symbol), lev=parseInt(($('levSlider')||{}).value)||1;
+    const move=(+b.dataset.sl/100)/lev;
+    $('slPrice').value=(px*(1-move)).toFixed(decOf(S.term.symbol)); tpslInfo(); haptic();
   }));
   ['tpPrice','slPrice'].forEach(id=>{ const el=$(id); if(el) el.addEventListener('input', tpslInfo); });
 }
@@ -4879,9 +5201,9 @@ function renderChSummary(){
     '<button class="btn btn-gold btn-block mt4" id="chBuy">Получить $'+fmt(s.size,0)+'</button>'+
     '<div class="micro mt2" style="text-align:center;">Оплата криптовалютой · счёт выдаётся после подтверждения</div></div>';
   $('chBuy').addEventListener('click',()=>{
-    openPay('challenge', R.name+' '+ (s.size>=1000?(s.size/1000)+'K':s.size), s.price, ()=>{
-      // после подтверждения оплаты (админом) счёт активируется; здесь — заявка отправлена
-    }, {size:s.size});
+    if(paidAccounts().length>=MAX_PAID_ACC){ toast('Максимум '+MAX_PAID_ACC+' платных счетов на аккаунт','⚠️'); return; }
+    openPay('challenge', R.name+' '+ (s.size>=1000?(s.size/1000)+'K':s.size), prc, null,
+      {size:s.size, stages:(S.chType==='fast'?1:2), name:s.name});
   });
 }
 
@@ -4950,7 +5272,7 @@ function downscale(file, cb){
 async function submitPayment(o){
   try{
     const res=await fetch(API_BASE+'/api/payments',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:'create', user:S.user?S.user.id:null, name:S.user?S.user.name:'', kind:o.kind, plan:o.plan, amount:o.amount, network:o.network, address:o.address, proof:o.proof})});
+      body:JSON.stringify({action:'create', user:S.user?S.user.id:null, name:S.user?S.user.name:'', kind:o.kind, plan:o.plan, amount:o.amount, network:o.network, address:o.address, proof:o.proof, meta:o.extra||null})});
     if(!res.ok) throw 0;
     // сохраняем «ожидает» локально
     S.pendingPay=S.pendingPay||[]; S.pendingPay.push({plan:o.plan, kind:o.kind, ts:Date.now()});
@@ -4993,10 +5315,12 @@ async function renderAdmin(){
     const st=await r1.json();
     const pend=await fetch(API_BASE+'/api/payments?admin='+id+'&status=pending').then(r=>r.json()).catch(()=>({payments:[]}));
     let html='<div class="stat-grid">'+
-      '<div class="stat-card"><div class="sv">'+(st.users||0)+'</div><div class="sl">Пользователей</div></div>'+
-      '<div class="stat-card"><div class="sv" style="color:var(--gold);">$'+fmt(st.revenue||0,0)+'</div><div class="sl">Выручка (подтв.)</div></div>'+
+      '<div class="stat-card"><div class="sv">'+(st.users||0)+'</div><div class="sl">Всего пользователей'+(st.newToday?' · +'+st.newToday+' сегодня':'')+'</div></div>'+
+      '<div class="stat-card"><div class="sv" style="color:var(--gold);">$'+fmt(st.revenue||0,0)+'</div><div class="sl">Выручка'+(st.rev30?' · $'+fmt(st.rev30,0)+' за 30д':'')+'</div></div>'+
+      '<div class="stat-card"><div class="sv" style="color:var(--green);">'+(st.active24||0)+'</div><div class="sl">Активны за сутки</div></div>'+
+      '<div class="stat-card"><div class="sv" style="color:var(--cy,#22E4FF);">'+(st.active7d||0)+'</div><div class="sl">Активны за неделю</div></div>'+
       '<div class="stat-card"><div class="sv" style="color:var(--green);">'+((st.payments&&st.payments.approved)||0)+'</div><div class="sl">Оплат подтверждено</div></div>'+
-      '<div class="stat-card"><div class="sv" style="color:var(--red);">'+((st.payments&&st.payments.pending)||0)+'</div><div class="sl">Ждут проверки</div></div>'+
+      '<div class="stat-card"><div class="sv" style="color:'+(((st.payments&&st.payments.pending)||0)>0?'var(--red)':'var(--txt2)')+';">'+((st.payments&&st.payments.pending)||0)+'</div><div class="sl">Ждут проверки</div></div>'+
       '</div>';
     html+='<div class="h2 mt5" style="margin-bottom:10px;">Заявки на оплату</div>';
     const list=(pend&&pend.payments)||[];
@@ -5110,11 +5434,12 @@ async function tick(){
   if(S.acc.status==='RUN' && dayPnl>=50 && S.acc.profitDays<1) S.acc.profitDays=1;
   checkTPSL();
   checkAlerts();
-  checkChallenge();
+  checkAllAccounts();
   renderAll();
 }
 async function init(){
   loadDraws(); loadMeta(); loadUser(); loadState(); acadLoad(); loadAlerts();
+  migrateAccounts();
   if(S.acc && S.acc.status==='PASS' && !S.acc.fundedAt){ S.acc.fundedAt=Date.now(); }
   if(S.acc && !S.acc.dayKey){ S.acc.dayKey=dayKey(); S.acc.startDay=S.acc.balance||S.acc.tier; }
   // миграция: демо теперь только $10k
@@ -5126,7 +5451,17 @@ async function init(){
   try{ const si=localStorage.getItem('nx_indA'); if(si) S.indA=normInd(JSON.parse(si)); }catch(e){}
   S.indA=normInd(S.indA);
   if(!S.user && tg && tg.initDataUnsafe && tg.initDataUnsafe.user){ authTelegram(); }
-  else if(S.user){ pullState(); }
+  else if(!S.user){
+    // демо-пользователь: учитывается в статистике, как и все остальные
+    let gid=null; try{ gid=localStorage.getItem('nx_gid'); }catch(e){}
+    if(!gid){ gid='demo_'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+      try{ localStorage.setItem('nx_gid', gid); }catch(e){} }
+    S.user={ id:gid, name:'Демо-трейдер', via:'demo' };
+    try{ localStorage.setItem('nx_user', JSON.stringify(S.user)); }catch(e){}
+  } else { pullState(); }
+  pingUser();
+  setTimeout(()=>checkMyPayments(true), 1500);
+  setInterval(()=>checkMyPayments(true), 60000);
   startWS();
   await loadTickers();
   await Promise.all(ASSETS.slice(0,4).map(a=>loadKlines(a.s,'1h')));
@@ -5137,6 +5472,7 @@ async function init(){
   setInterval(()=>{ if(S.screen==='signals'&&(S.stab==='signals'||S.stab==='analytics')) renderSignals(); }, 20000);
   setInterval(()=>{ if(S.screen==='terminal' && S.coachOn!==false) coachTip(); }, 25000);
   setInterval(()=>{ if(S.screen==='terminal') drawTermChart(); }, 1000);
+  setInterval(pingUser, 300000);
   setInterval(()=>{ loadMarkets().then(()=>{ if(S.screen==='market'){
     const cur=(S.search?ASSETS.filter(a=>{const q=S.search.toLowerCase();return a.t.toLowerCase().includes(q)||a.n.toLowerCase().includes(q);}):ASSETS.slice(0,S.mktLimit||60)).map(a=>a.s).join(',');
     if(cur===_mktSig) updateMarketPrices(); else renderMarket();
