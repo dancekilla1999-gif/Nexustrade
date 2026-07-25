@@ -551,6 +551,11 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
 .chk{font-size:12.5px;line-height:1.5;padding:6px 10px;border-radius:9px;margin-bottom:5px;}
 .chk.ok{background:rgba(43,255,158,.08);color:#9FE3C0;}
 .chk.no{background:rgba(255,59,87,.07);color:#E39FAC;}
+
+.promo-ok{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:11px;
+  background:rgba(43,255,158,.1);border:1px solid rgba(43,255,158,.35);font-size:12.5px;color:var(--green);}
+.promo-ok span{flex:1;line-height:1.4;}
+.promo-ok button{width:22px;height:22px;border-radius:50%;background:rgba(43,255,158,.15);color:var(--green);font-size:11px;flex-shrink:0;}
 </style>
 </head>
 <body>
@@ -933,6 +938,20 @@ const CDC = { BTCUSDT:'BTCUSD-PERP', ETHUSDT:'ETHUSD-PERP', SOLUSDT:'SOLUSD-PERP
 const CDC_TF = { '1m':'1m','5m':'5m','15m':'15m','30m':'30m','1h':'1h','2h':'2h','4h':'4h','6h':'6h','12h':'12h','1d':'1D','3d':'1D','1w':'7D','1M':'1M' };
 const TIERS = [ { size:10000, fee:0 } ];  // демо — только $10k
 const ADMIN_ID = '566501781';
+/* ============ ПРОМОКОДЫ ============ */
+const PROMOS = {
+  'NEXUS':   { off:50, label:'−50%', note:'Приветственная скидка' },
+  'START':   { off:25, label:'−25%', note:'Скидка новичка' },
+  'NEXUS10': { off:10, label:'−10%', note:'Партнёрская скидка' }
+};
+function findPromo(code){
+  const c=String(code||'').trim().toUpperCase();
+  return PROMOS[c] ? Object.assign({code:c}, PROMOS[c]) : null;
+}
+function applyPromo(amount, promo){
+  if(!promo) return amount;
+  return Math.max(1, Math.round(amount*(1-promo.off/100)*100)/100);
+}
 const PAY = {
   BEP20:{ label:'USDT · BEP-20 (BNB)', addr:'0x35cd937f9a5639589d6582636a1ad013e73ce2d8' },
   TRC20:{ label:'USDT · TRC-20 (Tron)', addr:'TPaM8Q8wboHbfXyiHsTAuM3fGqqHtY5PJC' },
@@ -960,7 +979,7 @@ const S = {
   prices:{},      // symbol -> {price, change24h}
   klines:{},      // symbol_interval -> [{t,o,h,l,c,v}]
   term:{ symbol:'BTCUSDT', interval:'1h', hover:null, tool:'cursor', pend:null, layout:null, view:null, type:'candle', pScale:1, oScale:[1,1,1,1], priceH:300, oscH:70 },
-  marketFilter:'all', search:'', coinMeta:{}, mktLimit:60, chType:'base', chSel:null, adminStat:null,
+  marketFilter:'all', search:'', coinMeta:{}, mktLimit:60, chType:'base', chSel:null, adminStat:null, activePromo:null,
   acc:{ active:true, tier:10000, stage:1, balance:10000, startDay:10000, profitDays:0, dayPnlPeak:0, status:'RUN' },
   positions:[], history:[], nextId:1, payoutReq:[],
   equityHist:[], alerts:[], ptab:'pos', stab:'signals', tier:'free', wallet:{}, chat:[], user:null,
@@ -1024,7 +1043,7 @@ async function loadTickers(){
     let got=0;
     ASSETS.forEach(a=>{ const r=map[CDC[a.s]]; if(!r) return;
       const last=+(r.a!==undefined?r.a:r.last); const ch=+(r.c!==undefined?r.c:r.change)*100;
-      if(isFinite(last)){ S.prices[a.s]={price:last, change:isFinite(ch)?ch:0}; got++; } });
+      if(isFinite(last)){ S.prices[a.s]={price:last, change:isFinite(ch)?ch:0}; feedCandle(a.s,last); got++; } });
     if(!got) throw new Error('no instruments');
     S.live=true; S.src='Crypto.com'; return;
   }catch(e){}
@@ -1032,7 +1051,7 @@ async function loadTickers(){
     const raw=await fetchJson('https://fapi.binance.com/fapi/v1/ticker/24hr');
     if(!Array.isArray(raw)) throw new Error('bad');
     const map={}; raw.forEach(r=>{ map[r.symbol]=r; });
-    ASSETS.forEach(a=>{ const r=map[a.s]; if(r) S.prices[a.s]={price:+r.lastPrice, change:+r.priceChangePercent}; });
+    ASSETS.forEach(a=>{ const r=map[a.s]; if(r){ S.prices[a.s]={price:+r.lastPrice, change:+r.priceChangePercent}; feedCandle(a.s,+r.lastPrice); } });
     S.live=true; S.src='Binance'; return;
   }catch(e){}
   S.live=false; S.src='DEMO';
@@ -1100,8 +1119,10 @@ function startWS(){
     if(!isFinite(last)) return;
     const prev=S.prices[sym];
     S.prices[sym]={ price:last, change:prev?prev.change:0 };
+    feedCandle(sym, last);
     wsAlive=true; S.live=true; S.src='Crypto.com \u26a1';
     rtDirty=true;
+    if(S.screen==='terminal' && S.term.symbol===sym) drawTermChart();
   };
   ws.onclose=()=>{ wsAlive=false; setTimeout(startWS, 4000); };
   ws.onerror=()=>{ try{ ws.close(); }catch(e){} };
@@ -1665,6 +1686,37 @@ function orderBlocks(k){
 }
 
 /* ================= DRAWS STORE ================= */
+
+/* ============ ЖИВЫЕ СВЕЧИ ============ */
+function feedCandle(sym, price){
+  if(!isFinite(price)||price<=0) return;
+  Object.keys(S.klines).forEach(key=>{
+    if(key.indexOf(sym+'_')!==0) return;
+    const iv = IMS[key.slice(sym.length+1)] || 3.6e6;
+    const arr = S.klines[key]; if(!arr || !arr.length) return;
+    const last = arr[arr.length-1];
+    const now = Date.now();
+    const bucket = Math.floor(now/iv)*iv;      // время открытия текущей свечи
+    if(bucket > last.t){
+      // закрылась предыдущая — открываем новую
+      const need = Math.min(3, Math.round((bucket-last.t)/iv));
+      for(let i=1;i<=need;i++){
+        const t = last.t + iv*i;
+        const o = (i===need) ? last.c : last.c;
+        arr.push({ t, o, h:Math.max(o,price), l:Math.min(o,price), c:price, v:0 });
+      }
+      if(arr.length>400) arr.splice(0, arr.length-400);
+      _klinesReady=false;                      // пересчитать сигналы
+      _obC={};                                 // сбросить кэш ордер-блоков
+    } else {
+      // обновляем текущую
+      last.c = price;
+      if(price>last.h) last.h=price;
+      if(price<last.l) last.l=price;
+      last.v = (last.v||0) + 1;
+    }
+  });
+}
 function drawsKey(){ return S.term.symbol+'_'+S.term.interval; }
 function saveDraws(){ try{ localStorage.setItem('nx_draws', JSON.stringify(S.draws)); }catch(e){} }
 function loadDraws(){ try{ const d=localStorage.getItem('nx_draws'); if(d) S.draws=JSON.parse(d); }catch(e){} }
@@ -1675,7 +1727,7 @@ function drawTermChart(){
   const cv=$('termChart'), wrap=$('termChartWrap');
   const k=S.klines[S.term.symbol+'_'+S.term.interval]; if(!cv||!k||!k.length) return;
   let V=S.term.view;
-  if(!V || (V.b-V.a)<10){ V=S.term.view={a:Math.max(0,k.length-90), b:k.length+12}; }
+  if(!V || (V.b-V.a)<10){ V=S.term.view={a:Math.max(0,k.length-130), b:k.length+8}; }
   const span=V.b-V.a;
   const a0=Math.max(0,Math.floor(V.a)), b0=Math.min(k.length,Math.ceil(V.b));
   const vis=k.slice(a0,b0);
@@ -1698,7 +1750,11 @@ function drawTermChart(){
   const pad=(hi-lo)*0.06||1; hi+=pad; lo-=pad;
   const psc=S.term.pScale||1;
   if(psc!==1){ const mid=(hi+lo)/2, half=(hi-lo)/2/psc; hi=mid+half; lo=mid-half; }
-  const plotL=4, plotR=W-mR, pw=Math.max(10,plotR-plotL), sw=pw/n, cw=Math.max(1.1,sw*0.6);
+  const plotL=4, plotR=W-mR, pw=Math.max(10,plotR-plotL), sw=pw/n;
+  // ширина тела: плотно как в проф. терминалах (промежуток ~20%)
+  const cw=Math.max(1, sw>3 ? Math.floor(sw*0.8) : sw*0.8);
+  const wickW=Math.max(1, Math.min(2, Math.round(cw*0.16)));
+  const px2=(v)=>Math.round(v)+0.5;   // выравнивание по пикселям для резкости
   const X=gi=>plotL+(gi-V.a)*sw+sw/2, Y=p=>priceBottom-(p-lo)/(hi-lo)*(priceBottom-priceTop);
   const step0=(k.length>1)?(k[1].t-k[0].t):3.6e6;
   const idxOfTimeG=t=>{
@@ -1737,16 +1793,21 @@ function drawTermChart(){
     x.lineTo(X(a0+vn-1),priceBottom); x.lineTo(X(a0),priceBottom); x.closePath(); x.fillStyle=grad; x.fill(); }
   } else if(ctype==='bar'){
     for(let i=0;i<vn;i++){ const o=vis[i], px=X(a0+i), u=o.c>=o.o;
-      x.strokeStyle=u?'#2BFF9E':'#FF3B57'; x.lineWidth=Math.max(1.1,cw*0.22);
+      x.strokeStyle=u?'#2BFF9E':'#FF3B57'; x.lineWidth=Math.max(1.1,wickW);
       x.beginPath(); x.moveTo(px,Y(o.h)); x.lineTo(px,Y(o.l));
       x.moveTo(px-cw/2,Y(o.o)); x.lineTo(px,Y(o.o));
       x.moveTo(px,Y(o.c)); x.lineTo(px+cw/2,Y(o.c)); x.stroke(); }
   } else {
     for(let i=0;i<vn;i++){ const o=vis[i], px=X(a0+i), u=o.c>=o.o;
-      x.strokeStyle=u?'#2BFF9E':'#FF3B57'; x.lineWidth=Math.max(1,cw*0.16);
-      x.beginPath(); x.moveTo(px,Y(o.h)); x.lineTo(px,Y(o.l)); x.stroke();
-      x.fillStyle=u?'#2BFF9E':'#FF3B57';
-      const a=Y(o.o), b=Y(o.c); x.fillRect(px-cw/2, Math.min(a,b), cw, Math.max(Math.abs(b-a),1.1)); }
+      const col=u?'#2BFF9E':'#FF3B57';
+      // фитиль
+      x.fillStyle=col;
+      x.fillRect(px2(px)-wickW/2, Y(o.h), wickW, Math.max(1,Y(o.l)-Y(o.h)));
+      // тело
+      const yo=Y(o.o), yc=Y(o.c);
+      const top=Math.min(yo,yc), hgt=Math.max(Math.abs(yc-yo), 1.5);
+      x.fillRect(px2(px-cw/2), Math.round(top), Math.max(1,Math.round(cw)), Math.round(hgt));
+    }
   }
   // оверлеи
   function iline(arr,color,w,dash){ x.beginPath(); let st=false;
@@ -2037,6 +2098,39 @@ function drawTermChart(){
     x.fillStyle='rgba(34,228,255,.85)'; x.fillText(spec.label||ind[0], plotL+4, top+8);
     x.fillStyle='rgba(234,247,255,0.35)'; x.font='10px JetBrains Mono';
   });
+  // ===== ТЕКУЩАЯ ЦЕНА + ТАЙМЕР ДО ЗАКРЫТИЯ СВЕЧИ =====
+  (function(){
+    const lastK=k[k.length-1]; if(!lastK) return;
+    const iv=IMS[S.term.interval]||3.6e6;
+    const closeAt=lastK.t+iv, left=Math.max(0, closeAt-Date.now());
+    const hh=Math.floor(left/3.6e6), mm=Math.floor(left%3.6e6/6e4), ss=Math.floor(left%6e4/1000);
+    const timeStr = hh>0 ? (hh+':'+String(mm).padStart(2,'0')+':'+String(ss).padStart(2,'0'))
+                         : (String(mm).padStart(2,'0')+':'+String(ss).padStart(2,'0'));
+    const cur=priceOf(S.term.symbol)||lastK.c;
+    const y=Y(cur);
+    if(y>=priceTop && y<=priceBottom){
+      const up=lastK.c>=lastK.o;
+      const col=up?'#2BFF9E':'#FF3B57';
+      // пунктирная линия текущей цены
+      x.setLineDash([2,3]); x.strokeStyle=col; x.lineWidth=1; x.globalAlpha=.55;
+      x.beginPath(); x.moveTo(plotL,y); x.lineTo(plotR,y); x.stroke();
+      x.setLineDash([]); x.globalAlpha=1;
+      // плашка с ценой и таймером
+      const pTxt=fmt(cur, decOf(S.term.symbol));
+      x.font='10px JetBrains Mono';
+      const bw2=Math.max(x.measureText(pTxt).width, x.measureText(timeStr).width)+12;
+      const bh=28;
+      x.fillStyle=col;
+      x.beginPath(); x.roundRect ? x.roundRect(plotR+2, y-bh/2, bw2, bh, 4) : x.rect(plotR+2, y-bh/2, bw2, bh);
+      x.fill();
+      x.fillStyle='#04070C'; x.textAlign='left';
+      x.fillText(pTxt, plotR+7, y-2);
+      x.font='9px JetBrains Mono'; x.globalAlpha=.75;
+      x.fillText(timeStr, plotR+7, y+10);
+      x.globalAlpha=1; x.font='10px JetBrains Mono'; x.fillStyle='rgba(234,247,255,0.35)';
+    }
+  })();
+
   // кнопка возврата к актуальной цене
   const gl=$('goLive');
   if(gl){ const off = (V.b < k.length-2) || (V.a > k.length-8);
@@ -2219,8 +2313,8 @@ tpslInit();
 const glb=$('goLive');
 if(glb) glb.addEventListener('click',()=>{
   const k=curK(); if(!k) return;
-  const span=Math.max(15, S.term.view? (S.term.view.b-S.term.view.a) : 90);
-  S.term.view={a:k.length-span+12, b:k.length+12};
+  const span=Math.max(15, S.term.view? (S.term.view.b-S.term.view.a) : 130);
+  S.term.view={a:k.length-span+8, b:k.length+8};
   S.term.pScale=1; haptic(); drawTermChart();
 });
 const sb=$('setBtn'); if(sb) sb.addEventListener('click', openSettings);
@@ -2531,7 +2625,7 @@ tc.addEventListener('wheel', e=>{ e.preventDefault();
 tc.addEventListener('dblclick', (e)=>{
   const z=zoneAt(chartPos(e));
   if(z){ if(z.t==='price') S.term.pScale=1; else { S.term.oScale=S.term.oScale||[]; S.term.oScale[z.i]=1; } }
-  else { const k=curK(); S.term.view = k ? {a:Math.max(0,k.length-90), b:k.length+12} : null; S.term.pScale=1; }
+  else { const k=curK(); S.term.view = k ? {a:Math.max(0,k.length-130), b:k.length+8} : null; S.term.pScale=1; }
   drawTermChart(); });
 
 /* ========= ПАНЕЛЬ ========= */
@@ -3450,8 +3544,8 @@ function requestPayout(amount){
     toast('Заявка на выплату отправлена','🧾'); renderWallet();
   });
 }
-function saveMeta(){ try{ localStorage.setItem('nx_meta', JSON.stringify({tier:S.tier, wallet:S.wallet})); }catch(e){} }
-function loadMeta(){ try{ const m=localStorage.getItem('nx_meta'); if(m){ const o=JSON.parse(m); S.tier=o.tier||'free'; S.wallet=o.wallet||{}; } }catch(e){} }
+function saveMeta(){ try{ localStorage.setItem('nx_meta', JSON.stringify({tier:S.tier, wallet:S.wallet, promo:S.activePromo})); }catch(e){} }
+function loadMeta(){ try{ const m=localStorage.getItem('nx_meta'); if(m){ const o=JSON.parse(m); S.tier=o.tier||'free'; S.wallet=o.wallet||{}; S.activePromo=o.promo||null; } }catch(e){} }
 
 
 /* ============ AUTH ============ */
@@ -4756,12 +4850,15 @@ function renderChallenges(){
   const sizes=CH_SIZES[t];
   $('chSizes').innerHTML=sizes.map((s,i)=>{
     const flag = s.pro?'<div class="ch-flag pro">😎 ВЫБОР ПРО</div>':(s.hot?'<div class="ch-flag hot">🔥 ПОПУЛЯРНЫЙ</div>':'');
-    const per=(s.price/(s.size/1000)).toFixed(2);
+    const pr=applyPromo(s.price, S.activePromo);
+    const per=(pr/(s.size/1000)).toFixed(2);
     const sel = S.chSel && S.chSel.i===i && S.chSel.t===t ? ' sel':'';
+    const priceHtml = S.activePromo
+      ? '<div class="cp"><span style="text-decoration:line-through;color:var(--txt3);font-size:11px;">$'+s.price+'</span> <span style="color:var(--green);">$'+pr+'</span></div>'
+      : '<div class="cp">$'+s.price+'</div>';
     return '<div class="ch-card'+sel+'" data-chi="'+i+'">'+flag+
       '<div class="cn" style="margin-top:'+(flag?'10px':'0')+'">'+s.name+'</div>'+
-      '<div class="cs">$'+fmt(s.size,0)+'</div>'+
-      '<div class="cp">$'+s.price+'</div>'+
+      '<div class="cs">$'+fmt(s.size,0)+'</div>'+priceHtml+
       '<div class="cx">$1k за $'+per+'</div></div>';
   }).join('');
   $('chSizes').querySelectorAll('[data-chi]').forEach(c=>c.addEventListener('click',()=>{
@@ -4773,8 +4870,12 @@ function renderChSummary(){
   const box=$('chSummary'); if(!box) return;
   if(!S.chSel || S.chSel.t!==S.chType){ box.innerHTML=''; return; }
   const s=CH_SIZES[S.chType][S.chSel.i]; const R=CH_RULES[S.chType];
+  const prc=applyPromo(s.price, S.activePromo);
   box.innerHTML='<div class="card"><div class="h2">Твой челлендж</div>'+
-    '<div class="row between mt3"><span class="small">'+R.name+' · '+s.name+' · $'+fmt(s.size,0)+'</span><span class="mono" style="font-weight:800;color:var(--gold);">$'+s.price+'</span></div>'+
+    '<div class="row between mt3"><span class="small">'+R.name+' · '+s.name+' · $'+fmt(s.size,0)+'</span>'+
+    '<span class="mono" style="font-weight:800;color:var(--gold);">'+
+      (S.activePromo?'<span style="text-decoration:line-through;color:var(--txt3);font-size:12px;">$'+s.price+'</span> <span style="color:var(--green);">$'+prc+'</span>':'$'+s.price)+'</span></div>'+
+    (S.activePromo?'<div class="micro mt2" style="color:var(--green);">🎟 '+S.activePromo.code+' · '+S.activePromo.note+'</div>':'')+
     '<button class="btn btn-gold btn-block mt4" id="chBuy">Получить $'+fmt(s.size,0)+'</button>'+
     '<div class="micro mt2" style="text-align:center;">Оплата криптовалютой · счёт выдаётся после подтверждения</div></div>';
   $('chBuy').addEventListener('click',()=>{
@@ -4787,12 +4888,24 @@ function renderChSummary(){
 /* ============ ОПЛАТА (адрес + QR + скрин) ============ */
 function openPay(kind, plan, amount, onDone, extra){
   let net='TON';
+  const base=amount;
+  let promo=S.activePromo||null;
   const render=()=>{
     const p=PAY[net];
+    amount=applyPromo(base, promo);
     const qr='https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=0&data='+encodeURIComponent(p.addr);
+    const priceLine = promo
+      ? '<span style="text-decoration:line-through;color:var(--txt3);">$'+base+'</span> <b style="color:var(--green);">$'+amount+'</b>'
+      : '<b style="color:var(--gold);">$'+amount+'</b>';
     $('sheetContent').innerHTML=
       '<div class="h2" style="text-align:center;">Оплата '+ (kind==='subscription'?'подписки':'челленджа') +'</div>'+
-      '<div class="small mt2" style="text-align:center;color:var(--txt2);">'+plan+' · <b style="color:var(--gold);">$'+amount+'</b></div>'+
+      '<div class="small mt2" style="text-align:center;color:var(--txt2);">'+plan+' · '+priceLine+'</div>'+
+      '<div class="promo-row mt3">'+
+        (promo
+          ? '<div class="promo-ok"><span>✓ Промокод <b>'+promo.code+'</b> · '+promo.note+' ('+promo.label+')</span><button id="promoDel">✕</button></div>'
+          : '<div class="row gap2"><input class="input mono grow" id="promoInp" placeholder="Промокод" autocapitalize="characters">'+
+            '<button class="btn btn-ghost" id="promoBtn" style="padding:0 16px;">Применить</button></div>')+
+      '</div>'+
       '<div class="pay-net" id="payNet">'+Object.keys(PAY).map(k=>'<button class="chip'+(k===net?' active':'')+'" data-net="'+k+'">'+k+'</button>').join('')+'</div>'+
       '<div class="small" style="text-align:center;color:var(--txt2);">'+p.label+'</div>'+
       '<div class="qr-box"><img src="'+qr+'" alt="QR"></div>'+
@@ -4802,12 +4915,23 @@ function openPay(kind, plan, amount, onDone, extra){
       '<input type="file" accept="image/*" id="payFile" style="display:none;">'+
       '<button class="btn btn-gold btn-block mt4" id="payProof">📎 Загрузить скрин оплаты</button>';
     $('payNet').addEventListener('click',e=>{ const b=e.target.closest('[data-net]'); if(b){ net=b.dataset.net; render(); }});
+    const pb=$('promoBtn');
+    if(pb) pb.addEventListener('click',()=>{
+      const f=findPromo((($('promoInp')||{}).value)||'');
+      if(!f){ toast('Промокод не найден','⚠️'); haptic('err'); return; }
+      promo=f; S.activePromo=f; saveMeta(); haptic('ok');
+      toast('Промокод применён · '+f.label,'🎟'); render();
+    });
+    const pi=$('promoInp');
+    if(pi) pi.addEventListener('keydown',e=>{ if(e.key==='Enter'){ const b2=$('promoBtn'); if(b2) b2.click(); } });
+    const pd=$('promoDel');
+    if(pd) pd.addEventListener('click',()=>{ promo=null; S.activePromo=null; saveMeta(); haptic(); render(); });
     $('payCopy').addEventListener('click',()=>{ try{ navigator.clipboard.writeText(p.addr); }catch(e){} toast('Адрес скопирован','📋'); haptic(); });
     $('payProof').addEventListener('click',()=>$('payFile').click());
     $('payFile').addEventListener('change',e=>{
       const f=e.target.files[0]; if(!f) return;
       $('payProof').textContent='Отправляю…';
-      downscale(f, dataUrl=>submitPayment({kind,plan,amount,network:net,address:p.addr,proof:dataUrl,extra,onDone}));
+      downscale(f, dataUrl=>submitPayment({kind,plan:plan+(promo?(' · промо '+promo.code+' '+promo.label):''),amount,network:net,address:p.addr,proof:dataUrl,extra,onDone}));
     });
   };
   render();
@@ -5012,6 +5136,7 @@ async function init(){
   setInterval(()=>{ if(rtDirty){ rtDirty=false; renderAll(); } }, 700);
   setInterval(()=>{ if(S.screen==='signals'&&(S.stab==='signals'||S.stab==='analytics')) renderSignals(); }, 20000);
   setInterval(()=>{ if(S.screen==='terminal' && S.coachOn!==false) coachTip(); }, 25000);
+  setInterval(()=>{ if(S.screen==='terminal') drawTermChart(); }, 1000);
   setInterval(()=>{ loadMarkets().then(()=>{ if(S.screen==='market'){
     const cur=(S.search?ASSETS.filter(a=>{const q=S.search.toLowerCase();return a.t.toLowerCase().includes(q)||a.n.toLowerCase().includes(q);}):ASSETS.slice(0,S.mktLimit||60)).map(a=>a.s).join(',');
     if(cur===_mktSig) updateMarketPrices(); else renderMarket();
