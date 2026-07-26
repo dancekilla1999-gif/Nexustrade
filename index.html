@@ -589,6 +589,13 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
 .bm-note{margin-top:16px;padding:13px 15px;border-radius:13px;background:var(--card2);
   border-left:3px solid var(--acc);text-align:left;font-size:12.5px;line-height:1.65;color:var(--txt2);
   animation:bmUp .5s .42s var(--spring) both;}
+
+.sig-meta{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+.sm-i{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:8px 6px;text-align:center;}
+.sm-i span{display:block;font-size:9.5px;color:var(--txt3);text-transform:uppercase;letter-spacing:.03em;}
+.sm-i b{display:block;font-family:var(--mono);font-size:12.5px;margin-top:3px;}
+.tf-mini{font-size:9.5px;font-weight:800;padding:2px 6px;border-radius:6px;background:var(--card2);
+  color:var(--txt2);font-family:var(--mono);}
 </style>
 </head>
 <body>
@@ -3584,53 +3591,167 @@ let _klinesReady=false;
 function sigUniverse(){ return ASSETS.slice(0,14); }
 function ensureKlines(cb){
   if(_klinesReady){ cb(); return; }
-  const need=sigUniverse().filter(a=>!S.klines[a.s+'_1h']||S.klines[a.s+'_1h'].length<40);
+  // сигналы строим на 4H — свинг-подход, а не скальпинг
+  const need=sigUniverse().filter(a=>!S.klines[a.s+'_4h']||S.klines[a.s+'_4h'].length<60);
   if(!need.length){ _klinesReady=true; cb(); return; }
-  Promise.all(need.map(a=>loadKlines(a.s,'1h'))).then(()=>{ _klinesReady=true; cb(); }).catch(cb);
+  Promise.all(need.map(a=>loadKlines(a.s,'4h'))).then(()=>{ _klinesReady=true; cb(); }).catch(cb);
 }
+
+/* ============ ДВИЖОК СИГНАЛОВ (swing, потенциал ≥2%) ============ */
+const SIG_MIN_MOVE = 2.0;   // минимальный потенциал до цели, %
+const SIG_MIN_RR   = 1.8;   // минимальное соотношение риск/прибыль
+const SIG_MIN_PASS = 13;    // минимум подтверждений из 20
+
+function structLevels(k, dep){
+  // подбираем глубину так, чтобы получить достаточно опорных точек
+  for(const d of [dep||4, 3, 2]){
+    const sw=swingPoints(k, d, 0.25);
+    const highs=sw.filter(s=>s.type==='H'), lows=sw.filter(s=>s.type==='L');
+    if(highs.length>=2 && lows.length>=2) return {highs, lows, dep:d};
+  }
+  const sw=swingPoints(k, 2, 0.15);
+  return { highs: sw.filter(s=>s.type==='H'), lows: sw.filter(s=>s.type==='L'), dep:2 };
+}
+function nearestAbove(levels, price, minGapPct){
+  const c=levels.filter(l=>l.p>price*(1+(minGapPct||0)/100)).sort((a,b)=>a.p-b.p);
+  return c.length?c[0]:null;
+}
+function nearestBelow(levels, price, minGapPct){
+  const c=levels.filter(l=>l.p<price*(1-(minGapPct||0)/100)).sort((a,b)=>b.p-a.p);
+  return c.length?c[0]:null;
+}
+
 function computeSignal(sym){
-  const k=S.klines[sym+'_1h']; if(!k||k.length<40) return null;
-  const cl=k.map(o=>o.c);
-  const e9=emaArr(cl,9), e21=emaArr(cl,21), e50=emaArr(cl,50);
-  const r=rsiArr(cl,14), mac=macdArr(cl), st=stochArr(k,14,3), bb=bbArr(cl,20,2), vw=vwapArr(k);
-  const n=cl.length, last=cl[n-1];
-  const rsi=r[n-1]||50;
-  const trend=e9[n-1]>e21[n-1]?1:-1;
-  const bias=trend>0?'LONG':'SHORT';
-  // 18 технических фильтров, подтверждающих направление bias
-  const up=bias==='LONG';
-  const vol=k.map(o=>o.v||0); const volAvg=vol.slice(-20).reduce((s,v)=>s+v,0)/20;
-  const higherHigh = cl[n-1]>Math.max(...cl.slice(n-6,n-1));
-  const lowerLow = cl[n-1]<Math.min(...cl.slice(n-6,n-1));
+  const k=S.klines[sym+'_4h']; if(!k||k.length<70) return null;
+  const cl=k.map(o=>o.c), n=cl.length, last=cl[n-1];
+  const e21=emaArr(cl,21), e50=emaArr(cl,50), e200=emaArr(cl,200);
+  const r=rsiArr(cl,14), mac=macdArr(cl), st=stochArr(k,14,3), bb=bbArr(cl,20,2);
+  const atr=atrArr(k,14), adxSpec=null;
+  const vol=k.map(o=>o.v||0), volAvg=vol.slice(-20).reduce((s,v)=>s+v,0)/20 || 1;
+  const rsi=r[n-1]||50, atrPct=(atr[n-1]/last)*100;
+
+  // --- направление по структуре и трендовым фильтрам ---
+  const {highs, lows} = structLevels(k,4);
+  const lastH=highs.length?highs[highs.length-1]:null, prevH=highs.length>1?highs[highs.length-2]:null;
+  const lastL=lows.length?lows[lows.length-1]:null,   prevL=lows.length>1?lows[lows.length-2]:null;
+  const structUp   = lastH&&prevH&&lastL&&prevL ? (lastH.p>prevH.p && lastL.p>prevL.p) : false;
+  const structDown = lastH&&prevH&&lastL&&prevL ? (lastH.p<prevH.p && lastL.p<prevL.p) : false;
+
+  const above200 = e200[n-1]!=null && last>e200[n-1];
+  const emaUp = e21[n-1]>e50[n-1];
+  // направление: структура важнее, но при её отсутствии работают трендовые фильтры
+  let bias=null;
+  if(structUp && above200) bias='LONG';
+  else if(structDown && !above200) bias='SHORT';
+  else if(emaUp && above200) bias='LONG';
+  else if(!emaUp && !above200) bias='SHORT';
+  else if(structUp) bias='LONG';
+  else if(structDown) bias='SHORT';
+  if(!bias) return null;
+  const up = bias==='LONG';
+
+  // --- ЦЕЛЬ по структуре: ближайший значимый уровень с запасом ≥2% ---
+  const target = up ? nearestAbove(highs, last, SIG_MIN_MOVE) : nearestBelow(lows, last, SIG_MIN_MOVE);
+  const atrProj = atr[n-1]*3.2;                      // проекция по волатильности
+  let tp, tpSrc;
+  if(target && Math.abs(target.p-last)/last*100 <= 9){
+    tp = target.p*(up?0.997:1.003); tpSrc='уровень структуры';
+  } else {
+    const projPct = Math.max(SIG_MIN_MOVE*1.15, atrProj/last*100);
+    tp = up ? last*(1+projPct/100) : last*(1-projPct/100); tpSrc='проекция по ATR';
+  }
+  const movePct = Math.abs(tp-last)/last*100;
+  if(movePct < SIG_MIN_MOVE) return null;            // отсекаем скальп
+
+  // --- СТОП за структуру ---
+  const protect = up ? lastL : lastH;
+  const protectOK = protect && (up ? protect.p<last : protect.p>last) &&
+                    Math.abs(last-protect.p)/last*100 <= 3.5;
+  let sl = protectOK ? protect.p*(up?0.995:1.005) : (up? last-atr[n-1]*1.6 : last+atr[n-1]*1.6);
+  const maxRisk = last*0.025;                        // не рискуем больше 2.5% цены
+  if(up && last-sl > maxRisk) sl = last-maxRisk;
+  if(!up && sl-last > maxRisk) sl = last+maxRisk;
+  const riskPct = Math.abs(last-sl)/last*100;
+  if(riskPct < 0.25) return null;
+
+  const rr = movePct/riskPct;
+  if(rr < SIG_MIN_RR) return null;                   // плохое соотношение — не сигнал
+
+  // --- 20 ПОДТВЕРЖДЕНИЙ ---
+  const higherHigh = last>Math.max(...cl.slice(n-6,n-1));
+  const lowerLow   = last<Math.min(...cl.slice(n-6,n-1));
+  const bodyOK = up ? k[n-1].c>k[n-1].o : k[n-1].c<k[n-1].o;
   const F=[
-    ['EMA9 vs EMA21', up? e9[n-1]>e21[n-1] : e9[n-1]<e21[n-1]],
-    ['EMA21 vs EMA50', up? e21[n-1]>e50[n-1] : e21[n-1]<e50[n-1]],
-    ['Цена выше/ниже EMA50', up? last>e50[n-1] : last<e50[n-1]],
-    ['Наклон EMA9', up? e9[n-1]>e9[n-3] : e9[n-1]<e9[n-3]],
-    ['Наклон EMA21', up? e21[n-1]>e21[n-3] : e21[n-1]<e21[n-3]],
-    ['MACD > сигнальной', up? mac.macd[n-1]>mac.sig[n-1] : mac.macd[n-1]<mac.sig[n-1]],
-    ['Гистограмма MACD', up? mac.hist[n-1]>0 : mac.hist[n-1]<0],
-    ['MACD растёт/падает', up? mac.hist[n-1]>mac.hist[n-2] : mac.hist[n-1]<mac.hist[n-2]],
-    ['RSI по тренду', up? rsi>50 : rsi<50],
-    ['RSI не в экстремуме', up? rsi<72 : rsi>28],
-    ['RSI разворот', up? r[n-1]>r[n-2] : r[n-1]<r[n-2]],
-    ['Stochastic %K/%D', up? st.k[n-1]>st.d[n-1] : st.k[n-1]<st.d[n-1]],
-    ['Stochastic зона', up? st.k[n-1]<80 : st.k[n-1]>20],
-    ['Цена vs VWAP', up? last>vw[n-1] : last<vw[n-1]],
-    ['Bollinger середина', up? last>bb.mid[n-1] : last<bb.mid[n-1]],
-    ['Структура (HH/LL)', up? higherHigh : lowerLow],
-    ['Свеча по тренду', up? cl[n-1]>k[n-1].o : cl[n-1]<k[n-1].o],
-    ['Объём выше среднего', (k[n-1].v||0) >= volAvg*0.8],
+    ['Структура рынка ('+(up?'HH/HL':'LH/LL')+')', up?structUp:structDown, 1.6],
+    ['Цена относительно EMA 200', up? above200 : !above200, 1.5],
+    ['EMA 21 vs EMA 50', up? e21[n-1]>e50[n-1] : e21[n-1]<e50[n-1], 1.3],
+    ['Наклон EMA 21', up? e21[n-1]>e21[n-3] : e21[n-1]<e21[n-3], 1.0],
+    ['Наклон EMA 50', up? e50[n-1]>e50[n-3] : e50[n-1]<e50[n-3], 1.0],
+    ['MACD выше/ниже сигнальной', up? mac.macd[n-1]>mac.sig[n-1] : mac.macd[n-1]<mac.sig[n-1], 1.2],
+    ['Гистограмма MACD усиливается', up? mac.hist[n-1]>mac.hist[n-2] : mac.hist[n-1]<mac.hist[n-2], 1.0],
+    ['RSI по направлению сделки', up? rsi>48 : rsi<52, 1.1],
+    ['RSI не в экстремуме', up? rsi<74 : rsi>26, 1.2],
+    ['RSI разворачивается', up? r[n-1]>r[n-2] : r[n-1]<r[n-2], 0.9],
+    ['Stochastic по направлению', up? st.k[n-1]>st.d[n-1] : st.k[n-1]<st.d[n-1], 0.9],
+    ['Stochastic не перегрет', up? st.k[n-1]<82 : st.k[n-1]>18, 1.0],
+    ['Позиция в канале Боллинджера', up? last>bb.mid[n-1] : last<bb.mid[n-1], 1.0],
+    ['Свеча по направлению', bodyOK, 0.8],
+    ['Импульс последних баров', up? higherHigh : lowerLow, 1.1],
+    ['Объём не ниже среднего', (k[n-1].v||0) >= volAvg*0.75, 1.0],
+    ['Волатильность достаточная (ATR '+atrPct.toFixed(2)+'%)', atrPct>0.5, 1.3],
+    ['Потенциал до цели ≥'+SIG_MIN_MOVE+'% ('+movePct.toFixed(1)+'%)', movePct>=SIG_MIN_MOVE, 2.0],
+    ['Соотношение риск/прибыль ≥'+SIG_MIN_RR+' (1:'+rr.toFixed(1)+')', rr>=SIG_MIN_RR, 2.0],
+    ['Цель опирается на уровень структуры', tpSrc==='уровень структуры', 1.4],
   ];
+  const totalW=F.reduce((s,f)=>s+f[2],0);
+  const gotW=F.filter(f=>f[1]).reduce((s,f)=>s+f[2],0);
   const passed=F.filter(f=>f[1]).length, total=F.length;
-  const dir=bias;
-  const strength=Math.round(passed/total*100);
-  const reasons=F.filter(f=>f[1]).slice(0,4).map(f=>f[0]);
+  if(passed < SIG_MIN_PASS) return null;             // мало подтверждений — не показываем
+
+  const strength=Math.round(gotW/totalW*100);
   const d=decOf(sym);
-  const atr=(Math.max(...k.slice(-14).map(o=>o.h))-Math.min(...k.slice(-14).map(o=>o.l)))/14 || last*0.01;
-  const tp=up?last+atr*3:last-atr*3;
-  const sl=up?last-atr*1.5:last+atr*1.5;
-  return { symbol:sym, dir, strength, passed, total, entry:last, tp, sl, rsi, reasons, d, filters:F };
+  const horizonBars = Math.max(3, Math.round(movePct/Math.max(0.3,atrPct)));
+  return {
+    symbol:sym, dir:bias, strength, passed, total, entry:last, tp, sl, rsi,
+    movePct, riskPct, rr,
+    reasons:F.filter(f=>f[1]).slice(0,4).map(f=>f[0]),
+    filters:F, d, tf:'4H', tpSrc,
+    horizon: horizonBars<=6 ? 'до 1 дня' : horizonBars<=18 ? '1–3 дня' : '3–7 дней',
+    targetLevel: target? target.p : null
+  };
+}
+function openSignalDetail(sym){
+  const sg=computeSignal(sym); if(!sg){ toast('Сигнал устарел','⚠️'); return; }
+  const a=ASSETS.find(x=>x.s===sym);
+  const ok=sg.filters.filter(f=>f[1]), no=sg.filters.filter(f=>!f[1]);
+  const col=sg.strength>=80?'var(--green)':sg.strength>=65?'var(--gold)':'var(--txt2)';
+  $('sheetContent').innerHTML=
+    '<div class="row between"><span class="h2" style="font-size:17px;">'+(a?a.t:sym)+'/USDT · '+sg.tf+'</span>'+
+    '<span class="badge" style="background:'+col+'22;color:'+col+';">'+sg.strength+'%</span></div>'+
+    '<div class="row gap2 mt2"><span class="sig-dir '+(sg.dir==='LONG'?'long':'short')+'">'+sg.dir+'</span>'+
+    '<span class="micro">'+sg.passed+' из '+sg.total+' подтверждений · горизонт '+sg.horizon+'</span></div>'+
+
+    '<div class="sig-meta mt3">'+
+      '<div class="sm-i"><span>Вход</span><b>'+fmt(sg.entry,sg.d)+'</b></div>'+
+      '<div class="sm-i"><span>Тейк</span><b style="color:var(--green);">'+fmt(sg.tp,sg.d)+'</b></div>'+
+      '<div class="sm-i"><span>Стоп</span><b style="color:var(--red);">'+fmt(sg.sl,sg.d)+'</b></div>'+
+      '<div class="sm-i"><span>R:R</span><b style="color:var(--gold);">1:'+sg.rr.toFixed(1)+'</b></div>'+
+    '</div>'+
+
+    '<div class="key-box mt3"><div class="micro" style="color:var(--gold);margin-bottom:5px;">ЛОГИКА СЕТАПА</div>'+
+    '<div class="small" style="color:var(--txt2);line-height:1.6;">Направление определено структурой рынка на 4H'+
+    (sg.targetLevel?' и подтверждено EMA. Цель — ближайший структурный уровень '+fmt(sg.targetLevel,sg.d)+', до него '+sg.movePct.toFixed(1)+'% движения.':'. Цель рассчитана от волатильности: '+sg.movePct.toFixed(1)+'%.')+
+    ' Стоп поставлен за последний значимый экстремум — риск '+sg.riskPct.toFixed(1)+'%.</div></div>'+
+
+    '<div class="micro mt4" style="margin-bottom:6px;">ПОДТВЕРЖДЕНИЯ ('+ok.length+')</div>'+
+    ok.map(f=>'<div class="chk ok">✓ '+f[0]+'</div>').join('')+
+    (no.length?'<div class="micro mt3" style="margin-bottom:6px;">НЕ ВЫПОЛНЕНО ('+no.length+')</div>'+
+      no.map(f=>'<div class="chk no">✕ '+f[0]+'</div>').join(''):'')+
+
+    '<button class="btn btn-gold btn-block mt4" id="sdTrade">Открыть в терминале</button>'+
+    '<div class="micro mt3" style="text-align:center;color:var(--txt3);line-height:1.5;">Сигнал — не рекомендация к сделке. Проверяйте контекст и соблюдайте риск-менеджмент.</div>';
+  $('sheetVeil').classList.add('open');
+  $('sdTrade').addEventListener('click',()=>{ closeSheet(); openTerminal(sym); });
 }
 function allSignals(){ return sigUniverse().map(a=>computeSignal(a.s)).filter(Boolean).sort((a,b)=>b.strength-a.strength); }
 
@@ -3654,24 +3775,34 @@ function renderSigList(body){
   if(!_klinesReady) body.innerHTML='<div class="mut small" style="text-align:center;padding:16px;">Считаю сигналы…</div>';
   ensureKlines(()=>{
     if(S.screen!=='signals'||S.stab!=='signals') return;
-    const sigs=allSignals().filter(s=>s.passed>=13);
+    const sigs=allSignals();
     const freeLimit=2, unlocked=tierRank(S.tier)>=1;
-    if(!sigs.length){ body.innerHTML='<div class="note-box">Сейчас нет сетапов с подтверждением ≥13/18 фильтров. Ассистент ждёт качественную точку входа — это нормально.</div>'; return; }
+    if(!sigs.length){ body.innerHTML='<div class="note-box"><b>Качественных сетапов сейчас нет.</b><br><span class="micro">Движок ищет сделки с потенциалом от '+SIG_MIN_MOVE+'%, соотношением R:R от 1:'+SIG_MIN_RR+' и минимум '+SIG_MIN_PASS+' подтверждениями из 20. Такие точки появляются не каждый день — это нормально и правильно.</span></div>'; return; }
     let html='';
     sigs.forEach((sg,i)=>{
       const a=ASSETS.find(x=>x.s===sg.symbol);
       const locked=!unlocked && i>=freeLimit;
       html+='<div class="sig-card'+(locked?' locked':'')+'">';
       if(locked) html+='<div class="sig-lock"><div class="lk">🔒</div><div class="small">Доступно в Премиум</div><button class="btn btn-gold btn-sm" data-stab="analytics" onclick="">Открыть</button></div>';
-      html+='<div class="sig-inner"><div class="row between"><div class="row gap2"><span class="sig-dir '+(sg.dir==='LONG'?'long':'short')+'">'+(sg.dir==='LONG'?'▲ LONG':'▼ SHORT')+'</span><b>'+a.t+'/USDT</b></div><span class="flt-badge'+(sg.passed>=14?'':' mid')+'">✓ '+sg.passed+'/'+sg.total+' фильтров</span></div>'+
+      html+='<div class="sig-inner"><div class="row between"><div class="row gap2"><span class="sig-dir '+(sg.dir==='LONG'?'long':'short')+'">'+(sg.dir==='LONG'?'▲ LONG':'▼ SHORT')+'</span><b>'+a.t+'/USDT</b>'+
+        '<span class="tf-mini">'+(sg.tf||'4H')+'</span></div>'+
+        '<span class="flt-badge'+(sg.passed>=16?'':' mid')+'">✓ '+sg.passed+'/'+sg.total+'</span></div>'+
         '<div class="progress mt3" style="height:6px;"><div class="fill" style="width:'+sg.strength+'%"></div></div>'+
+        '<div class="sig-meta mt3">'+
+          '<div class="sm-i"><span>Потенциал</span><b style="color:var(--green);">+'+sg.movePct.toFixed(1)+'%</b></div>'+
+          '<div class="sm-i"><span>Риск</span><b style="color:var(--red);">−'+sg.riskPct.toFixed(1)+'%</b></div>'+
+          '<div class="sm-i"><span>R:R</span><b style="color:var(--gold);">1:'+sg.rr.toFixed(1)+'</b></div>'+
+          '<div class="sm-i"><span>Горизонт</span><b>'+sg.horizon+'</b></div>'+
+        '</div>'+
         '<div class="pos-grid mt3">'+
         '<div><div class="micro">Вход</div><div class="mono" style="font-weight:700;font-size:12.5px;">'+fmt(sg.entry,sg.d)+'</div></div>'+
         '<div><div class="micro">Тейк</div><div class="mono" style="font-weight:700;font-size:12.5px;color:var(--green);">'+fmt(sg.tp,sg.d)+'</div></div>'+
         '<div><div class="micro">Стоп</div><div class="mono" style="font-weight:700;font-size:12.5px;color:var(--red);">'+fmt(sg.sl,sg.d)+'</div></div></div>'+
         '<div class="small mt3" style="color:var(--txt2);">'+sg.reasons.join(' · ')+'</div>'+
-        '<button class="btn btn-ghost btn-sm btn-block mt3" data-trade="'+sg.symbol+'">Открыть в терминале</button>'+
-        '</div></div>';
+        '<div class="row gap2 mt3">'+
+          '<button class="btn btn-ghost btn-sm grow" data-sigdet="'+sg.symbol+'">Разбор</button>'+
+          '<button class="btn btn-gold btn-sm grow" data-trade="'+sg.symbol+'">В терминал</button>'+
+        '</div></div></div>';
     });
     html+='<div class="row between mt6" style="margin-bottom:10px;"><span class="h2">Подписка на сигналы</span></div>';
     TIERS_SUB.forEach(t=>{
@@ -3684,6 +3815,7 @@ function renderSigList(body){
     });
     body.innerHTML=html;
     body.querySelectorAll('[data-trade]').forEach(b=>b.addEventListener('click',()=>openTerminal(b.dataset.trade)));
+  body.querySelectorAll('[data-sigdet]').forEach(b=>b.addEventListener('click',()=>openSignalDetail(b.dataset.sigdet)));
     body.querySelectorAll('[data-sub]').forEach(b=>b.addEventListener('click',()=>subscribe(b.dataset.sub)));
     body.querySelectorAll('[data-stab]').forEach(b=>b.addEventListener('click',()=>{ S.stab=b.dataset.stab; renderSignals(); }));
   });
