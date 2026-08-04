@@ -1249,12 +1249,52 @@ function startWS(){
   ws.onclose=()=>{ wsAlive=false; setTimeout(startWS, 4000); };
   ws.onerror=()=>{ try{ ws.close(); }catch(e){} };
 }
-function priceOf(sym){ return S.prices[sym] ? S.prices[sym].price : (BASE[sym]||100); }
-function posPnl(p){ const cur=priceOf(p.symbol); const dir=p.side==='LONG'?1:-1; return (cur-p.entry)*p.qty*dir; }
-function equity(){ const a=S.acc||{balance:0}; return (a.balance||0) + (S.positions||[]).reduce((s,p)=>s+posPnl(p),0); }
-function usedMargin(){ return S.positions.reduce((s,p)=>s+p.margin,0); }
-function freeMargin(){ return Math.max(0, S.acc.balance - usedMargin()); }
-function liqPrice(p){ const dir=p.side==='LONG'?1:-1; return p.entry*(1 - dir*(1/p.lev)*0.95); }
+/** Реальная цена. НИКОГДА не подставляем 100 для неизвестных монет. */
+function hasLivePrice(sym){
+  const r = S.prices && S.prices[sym];
+  return !!(r && isFinite(r.price) && r.price > 0);
+}
+function priceOf(sym){
+  const r = S.prices && S.prices[sym];
+  if(r && isFinite(r.price) && r.price > 0) return r.price;
+  // fallback только для известных CORE из BASE (не для CC/PUMP и т.п.)
+  if(BASE[sym] && isFinite(BASE[sym]) && BASE[sym] > 0) return BASE[sym];
+  return null;
+}
+/** Цена «здравая» относительно входа (защита от кривых тикеров). */
+function isSanePrice(price, entry){
+  if(!isFinite(price) || price <= 0) return false;
+  if(entry && isFinite(entry) && entry > 0){
+    if(price > entry * 15 || price < entry / 15) return false; // >15x — мусор данных
+  }
+  return true;
+}
+function posPnl(p){
+  if(!p || !p.entry || !p.qty) return 0;
+  let cur = priceOf(p.symbol);
+  if(cur == null || !isSanePrice(cur, p.entry)){
+    // нет цены / мусор — не рисуем фейковый PnL, считаем 0 до появления валидной котировки
+    return 0;
+  }
+  const dir = p.side==='LONG' ? 1 : -1;
+  let pnl = (cur - p.entry) * p.qty * dir;
+  // isolated margin: убыток не больше маржи (ликвидция)
+  const maxLoss = (p.margin || 0);
+  if(maxLoss > 0 && pnl < -maxLoss) pnl = -maxLoss;
+  return pnl;
+}
+function equity(){
+  const a = S.acc || {balance:0};
+  const upl = (S.positions||[]).reduce((s,p)=>s+posPnl(p),0);
+  return (a.balance||0) + upl;
+}
+function usedMargin(){ return (S.positions||[]).reduce((s,p)=>s+(p.margin||0),0); }
+function freeMargin(){ return Math.max(0, (S.acc&&S.acc.balance||0) - usedMargin()); }
+function liqPrice(p){
+  if(!p || !p.entry || !p.lev) return null;
+  const dir = p.side==='LONG' ? 1 : -1;
+  return p.entry * (1 - dir * (1/p.lev) * 0.95);
+}
 
 function openPosition(side){
   bindAcc();
@@ -1271,7 +1311,9 @@ function openPosition(side){
   const lev=parseInt($('levSlider').value)||1;
   if(margin<10){ toast('Минимальная маржа — $10','⚠️'); haptic('err'); return; }
   if(margin>freeMargin()+1e-9){ toast('Недостаточно свободной маржи','⚠️'); haptic('err'); return; }
-  const sym=S.term.symbol, entry=priceOf(sym);
+  const sym=S.term.symbol;
+  if(!hasLivePrice(sym)){ toast('Нет живой цены — подождите котировку','⚠️'); haptic('err'); return; }
+  const entry=priceOf(sym);
   if(!entry||!isFinite(entry)||entry<=0){ toast('Нет цены инструмента','⚠️'); haptic('err'); return; }
   const qty=margin*lev/entry;
   if(!isFinite(qty)||qty<=0){ toast('Некорректный объём','⚠️'); haptic('err'); return; }
@@ -1290,14 +1332,33 @@ function closePosition(id, reason, opts){
   const i=S.positions.findIndex(p=>p.id===id); if(i<0) return null;
   const p=S.positions[i];
   let exit = priceOf(p.symbol);
-  if(reason==='TP' && p.tp) exit = p.tp;
-  if(reason==='SL' && p.sl) exit = p.sl;
-  if(reason==='LIQ') exit = liqPrice(p);
-  if(opts.exitPrice!=null && isFinite(opts.exitPrice)) exit = opts.exitPrice;
+  if(reason==='TP' && p.tp && isFinite(p.tp)) exit = p.tp;
+  if(reason==='SL' && p.sl && isFinite(p.sl)) exit = p.sl;
+  if(reason==='LIQ'){ const lp=liqPrice(p); if(lp!=null) exit = lp; }
+  if(opts.exitPrice!=null && isFinite(opts.exitPrice) && opts.exitPrice>0) exit = opts.exitPrice;
+
+  // если цены нет или она «сломана» относительно входа — закрываем по входу (pnl=0) либо по SL/liq
+  if(exit==null || !isFinite(exit) || exit<=0 || !isSanePrice(exit, p.entry)){
+    if(reason==='SL' && p.sl && isSanePrice(p.sl, p.entry)) exit = p.sl;
+    else if(reason==='LIQ'){ const lp=liqPrice(p); exit = (lp!=null?lp:p.entry); }
+    else exit = p.entry; // безопасный выход без фейкового PnL
+  }
+
   const dir = p.side==='LONG'?1:-1;
-  const pnl = (exit - p.entry) * p.qty * dir;
-  S.acc.balance += pnl;
+  let pnl = (exit - p.entry) * p.qty * dir;
+  // isolated: нельзя потерять больше маржи
+  const maxLoss = Math.max(0, p.margin||0);
+  if(maxLoss>0 && pnl < -maxLoss){ pnl = -maxLoss; exit = p.entry - dir * (maxLoss / Math.max(p.qty,1e-12)); }
+  // защита от абсурдно огромного профита за тик (баг данных)
+  const maxWin = maxLoss * Math.max(3, (p.lev||1));
+  if(maxLoss>0 && pnl > maxWin) pnl = maxWin;
+
+  S.acc.balance = (S.acc.balance||0) + pnl;
+  // баланс не уводим в глубокий минус от одной сделки
+  if(S.acc.kind==='challenge' && S.acc.balance < 0) S.acc.balance = 0;
+
   S.history.unshift({ ...p, exit, pnl, closed:Date.now(), auto:reason||null });
+  if(S.history.length > 200) S.history.length = 200;
   S.positions.splice(i,1);
   if(!opts.silent){
     const label = reason==='TP'?'Тейк-профит: ':reason==='SL'?'Стоп-лосс: ':reason==='LIQ'?'Ликвидация: ':(reason==='maxDD'||reason==='dailyLoss')?'Лимит: ':'Закрыто: ';
@@ -1637,6 +1698,48 @@ function rollDay(){
     if(S.acc.status==='RUN' || S.acc.status==='PASS') persistState();
   }
 }
+
+/** Чистка сломанных позиций и истории с PnL на миллионы */
+function sanitizeBrokenTrades(){
+  const saveId = S.activeAccId;
+  (S.accounts||[]).forEach(a=>{
+    if(!a) return;
+    S.activeAccId = a.id; bindAcc();
+    // открытые позиции без цены / с мусорным entry
+    const keep = [];
+    (S.positions||[]).forEach(p=>{
+      if(!p || !isFinite(p.entry) || p.entry<=0 || !isFinite(p.qty) || p.qty<=0) return;
+      // позиция с «мёртвым» символом без цены — закрыть по входу
+      if(!hasLivePrice(p.symbol) && !(BASE[p.symbol])){
+        // закрываем без PnL
+        S.history = S.history||[];
+        S.history.unshift({...p, exit:p.entry, pnl:0, closed:Date.now(), auto:'bad_price'});
+        return;
+      }
+      keep.push(p);
+    });
+    S.positions = keep; a.positions = keep;
+
+    // история: режем абсурдные PnL
+    if(Array.isArray(S.history)){
+      S.history = S.history.filter(h=>{
+        if(!h) return false;
+        if(!isFinite(h.pnl)) return false;
+        const m = Math.max(1, h.margin||1);
+        // |pnl| > 50x маржи — явный баг данных
+        if(Math.abs(h.pnl) > m * 50) return false;
+        if(h.exit!=null && h.entry && !isSanePrice(h.exit, h.entry) && Math.abs(h.pnl)>m) return false;
+        return true;
+      }).slice(0, 150);
+      a.history = S.history;
+    }
+    // баланс не ниже 0 на челлендже после чистки
+    if(a.kind==='challenge' && (a.balance||0) < 0) a.balance = 0;
+  });
+  S.activeAccId = saveId; bindAcc();
+  try{ persistState(); }catch(e){}
+}
+
 function sanitizeAccountsRisk(){
   const saveId=S.activeAccId;
   (S.accounts||[]).forEach(a=>{
@@ -1750,7 +1853,7 @@ function renderHome(){
   const name = tg && tg.initDataUnsafe && tg.initDataUnsafe.user ? (tg.initDataUnsafe.user.first_name||'Трейдер') : 'Трейдер';
   $('userName').textContent=name; $('userAva').textContent=name.slice(0,1).toUpperCase();
   const hbh=$('homeBotHost'); if(hbh) renderBotPanel(hbh);
-  try{ syncVipFromAccounts(true); }catch(e){}
+  try{ syncVipFromAccounts(true); }catch(e){} try{ sanitizeBrokenTrades(); sanitizeAccountsRisk(); }catch(e){}
   const htb=$('homeTierBadge');
   if(htb){
     htb.textContent=(S.tier||'free').toUpperCase();
@@ -4007,44 +4110,72 @@ function botCanTrade(){
 function botOpenFromSignal(sg){
   if(!botCanTrade() || !sg) return false;
   bindAcc();
-  const entry = priceOf(sg.symbol);
-  if(!entry || !isFinite(entry)) return false;
-  // уже есть позиция по символу?
-  if((S.positions||[]).some(p=>p.symbol===sg.symbol)) return false;
+  const sym = sg.symbol;
+  // Только монеты с живой ценой; без фейкового BASE=100
+  if(!hasLivePrice(sym)) return false;
+  // Бот торгует только ликвидное ядро + топ по объёму с валидной ценой
+  const base = String(sym).replace('USDT','');
+  const illiquid = /^(CC|PUMP|1000|BABY|MOG|NEIRO|TURBO|MYRO|POPCAT|MEW|PNUT)$/i.test(base);
+  // мемкоины без стабильной котировки на WS — пропускаем
+  if(illiquid && !CORE_SYMS.includes(sym)) return false;
+
+  const entry = priceOf(sym);
+  if(!entry || !isFinite(entry) || entry <= 0) return false;
+
+  if((S.positions||[]).some(p=>p.symbol===sym)) return false;
+
   const eq = equity();
-  const riskUsd = Math.max(10, eq * ((S.bot.riskPct||1)/100));
-  // SL distance
-  const sl = sg.sl, tp = sg.tp;
-  if(!sl || !tp) return false;
-  const riskPerUnit = Math.abs(entry - sl);
-  if(riskPerUnit <= 0) return false;
+  if(!isFinite(eq) || eq <= 0) return false;
+  const riskUsd = Math.max(5, Math.min(eq * ((S.bot.riskPct||1)/100), eq * 0.02));
+
+  let sl = sg.sl, tp = sg.tp;
+  // если сигнала SL/TP нет или они «сломаны» — ставим 1% / 2%
+  if(!sl || !isSanePrice(sl, entry)){
+    sl = sg.dir==='LONG' ? entry * 0.99 : entry * 1.01;
+  }
+  if(!tp || !isSanePrice(tp, entry)){
+    tp = sg.dir==='LONG' ? entry * 1.02 : entry * 0.98;
+  }
+  // риск на единицу
+  let riskPerUnit = Math.abs(entry - sl);
+  if(riskPerUnit <= 0 || riskPerUnit/entry > 0.15){
+    // стоп слишком широкий — 1%
+    sl = sg.dir==='LONG' ? entry * 0.99 : entry * 1.01;
+    riskPerUnit = Math.abs(entry - sl);
+  }
   const qty = riskUsd / riskPerUnit;
-  const lev = Math.min(10, Math.max(2, Math.round(Math.abs(entry/(entry-sl))*0.5)));
-  const margin = Math.max(10, (qty * entry) / lev);
+  const notional = qty * entry;
+  const lev = Math.min(5, Math.max(2, Math.round(notional / Math.max(riskUsd,1))));
+  const margin = Math.max(10, notional / lev);
   if(margin > freeMargin()) return false;
-  // проверка лимитов челленджа после гипотетического убытка на SL
+
   if(S.acc.kind==='challenge' && S.acc.status==='RUN'){
     if(eq - riskUsd <= challengeStop() || eq - riskUsd <= dayStop()) return false;
   }
-  const side = sg.dir==='LONG'?'LONG':'SHORT';
+
+  const side = sg.dir==='LONG' ? 'LONG' : 'SHORT';
   S.positions.push({
-    id:S.nextId++, symbol:sg.symbol, side, margin, lev, entry, qty,
+    id:S.nextId++, symbol:sym, side, margin, lev, entry, qty,
     opened:Date.now(), tp, sl, bot:true
   });
   S.bot.lastTrade = Date.now();
   S.bot.log = (S.bot.log||[]).slice(-40);
-  S.bot.log.unshift({ t:Date.now(), side, sym:sg.symbol, entry, tp, sl, margin });
+  S.bot.log.unshift({ t:Date.now(), side, sym, entry, tp, sl, margin });
   botSave(); persistState();
-  toast('🤖 Бот: '+side+' '+sg.symbol.replace('USDT','')+' x'+lev, '🤖');
+  toast('🤖 Бот: '+side+' '+base+' x'+lev, '🤖');
   haptic('ok'); renderAll();
   return true;
 }
 
 async function botTick(){
   if(!botCanTrade()) return;
-  // обновить сигналы по уже загруженным 4h
-  const sigs = allSignals().filter(s=>s.strength>=60).slice(0,5);
-  for(const sg of sigs){
+  let sigs = [];
+  try{ sigs = allSignals().filter(s=>s && s.strength>=65); }catch(e){ return; }
+  // сначала ликвидное ядро
+  const core = sigs.filter(s=>CORE_SYMS.includes(s.symbol));
+  const rest = sigs.filter(s=>!CORE_SYMS.includes(s.symbol) && hasLivePrice(s.symbol));
+  const ordered = core.concat(rest).slice(0,8);
+  for(const sg of ordered){
     if(botOpenFromSignal(sg)) break;
   }
 }
@@ -4785,7 +4916,8 @@ function readTPSL(side, entry){
 function checkTPSL(){
   if(!S.positions || !S.positions.length) return;
   [...S.positions].forEach(p=>{
-    const px=priceOf(p.symbol); if(!px || !isFinite(px)) return;
+    const px=priceOf(p.symbol);
+    if(!px || !isFinite(px) || !isSanePrice(px, p.entry)) return;
     let hit=null;
     if(p.side==='LONG'){
       if(p.sl && px<=p.sl) hit='SL';
@@ -4800,8 +4932,9 @@ function checkTPSL(){
 function checkLiquidations(){
   if(!S.positions || !S.positions.length) return;
   [...S.positions].forEach(p=>{
-    const px=priceOf(p.symbol); if(!px || !isFinite(px)) return;
-    const liq = liqPrice(p); if(!isFinite(liq)) return;
+    const px=priceOf(p.symbol);
+    if(!px || !isFinite(px) || !isSanePrice(px, p.entry)) return;
+    const liq = liqPrice(p); if(liq==null || !isFinite(liq)) return;
     if(p.side==='LONG' && px<=liq) closePosition(p.id, 'LIQ');
     if(p.side==='SHORT' && px>=liq) closePosition(p.id, 'LIQ');
   });
@@ -6086,7 +6219,7 @@ async function tick(){
   renderAll();
 }
 async function init(){
-  loadDraws(); loadMeta(); loadUser(); loadState(); acadLoad(); loadAlerts(); botLoad(); try{ syncVipFromAccounts(true); }catch(e){}
+  loadDraws(); loadMeta(); loadUser(); loadState(); acadLoad(); loadAlerts(); botLoad(); try{ syncVipFromAccounts(true); }catch(e){} try{ sanitizeBrokenTrades(); sanitizeAccountsRisk(); }catch(e){}
   migrateAccounts();
   sanitizeAccountsRisk();
   if(S.acc && S.acc.status==='PASS' && !S.acc.fundedAt){ S.acc.fundedAt=Date.now(); }
