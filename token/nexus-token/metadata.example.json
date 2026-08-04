@@ -1,0 +1,11 @@
+{
+  "name": "NexusTrade Token",
+  "symbol": "NEXUS",
+  "description": "Utility token of NexusTrade prop-trading platform. Used for VIP access, fee discounts and rewards.",
+  "image": "https://your-cdn.com/nexus-logo.png",
+  "external_url": "https://your-nexustrade-domain.com",
+  "attributes": [
+    { "trait_type": "platform", "value": "NexusTrade" },
+    { "trait_type": "chain", "value": "Solana" }
+  ]
+}

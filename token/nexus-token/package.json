@@ -1,0 +1,25 @@
+{
+  "name": "nexus-token",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "create-token": "ts-node scripts/createToken.ts",
+    "airdrop-dev": "ts-node scripts/airdropDev.ts",
+    "metadata": "ts-node scripts/setMetadata.ts",
+    "revoke-mint": "ts-node scripts/revokeMintAuthority.ts"
+  },
+  "dependencies": {
+    "@metaplex-foundation/mpl-token-metadata": "^3.2.1",
+    "@metaplex-foundation/umi": "^0.9.2",
+    "@metaplex-foundation/umi-bundle-defaults": "^0.9.2",
+    "@solana/spl-token": "^0.4.9",
+    "@solana/web3.js": "^1.95.4",
+    "bs58": "^6.0.0",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2"
+  }
+}
