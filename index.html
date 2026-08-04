@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <title>Nexus Prop — Trade like a boss</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://unpkg.com/lightweight-charts@4.2.1/dist/lightweight-charts.standalone.production.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -745,7 +746,8 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
     <div class="term-stage">
       <div class="tool-rail" id="toolRail"></div>
       <div class="term-chart-wrap" id="termChartWrap">
-        <canvas id="termChart"></canvas>
+        <div id="tvChart" style="width:100%;height:100%;min-height:220px;"></div>
+        <canvas id="termChart" style="display:none;"></canvas>
         <div class="term-tt" id="termTT"></div>
         <button class="go-live" id="goLive" style="display:none;">→|</button>
       </div>
@@ -1163,6 +1165,7 @@ function startWS(){
     feedCandle(sym, last);
     wsAlive=true; S.live=true; S.src='Crypto.com \u26a1';
     rtDirty=true;
+    try{ riskOnTick(); }catch(e){}
     if(S.screen==='terminal' && S.term.symbol===sym) drawTermChart();
   };
   ws.onclose=()=>{ wsAlive=false; setTimeout(startWS, 4000); };
@@ -1176,15 +1179,24 @@ function freeMargin(){ return Math.max(0, S.acc.balance - usedMargin()); }
 function liqPrice(p){ const dir=p.side==='LONG'?1:-1; return p.entry*(1 - dir*(1/p.lev)*0.95); }
 
 function openPosition(side){
+  bindAcc();
   const blk=tradingBlocked();
   if(blk){ toast(blk,'🚫'); haptic('err'); return; }
-  if(S.acc.status!=='RUN' && S.acc.status!=='PASS'){ toast('Счёт неактивен','⚠️'); haptic('err'); return; }
+  if(!S.acc || (S.acc.status!=='RUN' && S.acc.status!=='PASS')){ toast('Счёт неактивен','⚠️'); haptic('err'); return; }
+  if(S.acc.kind==='challenge' && S.acc.status==='RUN'){
+    const eqNow=equity();
+    if(eqNow<=challengeStop() || eqNow<=dayStop()){
+      riskOnTick(); toast('Лимит просадки — сделки закрыты','🚫'); haptic('err'); return;
+    }
+  }
   const margin=parseFloat($('termMargin').value)||0;
   const lev=parseInt($('levSlider').value)||1;
   if(margin<10){ toast('Минимальная маржа — $10','⚠️'); haptic('err'); return; }
-  if(margin>freeMargin()){ toast('Недостаточно свободной маржи','⚠️'); haptic('err'); return; }
+  if(margin>freeMargin()+1e-9){ toast('Недостаточно свободной маржи','⚠️'); haptic('err'); return; }
   const sym=S.term.symbol, entry=priceOf(sym);
+  if(!entry||!isFinite(entry)||entry<=0){ toast('Нет цены инструмента','⚠️'); haptic('err'); return; }
   const qty=margin*lev/entry;
+  if(!isFinite(qty)||qty<=0){ toast('Некорректный объём','⚠️'); haptic('err'); return; }
   const ts=readTPSL(side, entry);
   bindAcc();
   S.positions.push({ id:S.nextId++, symbol:sym, side, margin, lev, entry, qty, opened:Date.now(), tp:ts.tp, sl:ts.sl });
@@ -1194,17 +1206,31 @@ function openPosition(side){
   setTimeout(()=>{ if(S.coachOn!==false) coachTip(true); }, 700);
   renderAll();
 }
-function closePosition(id, reason){
-  const i=S.positions.findIndex(p=>p.id===id); if(i<0) return;
-  const p=S.positions[i]; const pnl=posPnl(p); const exit=priceOf(p.symbol);
-  S.acc.balance+=pnl;
+function closePosition(id, reason, opts){
+  opts = opts || {};
+  bindAcc();
+  const i=S.positions.findIndex(p=>p.id===id); if(i<0) return null;
+  const p=S.positions[i];
+  let exit = priceOf(p.symbol);
+  if(reason==='TP' && p.tp) exit = p.tp;
+  if(reason==='SL' && p.sl) exit = p.sl;
+  if(reason==='LIQ') exit = liqPrice(p);
+  if(opts.exitPrice!=null && isFinite(opts.exitPrice)) exit = opts.exitPrice;
+  const dir = p.side==='LONG'?1:-1;
+  const pnl = (exit - p.entry) * p.qty * dir;
+  S.acc.balance += pnl;
   S.history.unshift({ ...p, exit, pnl, closed:Date.now(), auto:reason||null });
-  persistState();
   S.positions.splice(i,1);
-  haptic('ok'); toast((reason==='TP'?'Тейк-профит: ':reason==='SL'?'Стоп-лосс: ':'Закрыто: ')+(pnl>=0?'+':'')+fUsd(pnl), pnl>=0?'💰':'📉');
-  checkChallenge(); renderAll();
+  if(!opts.silent){
+    const label = reason==='TP'?'Тейк-профит: ':reason==='SL'?'Стоп-лосс: ':reason==='LIQ'?'Ликвидация: ':(reason==='maxDD'||reason==='dailyLoss')?'Лимит: ':'Закрыто: ';
+    haptic(pnl>=0?'ok':'err');
+    toast(label+(pnl>=0?'+':'')+fUsd(pnl), pnl>=0?'💰':'📉');
+  }
+  if(!opts.skipCheck) checkChallenge();
+  if(!opts.silent){ persistState(); renderAll(); }
+  return pnl;
 }
-function closeAll(){ [...S.positions].forEach(p=>closePosition(p.id)); }
+function closeAll(reason){ [...S.positions].forEach(p=>closePosition(p.id, reason||null, {silent:true, skipCheck:true})); persistState(); checkChallenge(); renderAll(); }
 
 const PAYOUT_HOLD_DAYS = 14;
 function isFunded(){ return S.acc && S.acc.status==='PASS'; }
@@ -1230,11 +1256,15 @@ function dayStop(){ return S.acc.startDay*(1-RULES.dailyLoss/100); }
 function forceCloseAll(reason){
   bindAcc();
   [...S.positions].forEach(p=>{
-    const pnl=posPnl(p), exit=priceOf(p.symbol);
-    S.acc.balance+=pnl;
-    S.history.unshift({ ...p, exit, pnl, closed:Date.now(), auto:reason });
+    closePosition(p.id, reason, {silent:true, skipCheck:true});
   });
-  S.positions=[];
+  S.positions = [];
+  // Clamp: equity не уходит ниже лимита челленджа
+  if(reason==='maxDD' || reason==='dailyLoss'){
+    const floor = reason==='maxDD' ? challengeStop() : dayStop();
+    if(S.acc.balance < floor) S.acc.balance = Math.max(0, floor);
+    if(S.acc.balance < 0) S.acc.balance = 0;
+  }
 }
 function tradingBlocked(){
   if(!S.acc) return false;
@@ -1498,6 +1528,34 @@ function rollDay(){
     S.acc.dayPnlPeak=0;
     if(S.acc.status==='RUN' || S.acc.status==='PASS') persistState();
   }
+}
+function sanitizeAccountsRisk(){
+  const saveId=S.activeAccId;
+  (S.accounts||[]).forEach(a=>{
+    if(!a || a.status==='FAIL') return;
+    S.activeAccId=a.id; bindAcc();
+    const eq = equity();
+    if(a.status==='RUN' && a.kind==='challenge'){
+      const stop = a.tier*(1-RULES.maxDD/100);
+      const dstop = (a.startDay||a.tier)*(1-RULES.dailyLoss/100);
+      if(eq<=stop || eq<=dstop){
+        const reason = eq<=stop ? 'maxDD' : 'dailyLoss';
+        forceCloseAll(reason);
+        a.status='FAIL';
+        a.failReason = reason==='maxDD'
+          ? ('превышена общая просадка −'+RULES.maxDD+'%')
+          : ('превышен дневной лимит −'+RULES.dailyLoss+'%');
+        a.failedAt=Date.now();
+        if(a.balance < 0) a.balance = 0;
+      }
+    }
+    if(a.kind==='demo' && eq < -(a.tier||10000)){
+      forceCloseAll('maxDD');
+      a.balance = Math.max(0, a.balance);
+    }
+  });
+  S.activeAccId=saveId; bindAcc();
+  try{ persistState(); }catch(e){}
 }
 function checkAllAccounts(){
   const saveId=S.activeAccId;
@@ -2040,8 +2098,77 @@ function saveDraws(){ try{ localStorage.setItem('nx_draws', JSON.stringify(S.dra
 function loadDraws(){ try{ const d=localStorage.getItem('nx_draws'); if(d) S.draws=JSON.parse(d); }catch(e){} }
 function saveInd(){ try{ localStorage.setItem('nx_indA', JSON.stringify(S.indA)); }catch(e){} }
 
-/* ================= CHART ================= */
+/* ================= CHART (TradingView Lightweight Charts) ================= */
+let _tvChart=null, _tvSeries=null, _tvVol=null, _tvKey='', _tvPriceLines=[];
+function destroyTvChart(){
+  try{ if(_tvChart){ _tvChart.remove(); } }catch(e){}
+  _tvChart=null; _tvSeries=null; _tvVol=null; _tvKey=''; _tvPriceLines=[];
+}
+function ensureTvChart(){
+  const wrap=$('tvChart'); if(!wrap) return null;
+  if(typeof LightweightCharts==='undefined') return null;
+  const key = S.term.symbol+'_'+S.term.interval;
+  if(_tvChart && _tvKey===key) return _tvChart;
+  destroyTvChart();
+  const h = Math.max(220, (wrap.parentElement&&wrap.parentElement.clientHeight)||280);
+  wrap.style.height = h+'px';
+  _tvChart = LightweightCharts.createChart(wrap, {
+    width: wrap.clientWidth || 320, height: h,
+    layout: { background:{type:'solid',color:'transparent'}, textColor:'rgba(234,247,255,0.55)', fontFamily:'JetBrains Mono, Manrope, monospace', fontSize:11 },
+    grid: { vertLines:{color:'rgba(34,228,255,0.06)'}, horzLines:{color:'rgba(34,228,255,0.06)'} },
+    crosshair: { mode: LightweightCharts.CrosshairMode.Normal, vertLine:{color:'rgba(34,228,255,0.35)',labelBackgroundColor:'#0b1a22'}, horzLine:{color:'rgba(34,228,255,0.35)',labelBackgroundColor:'#0b1a22'} },
+    rightPriceScale: { borderColor:'rgba(34,228,255,0.12)', scaleMargins:{top:0.08,bottom:0.18} },
+    timeScale: { borderColor:'rgba(34,228,255,0.12)', timeVisible:true, secondsVisible:false },
+    handleScroll: { vertTouchDrag:false }
+  });
+  _tvSeries = _tvChart.addCandlestickSeries({
+    upColor:'#2BFF9E', downColor:'#FF3B57', borderUpColor:'#2BFF9E', borderDownColor:'#FF3B57', wickUpColor:'#2BFF9E', wickDownColor:'#FF3B57'
+  });
+  try{ _tvVol=_tvChart.addHistogramSeries({ priceFormat:{type:'volume'}, priceScaleId:'', scaleMargins:{top:0.82,bottom:0} }); }catch(e){ _tvVol=null; }
+  _tvKey=key;
+  if(!_tvChart._ro){
+    const ro=new ResizeObserver(()=>{
+      if(!_tvChart||!wrap) return;
+      const nh=Math.max(220,(wrap.parentElement&&wrap.parentElement.clientHeight)||280);
+      wrap.style.height=nh+'px'; _tvChart.applyOptions({width:wrap.clientWidth,height:nh});
+    });
+    ro.observe(wrap.parentElement||wrap); _tvChart._ro=ro;
+  }
+  return _tvChart;
+}
 function drawTermChart(){
+  const k=S.klines[S.term.symbol+'_'+S.term.interval];
+  if(!k||!k.length) return;
+  if(typeof LightweightCharts!=='undefined' && $('tvChart')){
+    const chart=ensureTvChart();
+    if(chart && _tvSeries){
+      const data=k.map(c=>({ time:Math.floor((c.t>1e12?c.t:c.t*1000)/1000), open:+c.o, high:+c.h, low:+c.l, close:+c.c })).filter(c=>isFinite(c.open)&&isFinite(c.close));
+      const uniq=[]; let lastT=-1; data.forEach(c=>{ if(c.time>lastT){ uniq.push(c); lastT=c.time; } });
+      try{ _tvSeries.setData(uniq); }catch(e){}
+      if(_tvVol){ try{ _tvVol.setData(uniq.map(c=>{
+        const src=k.find(x=>Math.floor((x.t>1e12?x.t:x.t*1000)/1000)===c.time);
+        return { time:c.time, value:(src&&src.v)||0, color:c.close>=c.open?'rgba(43,255,158,0.35)':'rgba(255,59,87,0.35)' };
+      })); }catch(e){} }
+      try{ _tvPriceLines.forEach(l=>{ try{_tvSeries.removePriceLine(l);}catch(e){} }); }catch(e){}
+      _tvPriceLines=[];
+      S.positions.filter(p=>p.symbol===S.term.symbol).forEach(p=>{
+        const mk=(price,color,title)=>({ price, color, lineWidth:1, lineStyle:LightweightCharts.LineStyle.Dashed, axisLabelVisible:true, title });
+        try{
+          _tvPriceLines.push(_tvSeries.createPriceLine(mk(p.entry,'#EAC97A','ENTRY')));
+          if(p.tp) _tvPriceLines.push(_tvSeries.createPriceLine(mk(p.tp,'#2BFF9E','TP')));
+          if(p.sl) _tvPriceLines.push(_tvSeries.createPriceLine(mk(p.sl,'#FF3B57','SL')));
+          const liq=liqPrice(p); if(isFinite(liq)) _tvPriceLines.push(_tvSeries.createPriceLine(mk(liq,'rgba(255,59,87,0.5)','LIQ')));
+        }catch(e){}
+      });
+      try{ _tvSeries.applyOptions({ lastValueVisible:true, priceLineVisible:true }); }catch(e){}
+      return;
+    }
+  }
+  drawTermChartLegacy();
+}
+/* ================= CHART LEGACY ================= */
+function drawTermChartLegacy(){
+
   const cv=$('termChart'), wrap=$('termChartWrap');
   const k=S.klines[S.term.symbol+'_'+S.term.interval]; if(!cv||!k||!k.length) return;
   let V=S.term.view;
@@ -4284,19 +4411,35 @@ function readTPSL(side, entry){
   return {tp,sl};
 }
 function checkTPSL(){
-  if(!S.positions.length) return;
+  if(!S.positions || !S.positions.length) return;
   [...S.positions].forEach(p=>{
-    const px=priceOf(p.symbol); if(!px) return;
+    const px=priceOf(p.symbol); if(!px || !isFinite(px)) return;
     let hit=null;
     if(p.side==='LONG'){
-      if(p.tp && px>=p.tp) hit='TP';
-      else if(p.sl && px<=p.sl) hit='SL';
+      if(p.sl && px<=p.sl) hit='SL';
+      else if(p.tp && px>=p.tp) hit='TP';
     } else {
-      if(p.tp && px<=p.tp) hit='TP';
-      else if(p.sl && px>=p.sl) hit='SL';
+      if(p.sl && px>=p.sl) hit='SL';
+      else if(p.tp && px<=p.tp) hit='TP';
     }
-    if(hit){ closePosition(p.id, hit); }
+    if(hit) closePosition(p.id, hit);
   });
+}
+function checkLiquidations(){
+  if(!S.positions || !S.positions.length) return;
+  [...S.positions].forEach(p=>{
+    const px=priceOf(p.symbol); if(!px || !isFinite(px)) return;
+    const liq = liqPrice(p); if(!isFinite(liq)) return;
+    if(p.side==='LONG' && px<=liq) closePosition(p.id, 'LIQ');
+    if(p.side==='SHORT' && px>=liq) closePosition(p.id, 'LIQ');
+  });
+}
+function riskOnTick(){
+  if(!S.acc || S.acc.status==='FAIL') return;
+  bindAcc();
+  checkTPSL();
+  checkLiquidations();
+  checkChallenge();
 }
 /* ============ ПОЗИЦИИ В ТЕРМИНАЛЕ ============ */
 function renderTermPositions(){
@@ -5564,7 +5707,7 @@ async function tick(){
   const eq=equity(), dayPnl=eq-S.acc.startDay;
   if(dayPnl>S.acc.dayPnlPeak) S.acc.dayPnlPeak=dayPnl;
   if(S.acc.status==='RUN' && dayPnl>=50 && S.acc.profitDays<1) S.acc.profitDays=1;
-  checkTPSL();
+  riskOnTick();
   checkAlerts();
   checkAllAccounts();
   renderAll();
@@ -5572,6 +5715,7 @@ async function tick(){
 async function init(){
   loadDraws(); loadMeta(); loadUser(); loadState(); acadLoad(); loadAlerts();
   migrateAccounts();
+  sanitizeAccountsRisk();
   if(S.acc && S.acc.status==='PASS' && !S.acc.fundedAt){ S.acc.fundedAt=Date.now(); }
   if(S.acc && !S.acc.dayKey){ S.acc.dayKey=dayKey(); S.acc.startDay=S.acc.balance||S.acc.tier; }
   // миграция: демо теперь только $10k
