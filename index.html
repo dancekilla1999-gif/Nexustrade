@@ -4213,14 +4213,26 @@ function sigUniverse(){
 }
 function ensureKlines(cb){
   if(_klinesReady){ cb(); return; }
-  const need=sigUniverse().filter(a=>!S.klines[a.s+'_4h']||S.klines[a.s+'_4h'].length<60);
+  const uni = sigUniverse();
+  // Сначала ядро (BTC/ETH/…) — по ним почти всегда есть сетапы
+  const core = (CORE_SYMS||[]).map(s=>({s})).filter(a=>a.s);
+  const rest = uni.filter(a=>!(CORE_SYMS||[]).includes(a.s));
+  const ordered = core.concat(rest);
+  const need = ordered.filter(a=>{
+    const k4=S.klines[a.s+'_4h'], k1=S.klines[a.s+'_1h'];
+    return !(k4&&k4.length>=60) && !(k1&&k1.length>=60);
+  });
   if(!need.length){ _klinesReady=true; cb(); return; }
-  // Пакетная загрузка топ-100 (по 8), чтобы не упереться в rate-limit
   (async()=>{
-    for(let i=0;i<need.length;i+=8){
-      const batch=need.slice(i,i+8);
+    // ядро грузим 4h+1h сразу
+    await Promise.all((CORE_SYMS||[]).slice(0,8).map(s=>
+      Promise.all([loadKlines(s,'4h').catch(()=>null), loadKlines(s,'1h').catch(()=>null)])
+    ));
+    if(typeof cb==='function') cb();
+    for(let i=0;i<need.length;i+=6){
+      const batch=need.slice(i,i+6);
       await Promise.all(batch.map(a=>loadKlines(a.s,'4h').catch(()=>null)));
-      if(i===0 && typeof cb==='function') cb(); // первый батч — уже можно показать
+      if(i===0 || i%12===0){ if(typeof cb==='function') cb(); }
     }
     _klinesReady=true;
     if(typeof cb==='function') cb();
@@ -4228,9 +4240,9 @@ function ensureKlines(cb){
 }
 
 /* ============ ДВИЖОК СИГНАЛОВ (swing, потенциал ≥2%) ============ */
-const SIG_MIN_MOVE = 2.0;   // минимальный потенциал до цели, %
-const SIG_MIN_RR   = 1.8;   // минимальное соотношение риск/прибыль
-const SIG_MIN_PASS = 11;    // минимум подтверждений из 20
+const SIG_MIN_MOVE = 1.0;   // минимальный потенциал до цели, %
+const SIG_MIN_RR   = 1.2;   // минимальное соотношение риск/прибыль
+const SIG_MIN_PASS = 7;     // минимум подтверждений из 20
 
 function structLevels(k, dep){
   // подбираем глубину так, чтобы получить достаточно опорных точек
@@ -4252,7 +4264,9 @@ function nearestBelow(levels, price, minGapPct){
 }
 
 function computeSignal(sym){
-  const k=S.klines[sym+'_4h']; if(!k||k.length<70) return null;
+  let k=S.klines[sym+'_4h'], tfUsed='4H';
+  if(!k||k.length<70){ k=S.klines[sym+'_1h']; tfUsed='1H'; }
+  if(!k||k.length<70) return null;
   const cl=k.map(o=>o.c), n=cl.length, last=cl[n-1];
   const e21=emaArr(cl,21), e50=emaArr(cl,50), e200=emaArr(cl,200);
   const r=rsiArr(cl,14), mac=macdArr(cl), st=stochArr(k,14,3), bb=bbArr(cl,20,2);
@@ -4275,8 +4289,10 @@ function computeSignal(sym){
   else if(structDown && !above200) bias='SHORT';
   else if(emaUp && above200) bias='LONG';
   else if(!emaUp && !above200) bias='SHORT';
-  else if(structUp) bias='LONG';
-  else if(structDown) bias='SHORT';
+  else if(structUp || (emaUp && rsi>50)) bias='LONG';
+  else if(structDown || (!emaUp && rsi<50)) bias='SHORT';
+  else if(emaUp) bias='LONG';
+  else if(!emaUp) bias='SHORT';
   if(!bias) return null;
   const up = bias==='LONG';
 
@@ -4328,7 +4344,7 @@ function computeSignal(sym){
     ['Свеча по направлению', bodyOK, 0.8],
     ['Импульс последних баров', up? higherHigh : lowerLow, 1.1],
     ['Объём не ниже среднего', (k[n-1].v||0) >= volAvg*0.75, 1.0],
-    ['Волатильность достаточная (ATR '+atrPct.toFixed(2)+'%)', atrPct>0.5, 1.3],
+    ['Волатильность достаточная (ATR '+atrPct.toFixed(2)+'%)', atrPct>0.25, 1.0],
     ['Потенциал до цели ≥'+SIG_MIN_MOVE+'% ('+movePct.toFixed(1)+'%)', movePct>=SIG_MIN_MOVE, 2.0],
     ['Соотношение риск/прибыль ≥'+SIG_MIN_RR+' (1:'+rr.toFixed(1)+')', rr>=SIG_MIN_RR, 2.0],
     ['Цель опирается на уровень структуры', tpSrc==='уровень структуры', 1.4],
@@ -4345,7 +4361,7 @@ function computeSignal(sym){
     symbol:sym, dir:bias, strength, passed, total, entry:last, tp, sl, rsi,
     movePct, riskPct, rr,
     reasons:F.filter(f=>f[1]).slice(0,4).map(f=>f[0]),
-    filters:F, d, tf:'4H', tpSrc,
+    filters:F, d, tf:tfUsed, tpSrc,
     horizon: horizonBars<=6 ? 'до 1 дня' : horizonBars<=18 ? '1–3 дня' : '3–7 дней',
     targetLevel: target? target.p : null
   };
@@ -4407,7 +4423,13 @@ function renderSigList(body){
     if(S.screen!=='signals'||S.stab!=='signals') return;
     const sigs=allSignals();
     const freeLimit=2, unlocked=tierRank(S.tier)>=1;
-    if(!sigs.length){ body.innerHTML='<div class="note-box"><b>Качественных сетапов сейчас нет.</b><br><span class="micro">Движок ищет сделки с потенциалом от '+SIG_MIN_MOVE+'%, соотношением R:R от 1:'+SIG_MIN_RR+' и минимум '+SIG_MIN_PASS+' подтверждениями из 20. Такие точки появляются не каждый день — это нормально и правильно.</span></div>'; return; }
+    if(!sigs.length){
+      body.innerHTML='<div class="note-box"><b>Качественных сетапов сейчас нет.</b><br><span class="micro">Движок сканирует топ-100 на 4H/1H. Если список пуст — подождите 10–20 сек (грузятся свечи). Фильтры: потенциал ≥'+SIG_MIN_MOVE+'%, R:R ≥1:'+SIG_MIN_RR+', от '+SIG_MIN_PASS+' подтверждений.</span></div>'+
+        '<button class="btn btn-ghost btn-block mt3" id="sigRefresh">🔄 Обновить сканирование</button>';
+      const rb=$('sigRefresh');
+      if(rb) rb.onclick=()=>{ _klinesReady=false; body.innerHTML='<div class="mut small" style="text-align:center;padding:16px;">Сканирую рынок…</div>'; ensureKlines(()=>{ if(S.screen==='signals') renderSigList(body); }); };
+      return;
+    }
     let html='';
     sigs.forEach((sg,i)=>{
       const a=ASSETS.find(x=>x.s===sg.symbol);
