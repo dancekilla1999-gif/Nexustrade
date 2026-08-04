@@ -598,23 +598,50 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
 .tf-mini{font-size:9.5px;font-weight:800;padding:2px 6px;border-radius:6px;background:var(--card2);
   color:var(--txt2);font-family:var(--mono);}
 
-/* Fullscreen chart mode */
+/* Fullscreen chart mode — только график, без панелей и алертов */
 .chart-fs-active #termChartWrap{
-  position:fixed !important; inset:0 !important; z-index:95 !important;
-  width:100vw !important; height:100vh !important; max-height:none !important;
-  min-height:100vh !important; border-radius:0 !important; margin:0 !important;
+  position:fixed !important; inset:0 !important; z-index:200 !important;
+  width:100vw !important; height:100dvh !important; max-height:none !important;
+  min-height:100dvh !important; border-radius:0 !important; margin:0 !important;
   border:none !important; background:#0a1016 !important;
+  padding:0 !important;
 }
-.chart-fs-active #tvChart{ height:100% !important; min-height:100vh !important; }
+.chart-fs-active #tvChart{ height:100% !important; min-height:100dvh !important; }
+.chart-fs-active #screen-terminal > *:not(.term-chart-card){ display:none !important; }
+.chart-fs-active #screen-terminal .term-chart-card{
+  position:static !important; margin:0 !important; padding:0 !important;
+  border:none !important; background:transparent !important; box-shadow:none !important;
+}
+.chart-fs-active .tabbar,
+.chart-fs-active .toast,
+.chart-fs-active .sheet-veil,
+.chart-fs-active #sheetVeil,
+.chart-fs-active .note-box,
+.chart-fs-active [data-risk-banner],
+.chart-fs-active .risk-banner{ display:none !important; visibility:hidden !important; }
+
+.chart-fs-active #coachBox,
+.chart-fs-active .coach{ display:none !important; opacity:0 !important; pointer-events:none !important; }
+.chart-fs-active #screen-terminal .card:not(.term-chart-card),
+.chart-fs-active #screen-terminal .topbar,
+.chart-fs-active #screen-terminal > .row{ display:none !important; }
+
 .chart-fs-bar{
-  position:fixed; top:0; left:0; right:0; z-index:96;
-  display:flex; align-items:center; justify-content:space-between;
+  position:fixed; top:0; left:0; right:0; z-index:210;
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
   padding:10px 14px; padding-top:calc(10px + env(safe-area-inset-top));
-  background:linear-gradient(180deg,rgba(10,16,22,.95),rgba(10,16,22,.7));
+  background:linear-gradient(180deg,rgba(10,16,22,.92) 0%, rgba(10,16,22,.55) 70%, transparent 100%);
   pointer-events:none;
 }
-.chart-fs-bar button{ pointer-events:auto; }
-.chart-fs-active .tabbar, .chart-fs-active .toast{ display:none !important; }
+.chart-fs-bar button{
+  pointer-events:auto;
+  background:rgba(20,30,40,.9) !important;
+  border:1px solid rgba(34,228,255,.35) !important;
+  color:#eaf7ff !important;
+  border-radius:99px !important;
+  padding:8px 14px !important;
+  font-weight:700 !important;
+}
 
 </style>
 </head>
@@ -769,7 +796,7 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
 
   <div class="row gap2 mt2" style="align-items:center;"><span id="toolCur" class="micro" style="color:var(--gold);"></span></div>
 
-  <div class="card mt2" style="padding:12px 6px 4px;">
+  <div class="card mt2 term-chart-card" style="padding:12px 6px 4px;">
     <div class="term-stage" style="display:block;">
       <div class="tool-rail" id="toolRail" style="display:none;"></div>
       <div class="term-chart-wrap" id="termChartWrap" style="height:min(58vh,420px);min-height:280px;border-radius:14px;overflow:hidden;border:1px solid var(--line);">
@@ -1064,7 +1091,7 @@ function fUsd(n){ return (n<0?'-$':'$')+fmt(Math.abs(n)); }
 function decOf(sym){ const a=ASSETS.find(x=>x.s===sym); return a?a.d:2; }
 function hash(x){ let h=0; for(let i=0;i<x.length;i++) h=(Math.imul(31,h)+x.charCodeAt(i))|0; return h; }
 function rng(seed){ let s=seed%2147483647; if(s<=0)s+=2147483646; return()=>{ s=(s*16807)%2147483647; return (s-1)/2147483646; }; }
-function toast(msg, icon){ $('toastText').textContent=msg; $('toastIcon').textContent=icon||'✅';
+function toast(msg, icon){ if(typeof _chartFs!=='undefined' && _chartFs) return; $('toastText').textContent=msg; $('toastIcon').textContent=icon||'✅';
   const t=$('toast'); t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'), 2400); }
 
 /* ============ DATA (live Binance + demo fallback) ============ */
@@ -2205,23 +2232,46 @@ let _chartFs = false;
 function toggleChartFullscreen(force){
   _chartFs = force===undefined ? !_chartFs : !!force;
   document.body.classList.toggle('chart-fs-active', _chartFs);
+  // спрятать риск-баннеры, coach, тосты, торговую панель
+  try{ hideCoach(); }catch(e){}
+  document.querySelectorAll('.note-box, [data-risk-banner], .risk-banner, #coachBox, .coach').forEach(el=>{
+    if(_chartFs){ el.dataset._fsHide='1'; el.style.setProperty('display','none','important'); }
+    else if(el.dataset._fsHide){ el.style.removeProperty('display'); delete el.dataset._fsHide; }
+  });
+  const term = document.getElementById('screen-terminal');
+  if(term){
+    Array.from(term.children).forEach(ch=>{
+      if(ch.classList && ch.classList.contains('term-chart-card')) return;
+      if(_chartFs){ ch.dataset._fsHide='1'; ch.style.setProperty('display','none','important'); }
+      else if(ch.dataset._fsHide){ ch.style.removeProperty('display'); delete ch.dataset._fsHide; }
+    });
+  }
+  const toastEl = $('toast');
+  if(toastEl){
+    if(_chartFs){ toastEl.classList.remove('show'); toastEl.style.setProperty('display','none','important'); }
+    else { toastEl.style.removeProperty('display'); }
+  }
   let bar = document.getElementById('chartFsBar');
   if(_chartFs){
     if(!bar){
       bar = document.createElement('div');
       bar.id = 'chartFsBar';
       bar.className = 'chart-fs-bar';
-      bar.innerHTML = '<span class="micro" style="color:var(--txt2);">Режим разметки · полный экран</span>'+
-        '<button class="btn btn-ghost btn-sm" id="chartFsClose">✕ Закрыть</button>';
+      bar.innerHTML = '<span class="micro" style="color:rgba(234,247,255,.7);font-weight:600;">Режим разметки · полный экран</span>'+
+        '<button type="button" id="chartFsClose">✕ Закрыть</button>';
       document.body.appendChild(bar);
       bar.querySelector('#chartFsClose').onclick = ()=>toggleChartFullscreen(false);
     }
     bar.style.display = 'flex';
+    // блокируем скролл страницы под графиком
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
   } else if(bar){
     bar.style.display = 'none';
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
   }
-  // пересоздать виджет под новый размер
-  setTimeout(()=>{ destroyTvChart(); drawTermChart(); }, 80);
+  setTimeout(()=>{ destroyTvChart(); drawTermChart(); }, 100);
 }
 
 function destroyTvChart(){
@@ -3365,6 +3415,7 @@ function coachTip(force){
   showCoach(r.t, r.m(st), r.p>=8?'warn':'info');
 }
 function showCoach(title, text, kind){
+  if(typeof _chartFs!=='undefined' && _chartFs) return;
   let box=$('coachBox');
   if(!box){
     box=document.createElement('div'); box.id='coachBox'; box.className='coach';
