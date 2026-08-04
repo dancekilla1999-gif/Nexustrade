@@ -643,6 +643,17 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
   font-weight:700 !important;
 }
 
+
+/* Phantom */
+.ph-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;
+  background:linear-gradient(135deg,#ab9ff2,#7b61ff);color:#fff;font-weight:800;
+  border:none;border-radius:14px;padding:14px 16px;font-size:14px;cursor:pointer;
+  box-shadow:0 8px 28px -10px rgba(123,97,255,.55);}
+.ph-btn img{width:22px;height:22px;border-radius:6px;}
+.ph-btn.connected{background:linear-gradient(135deg,#2BFF9E22,#22E4FF22);color:var(--txt);
+  border:1px solid rgba(43,255,158,.35);box-shadow:none;}
+.ph-addr{font-family:var(--mono);font-size:12px;word-break:break-all;color:var(--txt2);text-align:center;margin-top:8px;}
+
 </style>
 </head>
 <body>
@@ -947,6 +958,20 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
     </div>
     <button class="btn btn-ghost btn-block mt2" id="nxDemoCredit" style="font-size:12px;">+100 NEXUS (демо)</button>
   </div>
+  <div class="card mt3">
+    <div class="micro" style="color:var(--gold);margin-bottom:10px;">PHANTOM WALLET</div>
+    <button type="button" class="ph-btn" id="phantomBtn">
+      <img src="https://phantom.app/img/phantom-icon-purple.png" alt="" onerror="this.style.display='none'"/>
+      <span id="phantomBtnText">Подключить Phantom</span>
+    </button>
+    <div class="ph-addr" id="phantomAddr"></div>
+    <div class="row gap2 mt3">
+      <button class="btn btn-ghost btn-sm grow" id="phantomCopy" style="display:none;">Скопировать</button>
+      <button class="btn btn-ghost btn-sm grow" id="phantomDisc" style="display:none;">Отключить</button>
+    </div>
+    <div class="micro mt2" style="color:var(--txt3);line-height:1.45;">Кошелёк используется для вывода NEXUS и подписи. В Telegram откроет приложение Phantom.</div>
+  </div>
+
   <div class="card mt3" id="nxHistoryCard">
     <div class="micro" style="color:var(--gold);margin-bottom:8px;">ИСТОРИЯ NEXUS</div>
     <div id="nxHistory"><div class="mut small">Пока пусто</div></div>
@@ -4695,6 +4720,168 @@ function aiAnalyze(sym){
 
 /* ============ WALLET ============ */
 
+
+/* ============ PHANTOM WALLET SDK ============ */
+S.phantom = S.phantom || { pubkey:null, connected:false };
+
+function getPhantomProvider(){
+  if(typeof window==='undefined') return null;
+  const p = (window.phantom && window.phantom.solana) ? window.phantom.solana
+          : (window.solana && window.solana.isPhantom) ? window.solana
+          : null;
+  return p || null;
+}
+
+function shortPk(pk){
+  if(!pk) return '';
+  const s=String(pk);
+  return s.length>12 ? (s.slice(0,4)+'…'+s.slice(-4)) : s;
+}
+
+function savePhantomLocal(){
+  try{ localStorage.setItem('nx_phantom', JSON.stringify({pubkey:S.phantom.pubkey||null})); }catch(e){}
+}
+function loadPhantomLocal(){
+  try{
+    const raw=localStorage.getItem('nx_phantom');
+    if(raw){ const o=JSON.parse(raw); if(o&&o.pubkey){ S.phantom.pubkey=o.pubkey; S.phantom.connected=true; } }
+  }catch(e){}
+}
+
+function renderPhantomUI(){
+  const btn=$('phantomBtn'), txt=$('phantomBtnText'), addr=$('phantomAddr');
+  const cp=$('phantomCopy'), disc=$('phantomDisc');
+  if(!btn) return;
+  const on=!!(S.phantom&&S.phantom.connected&&S.phantom.pubkey);
+  btn.classList.toggle('connected', on);
+  if(txt) txt.textContent = on ? ('Подключено · '+shortPk(S.phantom.pubkey)) : 'Подключить Phantom';
+  if(addr) addr.textContent = on ? S.phantom.pubkey : '';
+  if(cp) cp.style.display = on ? '' : 'none';
+  if(disc) disc.style.display = on ? '' : 'none';
+  // auto-fill sol withdraw address
+  if(on){
+    S.wallet = S.wallet || {};
+    if(!S.wallet.sol) S.wallet.sol = S.phantom.pubkey;
+    const as=$('addr_sol'); if(as && !as.value) as.value = S.phantom.pubkey;
+  }
+}
+
+function phantomDeepLink(){
+  // Открыть текущий mini-app URL внутри Phantom browse
+  const url = encodeURIComponent(window.location.href.split('#')[0]);
+  const ref = encodeURIComponent(window.location.hostname||'nexustrade');
+  return 'https://phantom.app/ul/v1/browse/'+url+'?ref='+ref;
+}
+
+async function connectPhantom(){
+  const provider = getPhantomProvider();
+  if(!provider){
+    // В Telegram WebView провайдера нет — ведём в Phantom
+    const link = phantomDeepLink();
+    try{
+      if(window.Telegram && Telegram.WebApp && Telegram.WebApp.openLink){
+        Telegram.WebApp.openLink(link);
+      } else {
+        window.open(link, '_blank');
+      }
+    }catch(e){ window.location.href = link; }
+    toast('Откройте в Phantom и нажмите Connect','◎');
+    return;
+  }
+  try{
+    // onlyIfTrusted first
+    let resp=null;
+    try{ resp = await provider.connect({ onlyIfTrusted: true }); }catch(e){}
+    if(!resp || !resp.publicKey){
+      resp = await provider.connect();
+    }
+    const pk = resp.publicKey.toString();
+    S.phantom.pubkey = pk;
+    S.phantom.connected = true;
+    S.wallet = S.wallet || {};
+    S.wallet.sol = pk;
+    saveMeta(); savePhantomLocal();
+    renderPhantomUI();
+    toast('Phantom подключён','◎');
+    haptic('ok');
+    // listeners
+    try{
+      provider.on('accountChanged', (publicKey)=>{
+        if(publicKey){
+          S.phantom.pubkey = publicKey.toString();
+          S.wallet.sol = S.phantom.pubkey;
+          savePhantomLocal(); saveMeta(); renderPhantomUI();
+        } else {
+          disconnectPhantom(true);
+        }
+      });
+      provider.on('disconnect', ()=>disconnectPhantom(true));
+    }catch(e){}
+  }catch(e){
+    console.warn('phantom connect', e);
+    toast('Подключение отменено','⚠️');
+  }
+}
+
+function disconnectPhantom(silent){
+  const provider = getPhantomProvider();
+  try{ if(provider && provider.disconnect) provider.disconnect(); }catch(e){}
+  S.phantom.pubkey = null;
+  S.phantom.connected = false;
+  savePhantomLocal();
+  renderPhantomUI();
+  if(!silent) toast('Phantom отключён','◎');
+}
+
+async function phantomSignMessage(message){
+  const provider = getPhantomProvider();
+  if(!provider || !S.phantom.connected){
+    toast('Сначала подключите Phantom','⚠️');
+    return null;
+  }
+  try{
+    const encoded = new TextEncoder().encode(message);
+    const signed = await provider.signMessage(encoded, 'utf8');
+    // signature as base64
+    let sig;
+    if(signed.signature){
+      sig = btoa(String.fromCharCode.apply(null, Array.from(signed.signature)));
+    } else {
+      sig = btoa(String.fromCharCode.apply(null, Array.from(signed)));
+    }
+    return { pubkey: S.phantom.pubkey, signature: sig, message };
+  }catch(e){
+    toast('Подпись отменена','⚠️');
+    return null;
+  }
+}
+
+async function phantomGetBalanceSol(){
+  // optional: via public RPC
+  if(!S.phantom.pubkey) return null;
+  try{
+    const r = await fetch('https://api.mainnet-beta.solana.com', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        jsonrpc:'2.0', id:1, method:'getBalance',
+        params:[S.phantom.pubkey]
+      })
+    });
+    const d=await r.json();
+    return (d.result && d.result.value!=null) ? d.result.value/1e9 : null;
+  }catch(e){ return null; }
+}
+
+function wirePhantomButtons(){
+  const btn=$('phantomBtn');
+  if(btn) btn.onclick=()=>connectPhantom();
+  const cp=$('phantomCopy');
+  if(cp) cp.onclick=()=>{ if(S.phantom.pubkey){ try{navigator.clipboard.writeText(S.phantom.pubkey);}catch(e){} toast('Адрес скопирован','📋'); } };
+  const disc=$('phantomDisc');
+  if(disc) disc.onclick=()=>disconnectPhantom();
+}
+
+
 /* ============ NEXUS TOKEN WALLET ============ */
 function loadNexusLocal(){
   try{
@@ -4764,10 +4951,12 @@ function openNexusDeposit(){
     S.nexus.history=S.nexus.history||[];
     S.nexus.history.unshift({kind:'deposit', amount, status:'pending', tx_sig:txSig, created_at:new Date().toISOString()});
     saveNexusLocal();
+    let proof=null;
+    try{ proof = await phantomSignMessage('NEXUS deposit '+amount+' tx:'+(txSig||'')+' @'+Date.now()); }catch(e){}
     try{
       if(S.user){
         await fetch(API_BASE+'/api/nexus',{method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({action:'deposit_request', user:S.user.id, name:S.user.name, amount, txSig})});
+          body:JSON.stringify({action:'deposit_request', user:S.user.id, name:S.user.name, amount, txSig, meta:{phantom:proof}})});
       }
     }catch(e){}
     closeSheet(); toast('Заявка на депозит отправлена','◎'); renderWallet();
@@ -4775,7 +4964,7 @@ function openNexusDeposit(){
 }
 function openNexusWithdraw(){
   const bal=S.nexus&&S.nexus.balance||0;
-  const saved=(S.wallet&&S.wallet.sol)||'';
+  const saved=(S.phantom&&S.phantom.pubkey)||(S.wallet&&S.wallet.sol)||'';
   $('sheetContent').innerHTML=
     '<div class="h2" style="text-align:center;">Вывести NEXUS</div>'+
     '<div class="small mt2" style="text-align:center;color:var(--txt2);">Доступно: <b>'+fmt(bal,2)+' NEXUS</b></div>'+
@@ -4826,6 +5015,7 @@ async function nexusDemoCredit(){
 
 function renderWallet(){
   fetchNexus().then(()=>renderNexusBlock());
+  loadPhantomLocal(); wirePhantomButtons(); renderPhantomUI();
   const nxD=$("nxDepositBtn"); if(nxD) nxD.onclick=openNexusDeposit;
   const nxW=$("nxWithdrawBtn"); if(nxW) nxW.onclick=openNexusWithdraw;
   const nxC=$("nxDemoCredit"); if(nxC) nxC.onclick=nexusDemoCredit;
