@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <title>Nexus Prop — Trade like a boss</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="https://unpkg.com/lightweight-charts@4.2.1/dist/lightweight-charts.standalone.production.js"></script>
+<script src="https://s3.tradingview.com/tv.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -743,12 +743,12 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
   <div class="row gap2 mt2" style="align-items:center;"><span id="toolCur" class="micro" style="color:var(--gold);"></span></div>
 
   <div class="card mt2" style="padding:12px 6px 4px;">
-    <div class="term-stage">
-      <div class="tool-rail" id="toolRail"></div>
-      <div class="term-chart-wrap" id="termChartWrap">
-        <div id="tvChart" style="width:100%;height:100%;min-height:220px;"></div>
+    <div class="term-stage" style="display:block;">
+      <div class="tool-rail" id="toolRail" style="display:none;"></div>
+      <div class="term-chart-wrap" id="termChartWrap" style="height:min(58vh,420px);min-height:280px;border-radius:14px;overflow:hidden;border:1px solid var(--line);">
+        <div id="tvChart" style="width:100%;height:100%;min-height:280px;"></div>
         <canvas id="termChart" style="display:none;"></canvas>
-        <div class="term-tt" id="termTT"></div>
+        <div class="term-tt" id="termTT" style="display:none;"></div>
         <button class="go-live" id="goLive" style="display:none;">→|</button>
       </div>
     </div>
@@ -1840,6 +1840,7 @@ function updateMarketPrices(){
 /* ============ RENDER: TERMINAL ============ */
 async function openTerminal(sym){
   S.term.symbol=sym; S.term.view=null; S.term.hover=null; S.term.pend=null; go('terminal');
+  destroyTvChart();
   await loadKlines(sym, S.term.interval);
   renderTerminal();
 }
@@ -2053,7 +2054,7 @@ function normInd(list){ return (list||[]).map(x=>{
   } return {n:x.n, p:Object.assign(defParams(indByName(x.n)||INDS[1]), x.p||{})}; }); }
 function oscList(){ return (S.indA||[]).filter(it=>{const d=indByName(it.n);return d&&d[1]==='os';}).slice(0,4); }
 function oscH(){ return S.term.oscH||70; }
-function chartWrapH(){ return (S.term.priceH||300) + oscList().length*(oscH()+10); }
+function chartWrapH(){ return Math.max(300, Math.min(window.innerHeight*0.52, 440)); }
 
 /* ================= ORDER BLOCKS ================= */
 let _obC={};
@@ -2108,86 +2109,117 @@ function saveDraws(){ try{ localStorage.setItem('nx_draws', JSON.stringify(S.dra
 function loadDraws(){ try{ const d=localStorage.getItem('nx_draws'); if(d) S.draws=JSON.parse(d); }catch(e){} }
 function saveInd(){ try{ localStorage.setItem('nx_indA', JSON.stringify(S.indA)); }catch(e){} }
 
-/* ================= CHART (TradingView Lightweight Charts) ================= */
-let _tvChart=null, _tvSeries=null, _tvVol=null, _tvKey='', _tvPriceLines=[];
+/* ================= CHART: full TradingView Advanced Chart ================= */
+let _tvWidget = null;
+let _tvWidgetKey = '';
+
+const TV_INTERVAL = {
+  '1m':'1','3m':'3','5m':'5','15m':'15','30m':'30',
+  '1h':'60','2h':'120','4h':'240','6h':'360','12h':'720',
+  '1d':'D','3d':'3D','1w':'W','1M':'M'
+};
+
+function tvSymbol(sym){
+  // Binance perpetual / spot style for TradingView
+  const s = String(sym||'BTCUSDT').toUpperCase().replace('/','');
+  return 'BINANCE:' + s;
+}
+
 function destroyTvChart(){
-  try{ if(_tvChart){ _tvChart.remove(); } }catch(e){}
-  _tvChart=null; _tvSeries=null; _tvVol=null; _tvKey=''; _tvPriceLines=[];
-}
-function ensureTvChart(){
-  const wrap=$('tvChart'); if(!wrap) return null;
-  if(typeof LightweightCharts==='undefined') return null;
-  const key = S.term.symbol+'_'+S.term.interval;
-  if(_tvChart && _tvKey===key) return _tvChart;
-  destroyTvChart();
-  const h = Math.max(220, (wrap.parentElement&&wrap.parentElement.clientHeight)||280);
-  wrap.style.height = h+'px';
-  _tvChart = LightweightCharts.createChart(wrap, {
-    width: wrap.clientWidth || 320, height: h,
-    layout: { background:{type:'solid',color:'transparent'}, textColor:'rgba(234,247,255,0.55)', fontFamily:'JetBrains Mono, Manrope, monospace', fontSize:11 },
-    grid: { vertLines:{color:'rgba(34,228,255,0.06)'}, horzLines:{color:'rgba(34,228,255,0.06)'} },
-    crosshair: { mode: LightweightCharts.CrosshairMode.Normal, vertLine:{color:'rgba(34,228,255,0.35)',labelBackgroundColor:'#0b1a22'}, horzLine:{color:'rgba(34,228,255,0.35)',labelBackgroundColor:'#0b1a22'} },
-    rightPriceScale: { borderColor:'rgba(34,228,255,0.12)', scaleMargins:{top:0.08,bottom:0.18} },
-    timeScale: { borderColor:'rgba(34,228,255,0.12)', timeVisible:true, secondsVisible:false, rightOffset:6, barSpacing:8, minBarSpacing:2 },
-    handleScroll: { mouseWheel:true, pressedMouseMove:true, horzTouchDrag:true, vertTouchDrag:false },
-    handleScale: { axisPressedMouseMove:true, mouseWheel:true, pinch:true }
-  });
-  _tvSeries = _tvChart.addCandlestickSeries({
-    upColor:'#2BFF9E', downColor:'#FF3B57', borderUpColor:'#2BFF9E', borderDownColor:'#FF3B57', wickUpColor:'#2BFF9E', wickDownColor:'#FF3B57'
-  });
-  try{ _tvVol=_tvChart.addHistogramSeries({ priceFormat:{type:'volume'}, priceScaleId:'', scaleMargins:{top:0.82,bottom:0} }); }catch(e){ _tvVol=null; }
-  _tvKey=key;
-  if(!_tvChart._ro){
-    const ro=new ResizeObserver(()=>{
-      if(!_tvChart||!wrap) return;
-      const nh=Math.max(220,(wrap.parentElement&&wrap.parentElement.clientHeight)||280);
-      wrap.style.height=nh+'px'; _tvChart.applyOptions({width:wrap.clientWidth,height:nh});
-    });
-    ro.observe(wrap.parentElement||wrap); _tvChart._ro=ro;
-  }
-  return _tvChart;
-}
-function drawTermChart(){
-  const k=S.klines[S.term.symbol+'_'+S.term.interval];
-  if(!k||!k.length) return;
-  if(typeof LightweightCharts!=='undefined' && $('tvChart')){
-    const chart=ensureTvChart();
-    if(chart && _tvSeries){
-      const data=k.map(c=>({ time:Math.floor((c.t>1e12?c.t:c.t*1000)/1000), open:+c.o, high:+c.h, low:+c.l, close:+c.c })).filter(c=>isFinite(c.open)&&isFinite(c.close));
-      const uniq=[]; let lastT=-1; data.forEach(c=>{ if(c.time>lastT){ uniq.push(c); lastT=c.time; } });
-      const first = !_tvSeries._nxInit;
-      try{ _tvSeries.setData(uniq); }catch(e){}
-      if(first && uniq.length){
-        try{ _tvChart.timeScale().fitContent(); }catch(e){}
-        // показать ~120 последних баров, но историю можно листать влево
-        try{
-          const from = Math.max(0, uniq.length-120);
-          _tvChart.timeScale().setVisibleLogicalRange({ from: from, to: uniq.length+4 });
-        }catch(e){}
-        _tvSeries._nxInit = true;
-      }
-      if(_tvVol){ try{ _tvVol.setData(uniq.map(c=>{
-        const src=k.find(x=>Math.floor((x.t>1e12?x.t:x.t*1000)/1000)===c.time);
-        return { time:c.time, value:(src&&src.v)||0, color:c.close>=c.open?'rgba(43,255,158,0.35)':'rgba(255,59,87,0.35)' };
-      })); }catch(e){} }
-      try{ _tvPriceLines.forEach(l=>{ try{_tvSeries.removePriceLine(l);}catch(e){} }); }catch(e){}
-      _tvPriceLines=[];
-      S.positions.filter(p=>p.symbol===S.term.symbol).forEach(p=>{
-        const mk=(price,color,title)=>({ price, color, lineWidth:1, lineStyle:LightweightCharts.LineStyle.Dashed, axisLabelVisible:true, title });
-        try{
-          _tvPriceLines.push(_tvSeries.createPriceLine(mk(p.entry,'#EAC97A','ENTRY')));
-          if(p.tp) _tvPriceLines.push(_tvSeries.createPriceLine(mk(p.tp,'#2BFF9E','TP')));
-          if(p.sl) _tvPriceLines.push(_tvSeries.createPriceLine(mk(p.sl,'#FF3B57','SL')));
-          const liq=liqPrice(p); if(isFinite(liq)) _tvPriceLines.push(_tvSeries.createPriceLine(mk(liq,'rgba(255,59,87,0.5)','LIQ')));
-        }catch(e){}
-      });
-      try{ _tvSeries.applyOptions({ lastValueVisible:true, priceLineVisible:true }); }catch(e){}
-      return;
+  try{
+    if(_tvWidget){
+      if(typeof _tvWidget.remove === 'function') _tvWidget.remove();
+      else if(_tvWidget._ready && typeof _tvWidget.chart === 'function'){ /* iframe widget */ }
     }
-  }
-  drawTermChartLegacy();
+  }catch(e){}
+  _tvWidget = null;
+  _tvWidgetKey = '';
+  const el = document.getElementById('tvChart');
+  if(el) el.innerHTML = '';
 }
-/* ================= CHART LEGACY ================= */
+
+function ensureTvChart(){
+  const wrap = document.getElementById('tvChart');
+  if(!wrap) return null;
+  if(typeof TradingView === 'undefined') return null;
+
+  const key = S.term.symbol + '_' + S.term.interval;
+  if(_tvWidget && _tvWidgetKey === key) return _tvWidget;
+
+  destroyTvChart();
+
+  const h = Math.max(280, (document.getElementById('termChartWrap')||wrap).clientHeight || 320);
+  wrap.style.height = h + 'px';
+
+  // Full Advanced Chart — инструменты, индикаторы, зум/скролл как на TradingView
+  _tvWidget = new TradingView.widget({
+    autosize: true,
+    symbol: tvSymbol(S.term.symbol),
+    interval: TV_INTERVAL[S.term.interval] || '60',
+    timezone: 'Europe/Moscow',
+    theme: 'dark',
+    style: '1',
+    locale: 'ru',
+    toolbar_bg: '#0b1218',
+    enable_publishing: false,
+    hide_top_toolbar: false,
+    hide_legend: false,
+    hide_side_toolbar: false, withdateranges: true, details: true,
+    allow_symbol_change: false,
+    save_image: false,
+    container_id: 'tvChart',
+    studies_overrides: {},
+    overrides: {
+      'paneProperties.background': '#0a1016',
+      'paneProperties.backgroundType': 'solid',
+      'paneProperties.vertGridProperties.color': 'rgba(34,228,255,0.06)',
+      'paneProperties.horzGridProperties.color': 'rgba(34,228,255,0.06)',
+      'scalesProperties.textColor': 'rgba(234,247,255,0.55)',
+      'mainSeriesProperties.candleStyle.upColor': '#2BFF9E',
+      'mainSeriesProperties.candleStyle.downColor': '#FF3B57',
+      'mainSeriesProperties.candleStyle.borderUpColor': '#2BFF9E',
+      'mainSeriesProperties.candleStyle.borderDownColor': '#FF3B57',
+      'mainSeriesProperties.candleStyle.wickUpColor': '#2BFF9E',
+      'mainSeriesProperties.candleStyle.wickDownColor': '#FF3B57'
+    },
+    disabled_features: [
+      'header_symbol_search',
+      'header_compare',
+      'header_saveload',
+      'display_market_status'
+    ],
+    enabled_features: [
+      'side_toolbar_in_fullscreen_mode',
+      'header_in_fullscreen_mode',
+      'same_data_requery',
+      'left_toolbar',
+      'edit_buttons_in_legend',
+      'context_menus',
+      'control_bar',
+      'timeframes_toolbar'
+    ],
+    // Базовые индикаторы как на TV — пользователь добавляет любые через «Индикаторы»
+    studies: [
+      'Volume@tv-basicstudies'
+    ],
+    loading_screen: { backgroundColor: '#0a1016', foregroundColor: '#22E4FF' }
+  });
+
+  _tvWidgetKey = key;
+  return _tvWidget;
+}
+
+function drawTermChart(){
+  // Пересоздаём/обновляем полноценный TradingView виджет
+  try {
+    ensureTvChart();
+  } catch(e) {
+    console.warn('TV widget', e);
+    try { drawTermChartLegacy && drawTermChartLegacy(); } catch(e2){}
+  }
+}
+
+/* ================= CHART LEGACY (canvas fallback) ================= */
 function drawTermChartLegacy(){
 
   const cv=$('termChart'), wrap=$('termChartWrap');
@@ -2773,6 +2805,7 @@ function openTfSheet(){
     S.term.interval=btn.dataset.tf; S.term.view=null; _klinesReady=false;
     $('tfCur').textContent=TF_LABEL[S.term.interval];
     closeSheet(); haptic();
+    destroyTvChart();
     await loadKlines(S.term.symbol, S.term.interval); drawTermChart();
   }));
 }
