@@ -734,6 +734,28 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
     </div>
   </div>
 
+
+  <div class="card mt4" id="homeSubCard">
+    <div class="row between" style="align-items:flex-start;">
+      <div>
+        <div class="h3">⭐ Подписка</div>
+        <div class="micro mt1" style="color:var(--txt2);">Сигналы, ИИ-аналитик, приоритет</div>
+      </div>
+      <span class="badge" id="homeTierBadge">FREE</span>
+    </div>
+    <div class="row gap2 mt3">
+      <button class="btn btn-ghost grow" id="homeBuyPrem" style="flex-direction:column;gap:2px;padding:12px 8px;">
+        <b style="color:var(--gold);">Премиум</b>
+        <span class="micro">$20 / мес</span>
+      </button>
+      <button class="btn btn-gold grow" id="homeBuyVip" style="flex-direction:column;gap:2px;padding:12px 8px;">
+        <b>ВИП</b>
+        <span class="micro" style="opacity:.9;">$39.99 / мес</span>
+      </button>
+    </div>
+    <div class="micro mt2" style="color:var(--txt3);line-height:1.45;">Счёт челленджа от <b>$50 000</b> — VIP бесплатно и навсегда (пока счёт активен в истории).</div>
+  </div>
+
   <div id="homeBotHost" class="mt3"></div>
 
   <div class="card mt4" style="display:flex;gap:14px;align-items:center;">
@@ -1062,11 +1084,11 @@ const CH_RULES = {
   fast:{ name:'Ускоренный', stages:'1 этап', rows:[['Этап 1','+10%','−3%','−6%','3'],['Фандед','∞','−3%','−6%','5']] }
 };
 const CH_SIZES = {
-  base:[ {name:'Легенда рынка',size:200000,price:1399,pro:false},{name:'Выбор топов',size:100000,price:799,pro:true},
-         {name:'Уверенный вход',size:50000,price:399},{name:'Оптимальный',size:25000,price:249,hot:true},
+  base:[ {name:'Легенда рынка',size:200000,price:1399,pro:false,vipGift:true},{name:'Выбор топов',size:100000,price:799,pro:true,vipGift:true},
+         {name:'Уверенный вход',size:50000,price:399,vipGift:true},{name:'Оптимальный',size:25000,price:249,hot:true},
          {name:'Плавный старт',size:10000,price:119},{name:'Минимум риска',size:5000,price:69} ],
-  fast:[ {name:'Король рынка',size:200000,price:1499,pro:false},{name:'Сильный старт',size:100000,price:899,pro:true},
-         {name:'Баланс силы',size:50000,price:459},{name:'Золотая середина',size:25000,price:259,hot:true},
+  fast:[ {name:'Король рынка',size:200000,price:1499,pro:false,vipGift:true},{name:'Сильный старт',size:100000,price:899,pro:true,vipGift:true},
+         {name:'Баланс силы',size:50000,price:459,vipGift:true},{name:'Золотая середина',size:25000,price:259,hot:true},
          {name:'Топ за свои',size:10000,price:129},{name:'Пробуй смело',size:5000,price:79} ]
 };
 const RULES = { target1:5, target2:8, dailyLoss:5, maxDD:10, profitDays:3, split:80 };
@@ -1459,6 +1481,30 @@ function checkMilestone(a, eq){
   }
 }
 
+
+const VIP_ACC_MIN = 50000; // счета от $50k → VIP автоматически
+function hasVipAccount(){
+  return (S.accounts||[]).some(a=>a && a.kind==='challenge' && (Number(a.tier)||0) >= VIP_ACC_MIN);
+}
+/** Выдать VIP если есть счёт ≥ $50k (в т.ч. уже купленные). */
+function syncVipFromAccounts(silent){
+  if(!hasVipAccount()) return false;
+  if(tierRank(S.tier) >= 2) return false;
+  S.tier = 'vip';
+  try{ saveMeta(); }catch(e){}
+  try{ persistState(); }catch(e){}
+  if(!silent) toast('VIP активирован за счёт от $50k','👑');
+  return true;
+}
+function grantVipForSize(size, silent){
+  if((Number(size)||0) < VIP_ACC_MIN) return false;
+  if(tierRank(S.tier) >= 2) return true;
+  S.tier = 'vip';
+  try{ saveMeta(); }catch(e){}
+  if(!silent) toast('VIP в подарок · счёт от $50k','👑');
+  return true;
+}
+
 /* ============ АКТИВАЦИЯ КУПЛЕННЫХ СЧЕТОВ ============ */
 async function checkMyPayments(silent){
   if(!S.user) return;
@@ -1482,7 +1528,9 @@ async function checkMyPayments(silent){
         const size=(p.meta&&p.meta.size) || parseChallengeSize(p.plan);
         const stages=(p.meta&&p.meta.stages) || (/ускорен/i.test(p.plan)?1:2);
         const a=addChallengeAcc(size, p.plan.split('·')[0].trim(), stages);
-        if(a){ haptic('ok'); showAccActivated(a); }
+        if(a){ grantVipForSize(size, true); haptic('ok'); showAccActivated(a);
+          if((Number(size)||0)>=VIP_ACC_MIN) toast('VIP активирован · счёт от $50k','👑');
+        }
       }
       S.appliedPays.push(p.id);
       fetch(API_BASE+'/api/payments',{method:'POST',headers:{'Content-Type':'application/json'},
@@ -1500,9 +1548,11 @@ function parseChallengeSize(plan){
   return 10000;
 }
 function showAccActivated(a){
+  const vipGift = (Number(a.tier)||0) >= VIP_ACC_MIN;
   $('sheetContent').innerHTML='<div style="text-align:center;padding:6px 0;">'+
-    '<div style="font-size:52px;">💼</div>'+
+    '<div style="font-size:52px;">'+(vipGift?'👑':'💼')+'</div>'+
     '<div class="h2 mt3">Счёт активирован</div>'+
+    (vipGift?'<div class="badge b-green mt2">VIP В ПОДАРОК</div>':'')+
     '<div class="equity mt3" style="color:var(--gold);">$'+fmt(a.tier,0)+'</div>'+
     '<div class="small mt3" style="color:var(--txt2);line-height:1.6;">'+a.label+'<br><br>'+
       'Цель этапа 1: <b style="color:var(--green);">+'+RULES.target1+'%</b> · дневной лимит −'+RULES.dailyLoss+'% · общая просадка −'+RULES.maxDD+'%<br><br>'+
@@ -1555,7 +1605,9 @@ function addChallengeAcc(size, planName, stages){
     tier:size, balance:size, startDay:size, stage:1, status:'RUN',
     stages: stages||2
   });
-  accList().push(a); S.activeAccId=a.id; bindAcc(); persistState();
+  accList().push(a); S.activeAccId=a.id; bindAcc();
+  grantVipForSize(size, false);
+  persistState();
   return a;
 }
 function migrateAccounts(){
@@ -1698,7 +1750,31 @@ function renderHome(){
   const name = tg && tg.initDataUnsafe && tg.initDataUnsafe.user ? (tg.initDataUnsafe.user.first_name||'Трейдер') : 'Трейдер';
   $('userName').textContent=name; $('userAva').textContent=name.slice(0,1).toUpperCase();
   const hbh=$('homeBotHost'); if(hbh) renderBotPanel(hbh);
+  try{ syncVipFromAccounts(true); }catch(e){}
+  const htb=$('homeTierBadge');
+  if(htb){
+    htb.textContent=(S.tier||'free').toUpperCase();
+    htb.className='badge '+(S.tier==='vip'?'b-green':S.tier==='prem'?'b-gold':'b-mut');
+  }
+  const bp=$('homeBuyPrem'), bv=$('homeBuyVip');
+  if(bp){ bp.onclick=()=>openSubPay('prem'); bp.disabled=tierRank(S.tier)>=1; bp.style.opacity=tierRank(S.tier)>=1?'.55':'1'; }
+  if(bv){ bv.onclick=()=>openSubPay('vip'); bv.disabled=tierRank(S.tier)>=2; bv.style.opacity=tierRank(S.tier)>=2?'.55':'1'; }
 }
+function openSubPay(tierId){
+  const t=(typeof TIERS_SUB!=='undefined'?TIERS_SUB:[]).find(x=>x.id===tierId);
+  if(!t){ toast('Тариф не найден','⚠️'); return; }
+  if(tierId==='prem' && tierRank(S.tier)>=1){ toast('У вас уже Премиум или выше','⭐'); return; }
+  if(tierId==='vip' && tierRank(S.tier)>=2){ toast('У вас уже ВИП','👑'); return; }
+  if(typeof openPay==='function'){
+    openPay('subscription', t.name+' · '+tierId, t.price, function(){
+      toast('Заявка на '+(tierId==='vip'?'ВИП':'Премиум')+' отправлена — ждём подтверждения','📨');
+      closeSheet();
+    }, { sub: tierId });
+  } else {
+    toast('Оплата временно недоступна','⚠️');
+  }
+}
+
 
 /* ============ RENDER: ACCOUNTS ============ */
 function renderAccounts(){
@@ -5742,7 +5818,7 @@ function renderChallenges(){
   // карточки размеров
   const sizes=CH_SIZES[t];
   $('chSizes').innerHTML=sizes.map((s,i)=>{
-    const flag = s.pro?'<div class="ch-flag pro">😎 ВЫБОР ПРО</div>':(s.hot?'<div class="ch-flag hot">🔥 ПОПУЛЯРНЫЙ</div>':'');
+    const flag = s.vipGift||s.size>=50000?'<div class="ch-flag pro">👑 VIP В ПОДАРОК</div>':(s.pro?'<div class="ch-flag pro">😎 ВЫБОР ПРО</div>':(s.hot?'<div class="ch-flag hot">🔥 ПОПУЛЯРНЫЙ</div>':''));
     const pr=applyPromo(s.price, S.activePromo);
     const per=(pr/(s.size/1000)).toFixed(2);
     const sel = S.chSel && S.chSel.i===i && S.chSel.t===t ? ' sel':'';
@@ -6010,7 +6086,7 @@ async function tick(){
   renderAll();
 }
 async function init(){
-  loadDraws(); loadMeta(); loadUser(); loadState(); acadLoad(); loadAlerts(); botLoad();
+  loadDraws(); loadMeta(); loadUser(); loadState(); acadLoad(); loadAlerts(); botLoad(); try{ syncVipFromAccounts(true); }catch(e){}
   migrateAccounts();
   sanitizeAccountsRisk();
   if(S.acc && S.acc.status==='PASS' && !S.acc.fundedAt){ S.acc.fundedAt=Date.now(); }
