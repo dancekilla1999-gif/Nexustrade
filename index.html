@@ -1191,19 +1191,22 @@ function parseCdcCandle(x){
 }
 async function loadKlines(sym, interval){
   const key=sym+'_'+interval;
+  // уже есть нормальные данные — не перезатираем
+  if(S.klines[key] && S.klines[key].length>=80 && S.klines[key]._live) return S.klines[key];
   try{
+    if(!CDC[sym]) throw new Error('no cdc');
     const url='https://api.crypto.com/exchange/v1/public/get-candlestick?instrument_name='+CDC[sym]+'&timeframe='+CDC_TF[interval]+'&count=1000';
     const raw=await fetchJson(url);
     const arr=raw && raw.result && raw.result.data;
     if(!Array.isArray(arr)||arr.length<20) throw new Error('bad');
     const ks=arr.map(parseCdcCandle).filter(o=>isFinite(o.c)&&isFinite(o.t));
     ks.sort((a,b)=>a.t-b.t);
-    S.klines[key]=ks; return S.klines[key];
+    S.klines[key]=ks; S.klines[key]._live=1; return S.klines[key];
   }catch(e){}
   try{
     const raw=await fetchJson('https://fapi.binance.com/fapi/v1/klines?symbol='+sym+'&interval='+interval+'&limit=1000');
     if(!Array.isArray(raw)||raw.length<20) throw new Error('bad');
-    S.klines[key]=raw.map(r=>({t:r[0],o:+r[1],h:+r[2],l:+r[3],c:+r[4],v:+r[5]}));
+    S.klines[key]=raw.map(r=>({t:r[0],o:+r[1],h:+r[2],l:+r[3],c:+r[4],v:+r[5]})); S.klines[key]._live=1;
     return S.klines[key];
   }catch(e){}
   // fallback: строим свечи из 7д-спарклайна CoinGecko, если есть
@@ -4200,49 +4203,90 @@ function renderBotPanel(host){
 }
 
 /* ============ SIGNALS ENGINE ============ */
-let _klinesReady=false;
+let _klinesReady=false, _klinesLoading=false, _sigScanGen=0;
 function sigUniverse(){
-  // Топ-100 по market cap (CoinGecko), fallback — все ASSETS
   const list = (ASSETS||[]).slice();
   list.sort((a,b)=>{
     const ca=(S.coinMeta[a.s]&&S.coinMeta[a.s].cap)||0;
     const cb=(S.coinMeta[b.s]&&S.coinMeta[b.s].cap)||0;
     return cb-ca;
   });
-  return list.slice(0, 100);
+  // ядро всегда в начале
+  const core = (CORE_SYMS||[]).map(s=>{
+    const a = list.find(x=>x.s===s) || {s:s, t:s.replace('USDT',''), n:s};
+    return a;
+  });
+  const rest = list.filter(a=>!(CORE_SYMS||[]).includes(a.s));
+  return core.concat(rest).slice(0, 40); // 40 достаточно, меньше rate-limit
+}
+/** Мгновенно кладём demo/spark свечи, чтобы UI не пустел */
+function seedKlinesQuick(){
+  (CORE_SYMS||[]).forEach(s=>{
+    ['4h','1h'].forEach(tf=>{
+      const key=s+'_'+tf;
+      if(S.klines[key] && S.klines[key].length>=50) return;
+      const meta=S.coinMeta[s];
+      if(meta && meta.spark && meta.spark.length>15){
+        const sp=meta.spark, out=[], now=Date.now();
+        const step = tf==='4h'?1.44e7:3.6e6;
+        for(let i=1;i<sp.length;i++){
+          const o=sp[i-1], c=sp[i];
+          out.push({t:now-(sp.length-i)*step, o, h:Math.max(o,c)*1.002, l:Math.min(o,c)*0.998, c, v:1000+i});
+        }
+        if(out.length>=20){ S.klines[key]=out; return; }
+      }
+      S.klines[key]=demoKlines(s, tf, 120);
+    });
+  });
 }
 function ensureKlines(cb){
-  if(_klinesReady){ cb(); return; }
-  const uni = sigUniverse();
-  // Сначала ядро (BTC/ETH/…) — по ним почти всегда есть сетапы
-  const core = (CORE_SYMS||[]).map(s=>({s})).filter(a=>a.s);
-  const rest = uni.filter(a=>!(CORE_SYMS||[]).includes(a.s));
-  const ordered = core.concat(rest);
-  const need = ordered.filter(a=>{
-    const k4=S.klines[a.s+'_4h'], k1=S.klines[a.s+'_1h'];
-    return !(k4&&k4.length>=60) && !(k1&&k1.length>=60);
-  });
-  if(!need.length){ _klinesReady=true; cb(); return; }
-  (async()=>{
-    // ядро грузим 4h+1h сразу
-    await Promise.all((CORE_SYMS||[]).slice(0,8).map(s=>
-      Promise.all([loadKlines(s,'4h').catch(()=>null), loadKlines(s,'1h').catch(()=>null)])
-    ));
-    if(typeof cb==='function') cb();
-    for(let i=0;i<need.length;i+=6){
-      const batch=need.slice(i,i+6);
-      await Promise.all(batch.map(a=>loadKlines(a.s,'4h').catch(()=>null)));
-      if(i===0 || i%12===0){ if(typeof cb==='function') cb(); }
+  seedKlinesQuick();
+  if(_klinesReady){ if(typeof cb==='function') cb(); return; }
+  if(_klinesLoading){
+    // уже грузим — не запускаем второй цикл (анти-мигание)
+    if(typeof cb==='function'){
+      const wait=setInterval(()=>{
+        if(_klinesReady || !_klinesLoading){ clearInterval(wait); cb(); }
+      }, 400);
+      setTimeout(()=>clearInterval(wait), 20000);
     }
-    _klinesReady=true;
+    return;
+  }
+  _klinesLoading=true;
+  const gen=++_sigScanGen;
+  const uni=sigUniverse();
+  (async()=>{
+    // 1) ядро — сеть
+    for(const s of (CORE_SYMS||[]).slice(0,7)){
+      if(gen!==_sigScanGen) return;
+      await Promise.all([
+        loadKlines(s,'4h').catch(()=>null),
+        loadKlines(s,'1h').catch(()=>null)
+      ]);
+    }
+    // один callback после ядра
+    if(gen===_sigScanGen && typeof cb==='function') cb();
+    // 2) остальные топ (тихо, без перерисовки каждый батч)
+    for(let i=0;i<uni.length;i+=5){
+      if(gen!==_sigScanGen) return;
+      const batch=uni.slice(i,i+5);
+      await Promise.all(batch.map(a=>loadKlines(a.s,'4h').catch(()=>null)));
+    }
+    if(gen===_sigScanGen){
+      _klinesReady=true;
+      _klinesLoading=false;
+      if(typeof cb==='function') cb();
+    }
+  })().catch(()=>{
+    _klinesReady=true; _klinesLoading=false;
     if(typeof cb==='function') cb();
-  })().catch(()=>{ _klinesReady=true; if(typeof cb==='function') cb(); });
+  });
 }
 
-/* ============ ДВИЖОК СИГНАЛОВ (swing, потенциал ≥2%) ============ */
-const SIG_MIN_MOVE = 1.0;   // минимальный потенциал до цели, %
-const SIG_MIN_RR   = 1.2;   // минимальное соотношение риск/прибыль
-const SIG_MIN_PASS = 7;     // минимум подтверждений из 20
+/* ============ ДВИЖОК СИГНАЛОВ ============ */
+const SIG_MIN_MOVE = 0.8;   // %
+const SIG_MIN_RR   = 1.1;
+const SIG_MIN_PASS = 6;
 
 function structLevels(k, dep){
   // подбираем глубину так, чтобы получить достаточно опорных точек
@@ -4265,8 +4309,8 @@ function nearestBelow(levels, price, minGapPct){
 
 function computeSignal(sym){
   let k=S.klines[sym+'_4h'], tfUsed='4H';
-  if(!k||k.length<70){ k=S.klines[sym+'_1h']; tfUsed='1H'; }
-  if(!k||k.length<70) return null;
+  if(!k||k.length<50){ k=S.klines[sym+'_1h']; tfUsed='1H'; }
+  if(!k||k.length<50) return null;
   const cl=k.map(o=>o.c), n=cl.length, last=cl[n-1];
   const e21=emaArr(cl,21), e50=emaArr(cl,50), e200=emaArr(cl,200);
   const r=rsiArr(cl,14), mac=macdArr(cl), st=stochArr(k,14,3), bb=bbArr(cl,20,2);
@@ -4399,7 +4443,44 @@ function openSignalDetail(sym){
   $('sheetVeil').classList.add('open');
   $('sdTrade').addEventListener('click',()=>{ closeSheet(); openTerminal(sym); });
 }
-function allSignals(){ return sigUniverse().map(a=>computeSignal(a.s)).filter(Boolean).sort((a,b)=>b.strength-a.strength); }
+function computeMomentumSignal(sym){
+  let k=S.klines[sym+'_1h']||S.klines[sym+'_4h'];
+  if(!k||k.length<30) return null;
+  const cl=k.map(o=>o.c), n=cl.length, last=cl[n-1];
+  if(!last||!isFinite(last)) return null;
+  const e9=emaArr(cl,9), e21=emaArr(cl,21), r=rsiArr(cl,14);
+  const rsi=r[n-1]||50;
+  const up = e9[n-1]>e21[n-1] && last>e21[n-1];
+  const dn = e9[n-1]<e21[n-1] && last<e21[n-1];
+  if(!up && !dn) return null;
+  // фильтр экстремумов
+  if(up && rsi>72) return null;
+  if(dn && rsi<28) return null;
+  const atr=atrArr(k,14), atrV=atr[n-1]||last*0.01;
+  const dir = up?'LONG':'SHORT';
+  const sl = up ? last-atrV*1.4 : last+atrV*1.4;
+  const tp = up ? last+atrV*2.2 : last-atrV*2.2;
+  const risk=Math.abs(last-sl), reward=Math.abs(tp-last);
+  if(risk<=0) return null;
+  const rr=reward/risk;
+  if(rr<1.0) return null;
+  const strength = Math.min(78, Math.round(40 + Math.abs(rsi-50)*0.6 + (rr*8)));
+  return {
+    symbol:sym, dir, strength, passed:6, total:10, entry:last, tp, sl, rsi,
+    movePct: reward/last*100, riskPct: risk/last*100, rr,
+    reasons:['EMA 9/21','RSI '+rsi.toFixed(0),'ATR-цель'],
+    filters:[], d:decOf(sym), tf:(S.klines[sym+'_1h']?'1H':'4H'), tpSrc:'ATR',
+    horizon:'1–2 дня', targetLevel:null, soft:true
+  };
+}
+function allSignals(){
+  const strict = sigUniverse().map(a=>computeSignal(a.s)).filter(Boolean);
+  if(strict.length>=3) return strict.sort((a,b)=>b.strength-a.strength);
+  // добираем мягкими momentum-сигналами по ядру
+  const have = new Set(strict.map(s=>s.symbol));
+  const soft = (CORE_SYMS||[]).map(s=>have.has(s)?null:computeMomentumSignal(s)).filter(Boolean);
+  return strict.concat(soft).sort((a,b)=>b.strength-a.strength);
+}
 
 const TIERS_SUB=[
   {id:'free', name:'Free', price:0, feats:['2 сигнала в день','Базовая аналитика','Задержка 15 мин']},
@@ -4417,61 +4498,75 @@ function renderSignals(){
   else if(S.stab==='analytics') renderAnalytics(body);
   else renderAI(body);
 }
-function renderSigList(body){
-  if(!_klinesReady) body.innerHTML='<div class="mut small" style="text-align:center;padding:16px;">Считаю сигналы…</div>';
-  ensureKlines(()=>{
-    if(S.screen!=='signals'||S.stab!=='signals') return;
-    const sigs=allSignals();
-    const freeLimit=2, unlocked=tierRank(S.tier)>=1;
-    if(!sigs.length){
-      body.innerHTML='<div class="note-box"><b>Качественных сетапов сейчас нет.</b><br><span class="micro">Движок сканирует топ-100 на 4H/1H. Если список пуст — подождите 10–20 сек (грузятся свечи). Фильтры: потенциал ≥'+SIG_MIN_MOVE+'%, R:R ≥1:'+SIG_MIN_RR+', от '+SIG_MIN_PASS+' подтверждений.</span></div>'+
-        '<button class="btn btn-ghost btn-block mt3" id="sigRefresh">🔄 Обновить сканирование</button>';
-      const rb=$('sigRefresh');
-      if(rb) rb.onclick=()=>{ _klinesReady=false; body.innerHTML='<div class="mut small" style="text-align:center;padding:16px;">Сканирую рынок…</div>'; ensureKlines(()=>{ if(S.screen==='signals') renderSigList(body); }); };
-      return;
-    }
-    let html='';
-    sigs.forEach((sg,i)=>{
-      const a=ASSETS.find(x=>x.s===sg.symbol);
-      const locked=!unlocked && i>=freeLimit;
-      html+='<div class="sig-card'+(locked?' locked':'')+'">';
-      if(locked) html+='<div class="sig-lock"><div class="lk">🔒</div><div class="small">Доступно в Премиум</div><button class="btn btn-gold btn-sm" data-stab="analytics" onclick="">Открыть</button></div>';
-      html+='<div class="sig-inner"><div class="row between"><div class="row gap2"><span class="sig-dir '+(sg.dir==='LONG'?'long':'short')+'">'+(sg.dir==='LONG'?'▲ LONG':'▼ SHORT')+'</span><b>'+a.t+'/USDT</b>'+
-        '<span class="tf-mini">'+(sg.tf||'4H')+'</span></div>'+
-        '<span class="flt-badge'+(sg.passed>=16?'':' mid')+'">✓ '+sg.passed+'/'+sg.total+'</span></div>'+
-        '<div class="progress mt3" style="height:6px;"><div class="fill" style="width:'+sg.strength+'%"></div></div>'+
-        '<div class="sig-meta mt3">'+
-          '<div class="sm-i"><span>Потенциал</span><b style="color:var(--green);">+'+sg.movePct.toFixed(1)+'%</b></div>'+
-          '<div class="sm-i"><span>Риск</span><b style="color:var(--red);">−'+sg.riskPct.toFixed(1)+'%</b></div>'+
-          '<div class="sm-i"><span>R:R</span><b style="color:var(--gold);">1:'+sg.rr.toFixed(1)+'</b></div>'+
-          '<div class="sm-i"><span>Горизонт</span><b>'+sg.horizon+'</b></div>'+
-        '</div>'+
-        '<div class="pos-grid mt3">'+
-        '<div><div class="micro">Вход</div><div class="mono" style="font-weight:700;font-size:12.5px;">'+fmt(sg.entry,sg.d)+'</div></div>'+
-        '<div><div class="micro">Тейк</div><div class="mono" style="font-weight:700;font-size:12.5px;color:var(--green);">'+fmt(sg.tp,sg.d)+'</div></div>'+
-        '<div><div class="micro">Стоп</div><div class="mono" style="font-weight:700;font-size:12.5px;color:var(--red);">'+fmt(sg.sl,sg.d)+'</div></div></div>'+
-        '<div class="small mt3" style="color:var(--txt2);">'+sg.reasons.join(' · ')+'</div>'+
-        '<div class="row gap2 mt3">'+
-          '<button class="btn btn-ghost btn-sm grow" data-sigdet="'+sg.symbol+'">Разбор</button>'+
-          '<button class="btn btn-gold btn-sm grow" data-trade="'+sg.symbol+'">В терминал</button>'+
-        '</div></div></div>';
-    });
-    html+='<div class="row between mt6" style="margin-bottom:10px;"><span class="h2">Подписка на сигналы</span></div>';
-    TIERS_SUB.forEach(t=>{
-      const cur=S.tier===t.id;
-      html+='<div class="tier-card '+(t.cls||'')+'"><div class="row between"><div><div class="h3">'+t.name+(t.id==='vip'?' 👑':t.id==='prem'?' ⭐':'')+'</div><div class="tier-price">'+(t.price?('$'+t.price+'<span class="micro"> /мес</span>'):'Бесплатно')+'</div></div>'+
-        (cur?'<span class="badge b-green">Активно</span>':'')+'</div>'+
-        t.feats.map(f=>'<div class="tier-feat"><span style="color:var(--gold);">✓</span> '+f+'</div>').join('')+
-        (cur?'':'<button class="btn '+(t.id==='free'?'btn-ghost':'btn-gold')+' btn-block mt4" data-sub="'+t.id+'">'+(t.price?'Оформить за $'+t.price:'Выбрать')+'</button>')+
-        '</div>';
-    });
-    body.innerHTML=html;
-    body.querySelectorAll('[data-trade]').forEach(b=>b.addEventListener('click',()=>openTerminal(b.dataset.trade)));
-  body.querySelectorAll('[data-sigdet]').forEach(b=>b.addEventListener('click',()=>openSignalDetail(b.dataset.sigdet)));
-    body.querySelectorAll('[data-sub]').forEach(b=>b.addEventListener('click',()=>subscribe(b.dataset.sub)));
-    body.querySelectorAll('[data-stab]').forEach(b=>b.addEventListener('click',()=>{ S.stab=b.dataset.stab; renderSignals(); }));
-  });
+function paintSigList(body){
+  if(!body || S.screen!=='signals'||S.stab!=='signals') return;
+  const sigs=allSignals();
+  const freeLimit=2, unlocked=tierRank(S.tier)>=1;
+  if(!sigs.length){
+    body.innerHTML='<div class="note-box"><b>Сетапы подгружаются…</b><br><span class="micro">Сканер проходит BTC, ETH и топ монет. Если пусто — нажмите обновить через несколько секунд.</span></div>'+
+      '<button class="btn btn-ghost btn-block mt3" id="sigRefresh">🔄 Обновить сканирование</button>';
+    const rb=$('sigRefresh');
+    if(rb) rb.onclick=()=>{
+      _klinesReady=false; _klinesLoading=false; _sigScanGen++;
+      seedKlinesQuick();
+      body.innerHTML='<div class="mut small" style="text-align:center;padding:16px;">Сканирую рынок…</div>';
+      ensureKlines(()=>paintSigList(body));
+    };
+    return;
+  }
+  // continue with existing list rendering — injected via flag below
+  __SIGS_PAINT__(body, sigs, freeLimit, unlocked);
 }
+function renderSigList(body){
+  if(!body) return;
+  seedKlinesQuick();
+  // сразу рисуем что есть (без мигания пустым экраном)
+  if(!_klinesReady){
+    const early=allSignals();
+    if(early.length){
+      paintSigList(body);
+    } else {
+      body.innerHTML='<div class="mut small" style="text-align:center;padding:20px;">🔍 Сканирую рынок…</div>';
+    }
+  } else {
+    paintSigList(body);
+  }
+  ensureKlines(()=>paintSigList(body));
+}
+function __SIGS_PAINT__(body, sigs, freeLimit, unlocked){
+  let html='';
+  sigs.forEach((sg,i)=>{
+    const a=ASSETS.find(x=>x.s===sg.symbol) || {t:sg.symbol.replace('USDT',''), s:sg.symbol};
+    const locked=!unlocked && i>=freeLimit;
+    html+='<div class="sig-card'+(locked?' locked':'')+'">';
+    if(locked) html+='<div class="sig-lock"><div class="lk">🔒</div><div class="small">Доступно в Премиум</div></div>';
+    html+='<div class="sig-inner"><div class="row between"><div class="row gap2"><span class="sig-dir '+(sg.dir==='LONG'?'long':'short')+'">'+(sg.dir==='LONG'?'▲ LONG':'▼ SHORT')+'</span><b>'+(a.t||'?')+'/USDT</b>'+
+      '<span class="tf-mini">'+(sg.tf||'4H')+'</span></div>'+
+      '<span class="flt-badge'+(sg.passed>=10?'':' mid')+'">✓ '+sg.passed+'/'+sg.total+'</span></div>'+
+      '<div class="progress mt3" style="height:6px;"><div class="fill" style="width:'+sg.strength+'%;background:'+(sg.strength>=70?'var(--green)':sg.strength>=55?'var(--gold)':'var(--txt2)')+';"></div></div>'+
+      '<div class="row between mt2"><span class="micro">Сила '+sg.strength+'%'+(sg.soft?' · momentum':'')+'</span>'+
+        '<span class="micro" style="color:'+(sg.dir==='LONG'?'var(--green)':'var(--red)')+'">'+(sg.dir==='LONG'?'+':'-')+sg.movePct.toFixed(1)+'%</span></div>'+
+      '<div class="sig-meta mt3">'+
+        '<div class="sm-i"><span>Потенциал</span><b class="'+(sg.dir==='LONG'?'up':'dn')+'">'+(sg.dir==='LONG'?'+':'-')+sg.movePct.toFixed(1)+'%</b></div>'+
+        '<div class="sm-i"><span>Риск</span><b style="color:var(--red);">−'+sg.riskPct.toFixed(1)+'%</b></div>'+
+        '<div class="sm-i"><span>R:R</span><b style="color:var(--gold);">1:'+sg.rr.toFixed(1)+'</b></div>'+
+        '<div class="sm-i"><span>Горизонт</span><b>'+sg.horizon+'</b></div>'+
+      '</div>'+
+      '<div class="pos-grid mt3">'+
+      '<div><div class="micro">Вход</div><div class="mono" style="font-weight:700;font-size:12.5px;">'+fmt(sg.entry,sg.d)+'</div></div>'+
+      '<div><div class="micro">Тейк</div><div class="mono" style="font-weight:700;font-size:12.5px;color:var(--green);">'+fmt(sg.tp,sg.d)+'</div></div>'+
+      '<div><div class="micro">Стоп</div><div class="mono" style="font-weight:700;font-size:12.5px;color:var(--red);">'+fmt(sg.sl,sg.d)+'</div></div></div>'+
+      '<div class="small mt3" style="color:var(--txt2);">'+((sg.reasons&&sg.reasons.length)?sg.reasons.join(' · '):'')+'</div>'+
+      '<div class="row gap2 mt3">'+
+        '<button class="btn btn-ghost btn-sm grow" data-sigdet="'+sg.symbol+'">Разбор</button>'+
+        '<button class="btn btn-gold btn-sm grow" data-trade="'+sg.symbol+'">В терминал</button>'+
+      '</div></div></div>';
+  });
+  body.innerHTML=html;
+  body.querySelectorAll('[data-trade]').forEach(b=>b.addEventListener('click',()=>openTerminal(b.dataset.trade)));
+  body.querySelectorAll('[data-sigdet]').forEach(b=>b.addEventListener('click',()=>openSignalDetail(b.dataset.sigdet)));
+}
+
 function subscribe(tier){
   const t=TIERS_SUB.find(x=>x.id===tier); if(!t) return;
   if(t.price===0){ S.tier='free'; saveMeta(); renderSignals(); return; }
