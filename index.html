@@ -597,6 +597,25 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
 .sm-i b{display:block;font-family:var(--mono);font-size:12.5px;margin-top:3px;}
 .tf-mini{font-size:9.5px;font-weight:800;padding:2px 6px;border-radius:6px;background:var(--card2);
   color:var(--txt2);font-family:var(--mono);}
+
+/* Fullscreen chart mode */
+.chart-fs-active #termChartWrap{
+  position:fixed !important; inset:0 !important; z-index:95 !important;
+  width:100vw !important; height:100vh !important; max-height:none !important;
+  min-height:100vh !important; border-radius:0 !important; margin:0 !important;
+  border:none !important; background:#0a1016 !important;
+}
+.chart-fs-active #tvChart{ height:100% !important; min-height:100vh !important; }
+.chart-fs-bar{
+  position:fixed; top:0; left:0; right:0; z-index:96;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:10px 14px; padding-top:calc(10px + env(safe-area-inset-top));
+  background:linear-gradient(180deg,rgba(10,16,22,.95),rgba(10,16,22,.7));
+  pointer-events:none;
+}
+.chart-fs-bar button{ pointer-events:auto; }
+.chart-fs-active .tabbar, .chart-fs-active .toast{ display:none !important; }
+
 </style>
 </head>
 <body>
@@ -688,6 +707,8 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
     </div>
   </div>
 
+  <div id="homeBotHost" class="mt3"></div>
+
   <div class="card mt4" style="display:flex;gap:14px;align-items:center;">
     <div style="width:52px;height:52px;flex-shrink:0;">
       <svg viewBox="0 0 200 200" width="52" height="52"><use href="#glasses"/><path d="M55 58 Q100 40 145 58 Q160 78 156 110 Q152 138 128 152 L72 152 Q48 138 44 110 Q40 78 55 58 Z" fill="url(#gBody)"/><path d="M38 62 Q18 46 22 24 Q40 34 50 52 Z" fill="url(#gGold)"/><path d="M162 62 Q182 46 178 24 Q160 34 150 52 Z" fill="url(#gGold)"/><rect x="52" y="76" width="42" height="26" rx="9" fill="url(#gGlass)" stroke="url(#gGold)" stroke-width="3"/><rect x="106" y="76" width="42" height="26" rx="9" fill="url(#gGlass)" stroke="url(#gGold)" stroke-width="3"/><rect x="94" y="84" width="12" height="6" rx="3" fill="url(#gGold)"/><path d="M64 112 Q100 98 136 112 Q142 132 128 146 L72 146 Q58 132 64 112 Z" fill="url(#gMuz)"/><path d="M80 141 Q100 150 122 139" stroke="#0E0C0A" stroke-width="4" fill="none" stroke-linecap="round"/></svg>
@@ -698,6 +719,7 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
     </div>
   </div>
 </section>
+
 
 <!-- ================= ACCOUNTS / CHALLENGE ================= -->
 <section class="screen" id="screen-accounts">
@@ -737,7 +759,12 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
         </div>
       </div>
     </div>
-    <button class="tf-btn" id="tfBtn"><b id="tfCur">1ч</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></button>
+    <div class="row gap2">
+      <button class="tf-btn" id="chartFsBtn" title="Полный экран" aria-label="Полный экран графика">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+      </button>
+      <button class="tf-btn" id="tfBtn"><b id="tfCur">1ч</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></button>
+    </div>
   </div>
 
   <div class="row gap2 mt2" style="align-items:center;"><span id="toolCur" class="micro" style="color:var(--gold);"></span></div>
@@ -804,7 +831,7 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
     </div>
 
     <div class="trade-btns mt4">
-      <button class="btn btn-green" id="btnLong">▲ LONG</button>
+      <button class="btn btn-green" id="termBotBtn" style="display:none;" data-x="1"></button><button class="btn" id="btnLong">▲ LONG</button>
       <button class="btn btn-red" id="btnShort">▼ SHORT</button>
     </div>
   </div>
@@ -1023,7 +1050,7 @@ const S = {
   prices:{},      // symbol -> {price, change24h}
   klines:{},      // symbol_interval -> [{t,o,h,l,c,v}]
   term:{ symbol:'BTCUSDT', interval:'1h', hover:null, tool:'cursor', pend:null, layout:null, view:null, type:'candle', pScale:1, oScale:[1,1,1,1], priceH:300, oscH:70 },
-  marketFilter:'all', search:'', coinMeta:{}, mktLimit:60, chType:'base', chSel:null, adminStat:null, activePromo:null,
+  marketFilter:'all', search:'', coinMeta:{}, mktLimit:100, chType:'base', chSel:null, adminStat:null, activePromo:null,
   acc:{ active:true, tier:10000, stage:1, balance:10000, startDay:10000, profitDays:0, dayPnlPeak:0, status:'RUN' },
   accounts:[], activeAccId:null, positions:[], history:[], nextId:1, payoutReq:[],
   equityHist:[], alerts:[], ptab:'pos', stab:'signals', tier:'free', wallet:{}, chat:[], user:null,
@@ -1643,6 +1670,7 @@ function renderHome(){
   if(S.acc.status==='PASS') $('stageDot3').classList.add('done');
   const name = tg && tg.initDataUnsafe && tg.initDataUnsafe.user ? (tg.initDataUnsafe.user.first_name||'Трейдер') : 'Трейдер';
   $('userName').textContent=name; $('userAva').textContent=name.slice(0,1).toUpperCase();
+  const hbh=$('homeBotHost'); if(hbh) renderBotPanel(hbh);
 }
 
 /* ============ RENDER: ACCOUNTS ============ */
@@ -2119,10 +2147,81 @@ const TV_INTERVAL = {
   '1d':'D','3d':'3D','1w':'W','1M':'M'
 };
 
+/** Карта символов TradingView: Binance + альтернативы (delisted / нет пары) */
+const TV_SYM_MAP = {
+  // Monero и др. нет на Binance spot
+  XMRUSDT: 'KUCOIN:XMRUSDT',
+  XMRUSD: 'KUCOIN:XMRUSDT',
+  TONUSDT: 'BINANCE:TONUSDT',
+  BCHUSDT: 'BINANCE:BCHUSDT',
+  LTCUSDT: 'BINANCE:LTCUSDT',
+  ADAUSDT: 'BINANCE:ADAUSDT',
+  DOTUSDT: 'BINANCE:DOTUSDT',
+  LINKUSDT: 'BINANCE:LINKUSDT',
+  ATOMUSDT: 'BINANCE:ATOMUSDT',
+  NEARUSDT: 'BINANCE:NEARUSDT',
+  APTUSDT: 'BINANCE:APTUSDT',
+  ARBUSDT: 'BINANCE:ARBUSDT',
+  OPUSDT: 'BINANCE:OPUSDT',
+  SUIUSDT: 'BINANCE:SUIUSDT',
+  INJUSDT: 'BINANCE:INJUSDT',
+  STXUSDT: 'BINANCE:STXUSDT',
+  TIAUSDT: 'BINANCE:TIAUSDT',
+  SEIUSDT: 'BINANCE:SEIUSDT',
+  RENDERUSDT: 'BINANCE:RENDERUSDT',
+  FETUSDT: 'BINANCE:FETUSDT',
+  TAOUSDT: 'BINANCE:TAOUSDT',
+  WLDUSDT: 'BINANCE:WLDUSDT',
+  PEPEUSDT: 'BINANCE:PEPEUSDT',
+  WIFUSDT: 'BINANCE:WIFUSDT',
+  BONKUSDT: 'BINANCE:BONKUSDT',
+  FLOKIUSDT: 'BINANCE:FLOKIUSDT',
+  SHIBUSDT: 'BINANCE:SHIBUSDT',
+  TRXUSDT: 'BINANCE:TRXUSDT',
+  AVAXUSDT: 'BINANCE:AVAXUSDT',
+  MATICUSDT: 'BINANCE:MATICUSDT',
+  POLUSDT: 'BINANCE:POLUSDT',
+  ICPUSDT: 'BINANCE:ICPUSDT',
+  FILUSDT: 'BINANCE:FILUSDT',
+  HYPEUSDT: 'BYBIT:HYPEUSDT',
+  // стейблы / обёртки
+  USDCUSDT: 'BINANCE:USDCUSDT',
+  DAIOUSDT: 'BINANCE:DAIUSDT',
+  WBTCUSDT: 'BINANCE:WBTCUSDT'
+};
 function tvSymbol(sym){
-  // Binance perpetual / spot style for TradingView
-  const s = String(sym||'BTCUSDT').toUpperCase().replace('/','');
-  return 'BINANCE:' + s;
+  const s = String(sym||'BTCUSDT').toUpperCase().replace('/','').replace('-','');
+  if(TV_SYM_MAP[s]) return TV_SYM_MAP[s];
+  // CoinGecko иногда отдаёт символы без USDT-пары на Binance — пробуем популярные биржи
+  const base = s.replace(/USDT$|USD$|USDC$/,'');
+  // HYPE и новые мемкоины чаще на Bybit
+  if(['HYPE','WIF','BONK','POPCAT','MEW','PNUT'].includes(base))
+    return 'BYBIT:'+base+'USDT';
+  return 'BINANCE:' + (s.endsWith('USDT')?s:s+'USDT');
+}
+
+
+let _chartFs = false;
+function toggleChartFullscreen(force){
+  _chartFs = force===undefined ? !_chartFs : !!force;
+  document.body.classList.toggle('chart-fs-active', _chartFs);
+  let bar = document.getElementById('chartFsBar');
+  if(_chartFs){
+    if(!bar){
+      bar = document.createElement('div');
+      bar.id = 'chartFsBar';
+      bar.className = 'chart-fs-bar';
+      bar.innerHTML = '<span class="micro" style="color:var(--txt2);">Режим разметки · полный экран</span>'+
+        '<button class="btn btn-ghost btn-sm" id="chartFsClose">✕ Закрыть</button>';
+      document.body.appendChild(bar);
+      bar.querySelector('#chartFsClose').onclick = ()=>toggleChartFullscreen(false);
+    }
+    bar.style.display = 'flex';
+  } else if(bar){
+    bar.style.display = 'none';
+  }
+  // пересоздать виджет под новый размер
+  setTimeout(()=>{ destroyTvChart(); drawTermChart(); }, 80);
 }
 
 function destroyTvChart(){
@@ -2165,7 +2264,7 @@ function ensureTvChart(){
     hide_top_toolbar: false,
     hide_legend: false,
     hide_side_toolbar: false, withdateranges: true, details: true,
-    allow_symbol_change: false,
+    allow_symbol_change: true,
     save_image: false,
     container_id: 'tvChart',
     studies_overrides: {},
@@ -2796,6 +2895,7 @@ document.querySelectorAll('[data-mf]').forEach(c=>c.addEventListener('click', ()
   c.classList.add('active'); S.marketFilter=c.dataset.mf; renderMarket();
 }));
 $('tfBtn').addEventListener('click', openTfSheet);
+const _fsb=$('chartFsBtn'); if(_fsb) _fsb.addEventListener('click', ()=>toggleChartFullscreen());
 function openTfSheet(){
   const TFS=Object.keys(IMS);
   $('sheetContent').innerHTML='<div class="h2" style="text-align:center;">Таймфрейм</div>'+
@@ -3826,15 +3926,17 @@ function renderBotPanel(host){
   if(!host) return;
   const b=S.bot||{on:false,riskPct:1,maxPos:2};
   host.innerHTML =
-    '<div class="card mt3"><div class="row between"><span class="h3" style="font-size:15px;">🤖 ИИ-бот</span>'+
-    '<button class="btn btn-sm '+(b.on?'btn-gold':'btn-ghost')+'" id="botToggle">'+(b.on?'ВКЛ':'ВЫКЛ')+'</button></div>'+
-    '<div class="micro mt2" style="color:var(--txt2);line-height:1.5;">Бот берёт сигналы топ-100, открывает сделки только со SL/TP, риск ~'+(b.riskPct||1)+'% equity на вход. Не чаще 1 сделки / 2 мин, макс '+(b.maxPos||2)+' позиций.</div>'+
-    '<div class="row gap2 mt3"><div class="grow"><div class="micro">Риск %</div>'+
+    '<div class="card mt3" style="border-color:'+(b.on?'rgba(34,228,255,.45)':'var(--line)')+';">'+
+    '<div class="row between"><div><span class="h3" style="font-size:15px;">🤖 ИИ-торговый бот</span>'+
+    '<div class="micro mt1" style="color:'+(b.on?'var(--green)':'var(--txt3)')+';">'+(b.on?'● Активен — торгует по сигналам':'○ Выключен')+'</div></div>'+
+    '<button class="btn btn-sm '+(b.on?'btn-gold':'btn-ghost')+'" id="botToggle">'+(b.on?'ВЫКЛ':'ВКЛ')+'</button></div>'+
+    '<div class="micro mt2" style="color:var(--txt2);line-height:1.55;">Сканирует <b>топ-100</b> монет, открывает сделки <b>только со стопом и тейком</b>. Риск ~'+(b.riskPct||1)+'% equity на вход, не чаще 1 раза / 2 мин, макс '+(b.maxPos||2)+' позиций. Учитывает лимиты челленджа.</div>'+
+    '<div class="row gap2 mt3"><div class="grow"><div class="micro">Риск на сделку %</div>'+
     '<input class="input mono" id="botRisk" type="number" min="0.5" max="3" step="0.5" value="'+(b.riskPct||1)+'"></div>'+
     '<div class="grow"><div class="micro">Макс. позиций</div>'+
     '<input class="input mono" id="botMax" type="number" min="1" max="5" value="'+(b.maxPos||2)+'"></div></div>'+
-    '<div class="micro mt3">Лог: '+(b.log&&b.log.length? b.log.slice(0,3).map(x=>x.side+' '+x.sym.replace('USDT','')).join(' · ') : 'пусто')+'</div></div>';
-  const tog=$('botToggle'); if(tog) tog.onclick=()=>{ S.bot.on=!S.bot.on; botSave(); renderBotPanel(host); toast(S.bot.on?'Бот включён':'Бот выключен','🤖'); };
+    '<div class="micro mt3">Последние: '+(b.log&&b.log.length? b.log.slice(0,4).map(x=>x.side+' '+String(x.sym).replace('USDT','')).join(' · ') : 'сделок ещё не было')+'</div></div>';
+  const tog=$('botToggle'); if(tog) tog.onclick=()=>{ S.bot.on=!S.bot.on; botSave(); renderBotPanel(host); toast(S.bot.on?'🤖 Бот включён — ищет сигналы':'Бот выключен','🤖'); haptic('ok'); };
   const r=$('botRisk'); if(r) r.onchange=()=>{ S.bot.riskPct=Math.max(0.5,Math.min(3,+r.value||1)); botSave(); };
   const m=$('botMax'); if(m) m.onchange=()=>{ S.bot.maxPos=Math.max(1,Math.min(5,+m.value||2)); botSave(); };
 }
