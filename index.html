@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" id="htmlRoot">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
@@ -680,7 +680,7 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
     <div class="row gap3">
       <div class="ava mascot-ava" id="userAva"></div>
       <div>
-        <div style="font-weight:800;font-size:15px;" id="userName">Трейдер</div>
+        <div style="font-weight:800;font-size:15px;" id="userName" data-i18n="trader">Трейдер</div>
         <div class="micro">Nexus Prop · <span style="color:var(--green)">online</span></div>
       </div>
     </div>
@@ -689,7 +689,7 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>
         <span class="notif-dot"></span>
       </button>
-      <button class="icon-btn" id="setBtn" aria-label="Настройки"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.36.4.66.74.85.29.17.62.26.95.26H21a2 2 0 010 4h-.09c-.7 0-1.33.42-1.6 1.05z"/></svg></button>
+      <button class="icon-btn" id="setBtn" aria-label="Настройки" data-i18n-aria="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.36.4.66.74.85.29.17.62.26.95.26H21a2 2 0 010 4h-.09c-.7 0-1.33.42-1.6 1.05z"/></svg></button>
       <button class="icon-btn" id="adminBtn" data-go="admin" style="display:none;" aria-label="Админ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg></button>
     </div>
   </div>
@@ -697,7 +697,7 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
   <div class="hero-card hero-bull" id="homeHero">
     <div class="row between">
       <span class="badge b-gold" id="homeStageBadge">ЭТАП 1 / 2</span>
-      <span class="badge b-mut" id="homeAccBadge">ДЕМО-СЧЁТ</span>
+      <span class="badge b-mut" id="homeAccBadge" data-i18n="demo">ДЕМО-СЧЁТ</span>
     </div>
     <div class="equity mt3" id="homeEquity">$10,000.00</div>
     <div class="micro mt2">◎ NEXUS: <b id="homeNxBal">0.00</b></div>
@@ -793,12 +793,12 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
 
 <!-- ================= MARKET ================= -->
 <section class="screen" id="screen-market">
-  <div style="padding:4px 0 14px;"><span class="h1">Торговля</span></div>
+  <div style="padding:4px 0 14px;"><span class="h1" data-i18n="trade_title">Торговля</span></div>
   <input class="input" id="marketSearch" placeholder="Поиск: BTC, ETH, SOL…">
   <div class="row gap2 mt3" style="flex-wrap:wrap;">
-    <button class="chip active" data-mf="all">Все</button>
-    <button class="chip" data-mf="gain">🔥 Растут</button>
-    <button class="chip" data-mf="lose">Падают</button>
+    <button class="chip active" data-mf="all" data-i18n="all">Все</button>
+    <button class="chip" data-mf="gain" data-i18n="gain">🔥 Растут</button>
+    <button class="chip" data-mf="lose" data-i18n="lose">Падают</button>
   </div>
   <div class="row between mt3" style="margin-bottom:10px;">
     <span class="micro">Актив · плечо до x20</span>
@@ -892,8 +892,8 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
     </div>
 
     <div class="trade-btns mt4">
-      <button class="btn btn-green" id="termBotBtn" style="display:none;" data-x="1"></button><button class="btn" id="btnLong">▲ LONG</button>
-      <button class="btn btn-red" id="btnShort">▼ SHORT</button>
+      <button class="btn btn-green" id="termBotBtn" style="display:none;" data-x="1"></button><button class="btn" id="btnLong" data-i18n="long">▲ LONG</button>
+      <button class="btn btn-red" id="btnShort" data-i18n="short">▼ SHORT</button>
     </div>
   </div>
 
@@ -915,9 +915,9 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
   </div>
 
   <div class="tabs2 mt5">
-    <button class="tab2 active" data-ptab="pos">Позиции<span class="cnt" id="cntPos">0</span></button>
-    <button class="tab2" data-ptab="hist">История<span class="cnt" id="cntHist" style="background:var(--card2);color:var(--txt2);">0</span></button>
-    <button class="tab2" data-ptab="stats">Статистика</button>
+    <button class="tab2 active" data-ptab="pos" data-i18n="positions">Позиции<span class="cnt" id="cntPos">0</span></button>
+    <button class="tab2" data-ptab="hist" data-i18n="history">История<span class="cnt" id="cntHist" style="background:var(--card2);color:var(--txt2);">0</span></button>
+    <button class="tab2" data-ptab="stats" data-i18n="stats">Статистика</button>
   </div>
   <div id="pfBody"></div>
 </section>
@@ -929,9 +929,9 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
     <span class="badge b-mut" id="tierBadge">FREE</span>
   </div>
   <div class="tabs2" id="sigTabs">
-    <button class="tab2 active" data-stab="signals">Сигналы</button>
-    <button class="tab2" data-stab="analytics">Аналитика</button>
-    <button class="tab2" data-stab="ai">ИИ-аналитик</button>
+    <button class="tab2 active" data-stab="signals" data-i18n="signals">Сигналы</button>
+    <button class="tab2" data-stab="analytics" data-i18n="analytics">Аналитика</button>
+    <button class="tab2" data-stab="ai" data-i18n="ai">ИИ-аналитик</button>
   </div>
   <div id="sigBody" class="mt4"></div>
 </section>
@@ -1006,8 +1006,8 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
     <button class="icon-btn" data-go="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </div>
   <div class="seg-lg" id="chTypeSeg">
-    <button class="seg-lg-b active" data-cht="base"><b>Базовый</b><span>2 этапа</span></button>
-    <button class="seg-lg-b" data-cht="fast"><b>Ускоренный</b><span>1 этап</span></button>
+    <button class="seg-lg-b active" data-cht="base"><b data-i18n="base">Базовый</b><span data-i18n="base_sub">2 этапа</span></button>
+    <button class="seg-lg-b" data-cht="fast"><b data-i18n="fast">Ускоренный</b><span data-i18n="fast_sub">1 этап</span></button>
   </div>
   <div id="chRules" class="mt4"></div>
   <div class="h2 mt5" style="margin-bottom:12px;">Размер счёта</div>
@@ -1060,11 +1060,11 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
 
 <!-- ================= TABBAR ================= -->
 <nav class="tabbar" id="tabbar">
-  <button class="tab active" data-go="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg><span>Главная</span></button>
-  <button class="tab" data-go="accounts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M7 15h4"/></svg><span>Счета</span></button>
-  <button class="tab" data-go="market"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg><span>Торговля</span></button>
-  <button class="tab" data-go="signals"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14a8 8 0 018-8M4 20a14 14 0 0114-14"/><circle cx="5" cy="19" r="1.4" fill="currentColor" stroke="none"/></svg><span>Сигналы</span></button>
-  <button class="tab" data-go="portfolio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M16 3H8a2 2 0 00-2 2v2h12V5a2 2 0 00-2-2z"/></svg><span>Портфель</span></button>
+  <button class="tab active" data-go="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg><span data-i18n="nav_home">Главная</span></button>
+  <button class="tab" data-go="accounts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M7 15h4"/></svg><span data-i18n="nav_accounts">Счета</span></button>
+  <button class="tab" data-go="market"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg><span data-i18n="nav_trade">Торговля</span></button>
+  <button class="tab" data-go="signals"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14a8 8 0 018-8M4 20a14 14 0 0114-14"/><circle cx="5" cy="19" r="1.4" fill="currentColor" stroke="none"/></svg><span data-i18n="nav_signals">Сигналы</span></button>
+  <button class="tab" data-go="portfolio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M16 3H8a2 2 0 00-2 2v2h12V5a2 2 0 00-2-2z"/></svg><span data-i18n="nav_portfolio">Портфель</span></button>
 </nav>
 
 <!-- ================= SHEET ================= -->
@@ -1080,6 +1080,159 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
 <script>
 (function(){
 "use strict";
+
+/* ============ I18N ============ */
+const LANGS = {
+  ru:{flag:'🇷🇺',name:'Русский'},
+  en:{flag:'🇬🇧',name:'English'},
+  zh:{flag:'🇨🇳',name:'中文'},
+  fr:{flag:'🇫🇷',name:'Français'},
+  de:{flag:'🇩🇪',name:'Deutsch'},
+  es:{flag:'🇪🇸',name:'Español'},
+  pt:{flag:'🇧🇷',name:'Português'},
+  ar:{flag:'🇸🇦',name:'العربية'}
+};
+const I18N = {
+  ru:{
+    nav_home:'Главная', nav_accounts:'Счета', nav_trade:'Торговля', nav_signals:'Сигналы', nav_portfolio:'Портфель',
+    settings:'Настройки', trader:'Трейдер', demo:'ДЕМО-СЧЁТ', stage:'ЭТАП', trade_title:'Торговля',
+    positions:'Позиции', history:'История', stats:'Статистика', signals:'Сигналы', analytics:'Аналитика', ai:'ИИ-аналитик',
+    long:'▲ LONG', short:'▼ SHORT', all:'Все', gain:'🔥 Растут', lose:'Падают',
+    base:'Базовый', base_sub:'2 этапа', fast:'Ускоренный', fast_sub:'1 этап',
+    account:'Аккаунт', tariff:'Тариф', academy:'Академия', deals_hist:'Сделок в истории',
+    data:'ДАННЫЕ', export_csv:'📤 Выгрузить историю сделок (CSV)', clear_draws:'🧹 Очистить все построения на графиках',
+    reset_demo:'♻️ Сбросить демо-счёт', reset_q:'Сбросить демо-счёт?', reset_desc:'Баланс вернётся к $10 000, позиции и история будут удалены. Академия и настройки сохранятся.',
+    yes_reset:'Да, сбросить', cancel:'Отмена', lang:'Язык', guest:'Гость',
+    risk_note:'Nexus Prop · демо-режим<br>Торговля сопряжена с риском потери средств.<br>Материалы не являются инвестиционной рекомендацией.',
+    toast_reset:'Демо-счёт сброшен', toast_draws:'Построения очищены', toast_empty:'История пуста',
+    online:'online', title:'Nexus Prop — Trade like a boss'
+  },
+  en:{
+    nav_home:'Home', nav_accounts:'Accounts', nav_trade:'Trade', nav_signals:'Signals', nav_portfolio:'Portfolio',
+    settings:'Settings', trader:'Trader', demo:'DEMO ACCOUNT', stage:'STAGE', trade_title:'Trade',
+    positions:'Positions', history:'History', stats:'Stats', signals:'Signals', analytics:'Analytics', ai:'AI Analyst',
+    long:'▲ LONG', short:'▼ SHORT', all:'All', gain:'🔥 Gainers', lose:'Losers',
+    base:'Standard', base_sub:'2 stages', fast:'Accelerated', fast_sub:'1 stage',
+    account:'Account', tariff:'Plan', academy:'Academy', deals_hist:'Trades in history',
+    data:'DATA', export_csv:'📤 Export trade history (CSV)', clear_draws:'🧹 Clear all chart drawings',
+    reset_demo:'♻️ Reset demo account', reset_q:'Reset demo account?', reset_desc:'Balance returns to $10,000. Positions and history will be deleted. Academy and settings are kept.',
+    yes_reset:'Yes, reset', cancel:'Cancel', lang:'Language', guest:'Guest',
+    risk_note:'Nexus Prop · demo mode<br>Trading involves risk of loss.<br>Materials are not investment advice.',
+    toast_reset:'Demo account reset', toast_draws:'Drawings cleared', toast_empty:'History is empty',
+    online:'online', title:'Nexus Prop — Trade like a boss'
+  },
+  zh:{
+    nav_home:'首页', nav_accounts:'账户', nav_trade:'交易', nav_signals:'信号', nav_portfolio:'资产',
+    settings:'设置', trader:'交易者', demo:'模拟账户', stage:'阶段', trade_title:'交易',
+    positions:'持仓', history:'历史', stats:'统计', signals:'信号', analytics:'分析', ai:'AI分析师',
+    long:'▲ 做多', short:'▼ 做空', all:'全部', gain:'🔥 上涨', lose:'下跌',
+    base:'标准', base_sub:'2阶段', fast:'加速', fast_sub:'1阶段',
+    account:'账户', tariff:'套餐', academy:'学院', deals_hist:'历史成交',
+    data:'数据', export_csv:'📤 导出交易历史 (CSV)', clear_draws:'🧹 清除所有图表标记',
+    reset_demo:'♻️ 重置模拟账户', reset_q:'重置模拟账户？', reset_desc:'余额将恢复为 $10,000，持仓与历史将被删除。学院与设置会保留。',
+    yes_reset:'确认重置', cancel:'取消', lang:'语言', guest:'访客',
+    risk_note:'Nexus Prop · 模拟模式<br>交易存在亏损风险。<br>内容不构成投资建议。',
+    toast_reset:'模拟账户已重置', toast_draws:'标记已清除', toast_empty:'暂无历史',
+    online:'在线', title:'Nexus Prop — Trade like a boss'
+  },
+  fr:{
+    nav_home:'Accueil', nav_accounts:'Comptes', nav_trade:'Trading', nav_signals:'Signaux', nav_portfolio:'Portefeuille',
+    settings:'Paramètres', trader:'Trader', demo:'COMPTE DÉMO', stage:'ÉTAPE', trade_title:'Trading',
+    positions:'Positions', history:'Historique', stats:'Stats', signals:'Signaux', analytics:'Analyse', ai:'Analyste IA',
+    long:'▲ LONG', short:'▼ SHORT', all:'Tous', gain:'🔥 Hausse', lose:'Baisse',
+    base:'Standard', base_sub:'2 étapes', fast:'Accéléré', fast_sub:'1 étape',
+    account:'Compte', tariff:'Offre', academy:'Académie', deals_hist:'Trades en historique',
+    data:'DONNÉES', export_csv:'📤 Exporter l’historique (CSV)', clear_draws:'🧹 Effacer les dessins',
+    reset_demo:'♻️ Réinitialiser la démo', reset_q:'Réinitialiser le compte démo ?', reset_desc:'Le solde revient à 10 000 $. Positions et historique seront supprimés.',
+    yes_reset:'Oui, réinitialiser', cancel:'Annuler', lang:'Langue', guest:'Invité',
+    risk_note:'Nexus Prop · mode démo<br>Le trading comporte un risque de perte.<br>Ceci n’est pas un conseil d’investissement.',
+    toast_reset:'Compte démo réinitialisé', toast_draws:'Dessins effacés', toast_empty:'Historique vide',
+    online:'en ligne', title:'Nexus Prop — Trade like a boss'
+  },
+  de:{
+    nav_home:'Start', nav_accounts:'Konten', nav_trade:'Handel', nav_signals:'Signale', nav_portfolio:'Portfolio',
+    settings:'Einstellungen', trader:'Trader', demo:'DEMO-KONTO', stage:'PHASE', trade_title:'Handel',
+    positions:'Positionen', history:'Verlauf', stats:'Statistik', signals:'Signale', analytics:'Analyse', ai:'KI-Analyst',
+    long:'▲ LONG', short:'▼ SHORT', all:'Alle', gain:'🔥 Gewinner', lose:'Verlierer',
+    base:'Standard', base_sub:'2 Phasen', fast:'Beschleunigt', fast_sub:'1 Phase',
+    account:'Konto', tariff:'Tarif', academy:'Akademie', deals_hist:'Trades in Verlauf',
+    data:'DATEN', export_csv:'📤 Trade-Historie exportieren (CSV)', clear_draws:'🧹 Alle Zeichnungen löschen',
+    reset_demo:'♻️ Demo zurücksetzen', reset_q:'Demo-Konto zurücksetzen?', reset_desc:'Guthaben kehrt auf $10.000 zurück. Positionen und Verlauf werden gelöscht.',
+    yes_reset:'Ja, zurücksetzen', cancel:'Abbrechen', lang:'Sprache', guest:'Gast',
+    risk_note:'Nexus Prop · Demo-Modus<br>Handel birgt Verlustrisiko.<br>Keine Anlageberatung.',
+    toast_reset:'Demo-Konto zurückgesetzt', toast_draws:'Zeichnungen gelöscht', toast_empty:'Verlauf leer',
+    online:'online', title:'Nexus Prop — Trade like a boss'
+  },
+  es:{
+    nav_home:'Inicio', nav_accounts:'Cuentas', nav_trade:'Trading', nav_signals:'Señales', nav_portfolio:'Cartera',
+    settings:'Ajustes', trader:'Trader', demo:'CUENTA DEMO', stage:'ETAPA', trade_title:'Trading',
+    positions:'Posiciones', history:'Historial', stats:'Estadísticas', signals:'Señales', analytics:'Análisis', ai:'Analista IA',
+    long:'▲ LONG', short:'▼ SHORT', all:'Todos', gain:'🔥 Suben', lose:'Bajan',
+    base:'Estándar', base_sub:'2 etapas', fast:'Acelerado', fast_sub:'1 etapa',
+    account:'Cuenta', tariff:'Plan', academy:'Academia', deals_hist:'Trades en historial',
+    data:'DATOS', export_csv:'📤 Exportar historial (CSV)', clear_draws:'🧹 Borrar dibujos del gráfico',
+    reset_demo:'♻️ Reiniciar demo', reset_q:'¿Reiniciar cuenta demo?', reset_desc:'El saldo vuelve a $10,000. Posiciones e historial se eliminarán.',
+    yes_reset:'Sí, reiniciar', cancel:'Cancelar', lang:'Idioma', guest:'Invitado',
+    risk_note:'Nexus Prop · modo demo<br>El trading implica riesgo de pérdida.<br>No es asesoramiento de inversión.',
+    toast_reset:'Cuenta demo reiniciada', toast_draws:'Dibujos borrados', toast_empty:'Historial vacío',
+    online:'en línea', title:'Nexus Prop — Trade like a boss'
+  },
+  pt:{
+    nav_home:'Início', nav_accounts:'Contas', nav_trade:'Trading', nav_signals:'Sinais', nav_portfolio:'Portfólio',
+    settings:'Configurações', trader:'Trader', demo:'CONTA DEMO', stage:'ETAPA', trade_title:'Trading',
+    positions:'Posições', history:'Histórico', stats:'Estatísticas', signals:'Sinais', analytics:'Análise', ai:'Analista IA',
+    long:'▲ LONG', short:'▼ SHORT', all:'Todos', gain:'🔥 Alta', lose:'Baixa',
+    base:'Padrão', base_sub:'2 etapas', fast:'Acelerado', fast_sub:'1 etapa',
+    account:'Conta', tariff:'Plano', academy:'Academia', deals_hist:'Trades no histórico',
+    data:'DADOS', export_csv:'📤 Exportar histórico (CSV)', clear_draws:'🧹 Limpar desenhos do gráfico',
+    reset_demo:'♻️ Resetar demo', reset_q:'Resetar conta demo?', reset_desc:'Saldo volta a $10.000. Posições e histórico serão apagados.',
+    yes_reset:'Sim, resetar', cancel:'Cancelar', lang:'Idioma', guest:'Convidado',
+    risk_note:'Nexus Prop · modo demo<br>Trading envolve risco de perda.<br>Não é recomendação de investimento.',
+    toast_reset:'Conta demo resetada', toast_draws:'Desenhos limpos', toast_empty:'Histórico vazio',
+    online:'online', title:'Nexus Prop — Trade like a boss'
+  },
+  ar:{
+    nav_home:'الرئيسية', nav_accounts:'الحسابات', nav_trade:'التداول', nav_signals:'الإشارات', nav_portfolio:'المحفظة',
+    settings:'الإعدادات', trader:'متداول', demo:'حساب تجريبي', stage:'المرحلة', trade_title:'التداول',
+    positions:'المراكز', history:'السجل', stats:'إحصائيات', signals:'إشارات', analytics:'تحليل', ai:'محلل ذكاء',
+    long:'▲ شراء', short:'▼ بيع', all:'الكل', gain:'🔥 صاعدة', lose:'هابطة',
+    base:'أساسي', base_sub:'مرحلتان', fast:'مسرع', fast_sub:'مرحلة واحدة',
+    account:'الحساب', tariff:'الخطة', academy:'الأكاديمية', deals_hist:'صفقات في السجل',
+    data:'البيانات', export_csv:'📤 تصدير السجل (CSV)', clear_draws:'🧹 مسح رسوم الرسم البياني',
+    reset_demo:'♻️ إعادة ضبط التجريبي', reset_q:'إعادة ضبط الحساب التجريبي؟', reset_desc:'سيعود الرصيد إلى 10,000$. سيتم حذف المراكز والسجل.',
+    yes_reset:'نعم، إعادة الضبط', cancel:'إلغاء', lang:'اللغة', guest:'ضيف',
+    risk_note:'Nexus Prop · وضع تجريبي<br>التداول ينطوي على مخاطر الخسارة.<br>المحتوى ليس نصيحة استثمارية.',
+    toast_reset:'تمت إعادة ضبط الحساب التجريبي', toast_draws:'تم مسح الرسوم', toast_empty:'السجل فارغ',
+    online:'متصل', title:'Nexus Prop — Trade like a boss'
+  }
+};
+let LANG = localStorage.getItem('nx_lang') || (navigator.language||'ru').slice(0,2);
+if(!I18N[LANG]) LANG = 'ru';
+function t(key){ const d=I18N[LANG]||I18N.ru; return (d&&d[key]!=null)?d[key]:((I18N.ru[key]!=null)?I18N.ru[key]:key); }
+function setLang(code){
+  if(!I18N[code]) return;
+  LANG=code;
+  try{ localStorage.setItem('nx_lang', code); }catch(e){}
+  document.documentElement.lang = code;
+  document.documentElement.dir = (code==='ar') ? 'rtl' : 'ltr';
+  applyI18n();
+  try{ if(typeof renderAll==='function') renderAll(); }catch(e){}
+}
+function applyI18n(){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const k=el.getAttribute('data-i18n');
+    if(!k) return;
+    const v=t(k);
+    if(el.tagName==='INPUT'||el.tagName==='TEXTAREA') el.placeholder=v;
+    else if(el.hasAttribute('data-i18n-html')) el.innerHTML=v;
+    else el.textContent=v;
+  });
+  document.querySelectorAll('[data-i18n-aria]').forEach(el=>{
+    el.setAttribute('aria-label', t(el.getAttribute('data-i18n-aria')));
+  });
+  try{ document.title = t('title'); }catch(e){}
+}
+
 
 /* ============ TELEGRAM ============ */
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
@@ -5185,31 +5338,42 @@ function openAlerts(){
 /* ============ НАСТРОЙКИ ============ */
 function openSettings(){
   const st=tradeStats();
-  $('sheetContent').innerHTML='<div class="h2" style="text-align:center;">Настройки</div>'+
-    '<div class="card mt4"><div class="st-row"><span>Аккаунт</span><b>'+(S.user?S.user.name:'Гость')+'</b></div>'+
-    '<div class="st-row"><span>Тариф</span><b style="color:var(--gold);">'+(S.tier||'free').toUpperCase()+'</b></div>'+
-    '<div class="st-row"><span>Академия</span><b>'+acadCount()+' / '+ACADEMY_TOTAL+'</b></div>'+
-    '<div class="st-row"><span>Сделок в истории</span><b>'+(st?st.total:0)+'</b></div></div>'+
+  const langChips=Object.keys(LANGS).map(code=>{
+    const L=LANGS[code];
+    const on=code===LANG?' active':'';
+    return '<button class="chip'+on+'" data-lang="'+code+'" style="min-width:auto;">'+L.flag+' '+L.name+'</button>';
+  }).join('');
+  $('sheetContent').innerHTML='<div class="h2" style="text-align:center;">'+t('settings')+'</div>'+
+    '<div class="card mt4"><div class="st-row"><span>'+t('account')+'</span><b>'+(S.user?S.user.name:t('guest'))+'</b></div>'+
+    '<div class="st-row"><span>'+t('tariff')+'</span><b style="color:var(--gold);">'+(S.tier||'free').toUpperCase()+'</b></div>'+
+    '<div class="st-row"><span>'+t('academy')+'</span><b>'+acadCount()+' / '+ACADEMY_TOTAL+'</b></div>'+
+    '<div class="st-row"><span>'+t('deals_hist')+'</span><b>'+(st?st.total:0)+'</b></div></div>'+
 
-    '<div class="micro mt4" style="margin-bottom:6px;">ДАННЫЕ</div>'+
-    '<button class="btn btn-ghost btn-block" id="setExport">📤 Выгрузить историю сделок (CSV)</button>'+
-    '<button class="btn btn-ghost btn-block mt2" id="setClearDraws">🧹 Очистить все построения на графиках</button>'+
-    '<button class="btn btn-ghost btn-block mt2" id="setReset" style="border-color:rgba(255,59,87,.4);color:var(--red);">♻️ Сбросить демо-счёт</button>'+
+    '<div class="micro mt4" style="margin-bottom:6px;">'+t('lang').toUpperCase()+'</div>'+
+    '<div class="draw-menu" style="flex-wrap:wrap;gap:6px;">'+langChips+'</div>'+
 
-    '<div class="micro mt5" style="text-align:center;color:var(--txt3);line-height:1.6;">Nexus Prop · демо-режим<br>Торговля сопряжена с риском потери средств.<br>Материалы не являются инвестиционной рекомендацией.</div>';
+    '<div class="micro mt4" style="margin-bottom:6px;">'+t('data')+'</div>'+
+    '<button class="btn btn-ghost btn-block" id="setExport">'+t('export_csv')+'</button>'+
+    '<button class="btn btn-ghost btn-block mt2" id="setClearDraws">'+t('clear_draws')+'</button>'+
+    '<button class="btn btn-ghost btn-block mt2" id="setReset" style="border-color:rgba(255,59,87,.4);color:var(--red);">'+t('reset_demo')+'</button>'+
+
+    '<div class="micro mt5" style="text-align:center;color:var(--txt3);line-height:1.6;">'+t('risk_note')+'</div>';
   $('sheetVeil').classList.add('open');
+  $('sheetContent').querySelectorAll('[data-lang]').forEach(b=>b.addEventListener('click',()=>{
+    setLang(b.dataset.lang); haptic('ok'); openSettings();
+  }));
   $('setExport').addEventListener('click',exportHistory);
-  $('setClearDraws').addEventListener('click',()=>{ S.draws={}; saveDraws(); toast('Построения очищены','🧹'); haptic(); });
+  $('setClearDraws').addEventListener('click',()=>{ S.draws={}; saveDraws(); toast(t('toast_draws'),'🧹'); haptic(); });
   $('setReset').addEventListener('click',()=>{
     $('sheetContent').innerHTML='<div style="text-align:center;padding:10px;"><div style="font-size:40px;">♻️</div>'+
-      '<div class="h2 mt3">Сбросить демо-счёт?</div>'+
-      '<div class="small mt2" style="color:var(--txt2);">Баланс вернётся к $10 000, позиции и история будут удалены. Академия и настройки сохранятся.</div>'+
-      '<button class="btn btn-gold btn-block mt4" id="rsYes" style="background:var(--red);color:#fff;">Да, сбросить</button>'+
-      '<button class="btn btn-ghost btn-block mt2" id="rsNo">Отмена</button></div>';
+      '<div class="h2 mt3">'+t('reset_q')+'</div>'+
+      '<div class="small mt2" style="color:var(--txt2);">'+t('reset_desc')+'</div>'+
+      '<button class="btn btn-gold btn-block mt4" id="rsYes" style="background:var(--red);color:#fff;">'+t('yes_reset')+'</button>'+
+      '<button class="btn btn-ghost btn-block mt2" id="rsNo">'+t('cancel')+'</button></div>';
     $('rsYes').addEventListener('click',()=>{
       S.acc={ active:true, tier:10000, stage:1, balance:10000, startDay:10000, profitDays:0, dayPnlPeak:0, status:'RUN', dayKey:dayKey() };
       S.positions=[]; S.history=[]; S.equityHist=[]; S.payoutReq=[];
-      persistState(); closeSheet(); haptic('ok'); toast('Демо-счёт сброшен','♻️'); go('home');
+      persistState(); closeSheet(); haptic('ok'); toast(t('toast_reset'),'♻️'); go('home');
     });
     $('rsNo').addEventListener('click',openSettings);
   });
@@ -6686,6 +6850,7 @@ async function tick(){
   renderAll();
 }
 async function init(){
+  try{ document.documentElement.lang=LANG; document.documentElement.dir=(LANG==='ar'?'rtl':'ltr'); applyI18n(); }catch(e){}
   loadDraws(); loadMeta(); loadUser(); loadState(); acadLoad(); loadAlerts(); botLoad(); try{ syncVipFromAccounts(true); }catch(e){} try{ sanitizeBrokenTrades(); sanitizeAccountsRisk(); }catch(e){}
   migrateAccounts();
   sanitizeAccountsRisk();
@@ -6715,7 +6880,7 @@ async function init(){
   await loadTickers();
   await Promise.all(ASSETS.slice(0,4).map(a=>loadKlines(a.s,'1h')));
   S.equityHist.push(equity());
-  renderHome(); renderMarket(); maybeOnboarding();
+  renderHome(); renderMarket(); maybeOnboarding(); try{ applyI18n(); }catch(e){}
   setInterval(tick, 2000);
   setInterval(()=>{ if(rtDirty){ rtDirty=false; renderAll(); } }, 700);
   setInterval(()=>{ if(S.screen==='signals'&&(S.stab==='signals'||S.stab==='analytics')) renderSignals(); }, 20000);
