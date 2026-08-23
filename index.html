@@ -1,11 +1,10 @@
 <!DOCTYPE html>
-<html lang="ru" id="htmlRoot">
+<html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <title>Nexus Prop — Trade like a boss</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="https://s3.tradingview.com/tv.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -598,62 +597,30 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
 .tf-mini{font-size:9.5px;font-weight:800;padding:2px 6px;border-radius:6px;background:var(--card2);
   color:var(--txt2);font-family:var(--mono);}
 
-/* Fullscreen chart mode — только график, без панелей и алертов */
-.chart-fs-active #termChartWrap{
-  position:fixed !important; inset:0 !important; z-index:200 !important;
-  width:100vw !important; height:100dvh !important; max-height:none !important;
-  min-height:100dvh !important; border-radius:0 !important; margin:0 !important;
-  border:none !important; background:#0a1016 !important;
-  padding:0 !important;
-}
-.chart-fs-active #tvChart{ height:100% !important; min-height:100dvh !important; }
-.chart-fs-active #screen-terminal > *:not(.term-chart-card){ display:none !important; }
-.chart-fs-active #screen-terminal .term-chart-card{
-  position:static !important; margin:0 !important; padding:0 !important;
-  border:none !important; background:transparent !important; box-shadow:none !important;
-}
-.chart-fs-active .tabbar,
-.chart-fs-active .toast,
-.chart-fs-active .sheet-veil,
-.chart-fs-active #sheetVeil,
-.chart-fs-active .note-box,
-.chart-fs-active [data-risk-banner],
-.chart-fs-active .risk-banner{ display:none !important; visibility:hidden !important; }
-
-.chart-fs-active #coachBox,
-.chart-fs-active .coach{ display:none !important; opacity:0 !important; pointer-events:none !important; }
-.chart-fs-active #screen-terminal .card:not(.term-chart-card),
-.chart-fs-active #screen-terminal .topbar,
-.chart-fs-active #screen-terminal > .row{ display:none !important; }
-
-.chart-fs-bar{
-  position:fixed; top:0; left:0; right:0; z-index:210;
-  display:flex; align-items:center; justify-content:space-between; gap:10px;
-  padding:10px 14px; padding-top:calc(10px + env(safe-area-inset-top));
-  background:linear-gradient(180deg,rgba(10,16,22,.92) 0%, rgba(10,16,22,.55) 70%, transparent 100%);
-  pointer-events:none;
-}
-.chart-fs-bar button{
-  pointer-events:auto;
-  background:rgba(20,30,40,.9) !important;
-  border:1px solid rgba(34,228,255,.35) !important;
-  color:#eaf7ff !important;
-  border-radius:99px !important;
-  padding:8px 14px !important;
-  font-weight:700 !important;
-}
-
-
-/* Phantom */
-.ph-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;
-  background:linear-gradient(135deg,#ab9ff2,#7b61ff);color:#fff;font-weight:800;
-  border:none;border-radius:14px;padding:14px 16px;font-size:14px;cursor:pointer;
-  box-shadow:0 8px 28px -10px rgba(123,97,255,.55);}
-.ph-btn img{width:22px;height:22px;border-radius:6px;}
-.ph-btn.connected{background:linear-gradient(135deg,#2BFF9E22,#22E4FF22);color:var(--txt);
-  border:1px solid rgba(43,255,158,.35);box-shadow:none;}
-.ph-addr{font-family:var(--mono);font-size:12px;word-break:break-all;color:var(--txt2);text-align:center;margin-top:8px;}
-
+#screen-maint{position:fixed;inset:0;z-index:150;background:#04070C;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;}
+.mt-fx{position:absolute;inset:0;width:100%;height:100%;}
+.mt-wrap{position:relative;z-index:2;width:100%;max-width:390px;padding:0 26px;text-align:center;
+  animation:mtUp .7s var(--spring) both;}
+@keyframes mtUp{from{opacity:0;transform:translateY(22px);}to{opacity:1;transform:none;}}
+.mt-gear{width:76px;height:76px;margin:0 auto;color:var(--gold);
+  filter:drop-shadow(0 0 22px rgba(34,228,255,.55));animation:mtSpin 9s linear infinite;}
+.mt-gear svg{width:100%;height:100%;}
+@keyframes mtSpin{to{transform:rotate(360deg);}}
+.mt-badge{display:inline-block;margin-top:20px;font-family:var(--display);font-size:10.5px;font-weight:700;
+  letter-spacing:.18em;color:var(--gold);border:1px solid rgba(34,228,255,.4);border-radius:99px;
+  padding:5px 14px;background:rgba(4,7,12,.6);box-shadow:0 0 20px rgba(34,228,255,.22);}
+.mt-title{font-family:var(--display);font-size:30px;font-weight:700;margin-top:14px;color:var(--txt);
+  text-shadow:0 0 24px rgba(34,228,255,.4);}
+.mt-msg{font-size:14px;line-height:1.65;color:var(--txt2);margin-top:12px;}
+.mt-until{margin-top:14px;font-family:var(--mono);font-size:13px;color:var(--gold);
+  background:var(--gold-dim);border:1px solid rgba(34,228,255,.3);border-radius:11px;padding:9px 14px;display:inline-block;}
+.mt-card{margin-top:22px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:4px 15px;text-align:left;}
+.mt-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;
+  border-bottom:1px solid var(--line);font-size:12.5px;color:var(--txt2);}
+.mt-row:last-child{border-bottom:none;}
+.mt-row b{font-size:12.5px;color:var(--txt);}
+.mt-link{display:block;margin-top:16px;font-size:12.5px;color:var(--gold);text-decoration:none;}
 </style>
 </head>
 <body>
@@ -673,6 +640,30 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
   </div>
 </div>
 
+<!-- ================= MAINTENANCE ================= -->
+<div id="screen-maint" style="display:none;">
+  <canvas class="mt-fx" id="mtFx"></canvas>
+  <div class="mt-wrap">
+    <div class="mt-gear">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+        <circle cx="12" cy="12" r="3.2"/>
+        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.36.4.66.74.85.29.17.62.26.95.26H21a2 2 0 010 4h-.09c-.7 0-1.33.42-1.6 1.05z"/>
+      </svg>
+    </div>
+    <div class="mt-badge">ТЕХНИЧЕСКИЕ РАБОТЫ</div>
+    <div class="mt-title">Скоро вернёмся</div>
+    <div class="mt-msg" id="mtMsg">Обновляем платформу: улучшаем терминал, сигналы и скорость работы. Приложение будет недоступно совсем недолго.</div>
+    <div class="mt-until" id="mtUntil" style="display:none;"></div>
+    <div class="mt-card">
+      <div class="mt-row"><span>Ваши счета и история</span><b style="color:var(--green);">в безопасности</b></div>
+      <div class="mt-row"><span>Открытые позиции</span><b>сохранены</b></div>
+      <div class="mt-row"><span>Прогресс челленджа</span><b>не сбросится</b></div>
+    </div>
+    <button class="btn btn-gold btn-block mt4" id="mtRetry">Проверить снова</button>
+    <a class="mt-link" href="https://t.me/NexusTrade" target="_blank">Новости и статус — в нашем канале</a>
+  </div>
+</div>
+
 <!-- ================= HOME ================= -->
 <div class="wrap">
 <section class="screen" id="screen-home">
@@ -680,7 +671,7 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
     <div class="row gap3">
       <div class="ava mascot-ava" id="userAva"></div>
       <div>
-        <div style="font-weight:800;font-size:15px;" id="userName" data-i18n="trader">Трейдер</div>
+        <div style="font-weight:800;font-size:15px;" id="userName">Трейдер</div>
         <div class="micro">Nexus Prop · <span style="color:var(--green)">online</span></div>
       </div>
     </div>
@@ -689,7 +680,7 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>
         <span class="notif-dot"></span>
       </button>
-      <button class="icon-btn" id="setBtn" aria-label="Настройки" data-i18n-aria="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.36.4.66.74.85.29.17.62.26.95.26H21a2 2 0 010 4h-.09c-.7 0-1.33.42-1.6 1.05z"/></svg></button>
+      <button class="icon-btn" id="setBtn" aria-label="Настройки"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.36.4.66.74.85.29.17.62.26.95.26H21a2 2 0 010 4h-.09c-.7 0-1.33.42-1.6 1.05z"/></svg></button>
       <button class="icon-btn" id="adminBtn" data-go="admin" style="display:none;" aria-label="Админ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg></button>
     </div>
   </div>
@@ -697,10 +688,9 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
   <div class="hero-card hero-bull" id="homeHero">
     <div class="row between">
       <span class="badge b-gold" id="homeStageBadge">ЭТАП 1 / 2</span>
-      <span class="badge b-mut" id="homeAccBadge" data-i18n="demo">ДЕМО-СЧЁТ</span>
+      <span class="badge b-mut" id="homeAccBadge">ДЕМО-СЧЁТ</span>
     </div>
     <div class="equity mt3" id="homeEquity">$10,000.00</div>
-    <div class="micro mt2">◎ NEXUS: <b id="homeNxBal">0.00</b></div>
     <div class="mono mt2" style="font-size:13px;font-weight:700;" id="homePnl"><span class="up">+$0.00 (0.00%)</span></div>
     <div class="stage-track" id="stageTrack">
       <div class="stage-dot done">🏆</div>
@@ -746,30 +736,6 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
     </div>
   </div>
 
-
-  <div class="card mt4" id="homeSubCard">
-    <div class="row between" style="align-items:flex-start;">
-      <div>
-        <div class="h3">⭐ Подписка</div>
-        <div class="micro mt1" style="color:var(--txt2);">Сигналы, ИИ-аналитик, приоритет</div>
-      </div>
-      <span class="badge" id="homeTierBadge">FREE</span>
-    </div>
-    <div class="row gap2 mt3">
-      <button class="btn btn-ghost grow" id="homeBuyPrem" style="flex-direction:column;gap:2px;padding:12px 8px;">
-        <b style="color:var(--gold);">Премиум</b>
-        <span class="micro">$20 / мес</span>
-      </button>
-      <button class="btn btn-gold grow" id="homeBuyVip" style="flex-direction:column;gap:2px;padding:12px 8px;">
-        <b>ВИП</b>
-        <span class="micro" style="opacity:.9;">$39.99 / мес</span>
-      </button>
-    </div>
-    <div class="micro mt2" style="color:var(--txt3);line-height:1.45;">Счёт челленджа от <b>$50 000</b> — VIP бесплатно и навсегда (пока счёт активен в истории).</div>
-  </div>
-
-  <div id="homeBotHost" class="mt3"></div>
-
   <div class="card mt4" style="display:flex;gap:14px;align-items:center;">
     <div style="width:52px;height:52px;flex-shrink:0;">
       <svg viewBox="0 0 200 200" width="52" height="52"><use href="#glasses"/><path d="M55 58 Q100 40 145 58 Q160 78 156 110 Q152 138 128 152 L72 152 Q48 138 44 110 Q40 78 55 58 Z" fill="url(#gBody)"/><path d="M38 62 Q18 46 22 24 Q40 34 50 52 Z" fill="url(#gGold)"/><path d="M162 62 Q182 46 178 24 Q160 34 150 52 Z" fill="url(#gGold)"/><rect x="52" y="76" width="42" height="26" rx="9" fill="url(#gGlass)" stroke="url(#gGold)" stroke-width="3"/><rect x="106" y="76" width="42" height="26" rx="9" fill="url(#gGlass)" stroke="url(#gGold)" stroke-width="3"/><rect x="94" y="84" width="12" height="6" rx="3" fill="url(#gGold)"/><path d="M64 112 Q100 98 136 112 Q142 132 128 146 L72 146 Q58 132 64 112 Z" fill="url(#gMuz)"/><path d="M80 141 Q100 150 122 139" stroke="#0E0C0A" stroke-width="4" fill="none" stroke-linecap="round"/></svg>
@@ -780,7 +746,6 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
     </div>
   </div>
 </section>
-
 
 <!-- ================= ACCOUNTS / CHALLENGE ================= -->
 <section class="screen" id="screen-accounts">
@@ -793,12 +758,12 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
 
 <!-- ================= MARKET ================= -->
 <section class="screen" id="screen-market">
-  <div style="padding:4px 0 14px;"><span class="h1" data-i18n="trade_title">Торговля</span></div>
+  <div style="padding:4px 0 14px;"><span class="h1">Торговля</span></div>
   <input class="input" id="marketSearch" placeholder="Поиск: BTC, ETH, SOL…">
   <div class="row gap2 mt3" style="flex-wrap:wrap;">
-    <button class="chip active" data-mf="all" data-i18n="all">Все</button>
-    <button class="chip" data-mf="gain" data-i18n="gain">🔥 Растут</button>
-    <button class="chip" data-mf="lose" data-i18n="lose">Падают</button>
+    <button class="chip active" data-mf="all">Все</button>
+    <button class="chip" data-mf="gain">🔥 Растут</button>
+    <button class="chip" data-mf="lose">Падают</button>
   </div>
   <div class="row between mt3" style="margin-bottom:10px;">
     <span class="micro">Актив · плечо до x20</span>
@@ -820,23 +785,17 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
         </div>
       </div>
     </div>
-    <div class="row gap2">
-      <button class="tf-btn" id="chartFsBtn" title="Полный экран" aria-label="Полный экран графика">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
-      </button>
-      <button class="tf-btn" id="tfBtn"><b id="tfCur">1ч</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></button>
-    </div>
+    <button class="tf-btn" id="tfBtn"><b id="tfCur">1ч</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></button>
   </div>
 
   <div class="row gap2 mt2" style="align-items:center;"><span id="toolCur" class="micro" style="color:var(--gold);"></span></div>
 
-  <div class="card mt2 term-chart-card" style="padding:12px 6px 4px;">
-    <div class="term-stage" style="display:block;">
-      <div class="tool-rail" id="toolRail" style="display:none;"></div>
-      <div class="term-chart-wrap" id="termChartWrap" style="height:min(58vh,420px);min-height:280px;border-radius:14px;overflow:hidden;border:1px solid var(--line);">
-        <div id="tvChart" style="width:100%;height:100%;min-height:280px;"></div>
-        <canvas id="termChart" style="display:none;"></canvas>
-        <div class="term-tt" id="termTT" style="display:none;"></div>
+  <div class="card mt2" style="padding:12px 6px 4px;">
+    <div class="term-stage">
+      <div class="tool-rail" id="toolRail"></div>
+      <div class="term-chart-wrap" id="termChartWrap">
+        <canvas id="termChart"></canvas>
+        <div class="term-tt" id="termTT"></div>
         <button class="go-live" id="goLive" style="display:none;">→|</button>
       </div>
     </div>
@@ -892,8 +851,8 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
     </div>
 
     <div class="trade-btns mt4">
-      <button class="btn btn-green" id="termBotBtn" style="display:none;" data-x="1"></button><button class="btn" id="btnLong" data-i18n="long">▲ LONG</button>
-      <button class="btn btn-red" id="btnShort" data-i18n="short">▼ SHORT</button>
+      <button class="btn btn-green" id="btnLong">▲ LONG</button>
+      <button class="btn btn-red" id="btnShort">▼ SHORT</button>
     </div>
   </div>
 
@@ -910,14 +869,13 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
   <div class="hero-card">
     <div class="micro">Общий баланс (equity)</div>
     <div class="equity mt2" id="pfEquity">$10,000.00</div>
-    <div id="botHost"></div>
     <div class="mono mt2" style="font-size:13px;font-weight:700;" id="pfPnl"><span class="up">+$0.00 (0.00%)</span></div>
   </div>
 
   <div class="tabs2 mt5">
-    <button class="tab2 active" data-ptab="pos" data-i18n="positions">Позиции<span class="cnt" id="cntPos">0</span></button>
-    <button class="tab2" data-ptab="hist" data-i18n="history">История<span class="cnt" id="cntHist" style="background:var(--card2);color:var(--txt2);">0</span></button>
-    <button class="tab2" data-ptab="stats" data-i18n="stats">Статистика</button>
+    <button class="tab2 active" data-ptab="pos">Позиции<span class="cnt" id="cntPos">0</span></button>
+    <button class="tab2" data-ptab="hist">История<span class="cnt" id="cntHist" style="background:var(--card2);color:var(--txt2);">0</span></button>
+    <button class="tab2" data-ptab="stats">Статистика</button>
   </div>
   <div id="pfBody"></div>
 </section>
@@ -929,9 +887,9 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
     <span class="badge b-mut" id="tierBadge">FREE</span>
   </div>
   <div class="tabs2" id="sigTabs">
-    <button class="tab2 active" data-stab="signals" data-i18n="signals">Сигналы</button>
-    <button class="tab2" data-stab="analytics" data-i18n="analytics">Аналитика</button>
-    <button class="tab2" data-stab="ai" data-i18n="ai">ИИ-аналитик</button>
+    <button class="tab2 active" data-stab="signals">Сигналы</button>
+    <button class="tab2" data-stab="analytics">Аналитика</button>
+    <button class="tab2" data-stab="ai">ИИ-аналитик</button>
   </div>
   <div id="sigBody" class="mt4"></div>
 </section>
@@ -942,43 +900,8 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
     <span class="h1">Кошелёк</span>
     <button class="icon-btn" data-go="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg></button>
   </div>
-
-  <!-- NEXUS TOKEN -->
-  <div class="hero-card" style="border-color:rgba(34,228,255,.35);">
-    <div class="row between">
-      <span class="badge b-gold">◎ NEXUS</span>
-      <span class="micro" id="nxNetLabel">Solana</span>
-    </div>
-    <div class="micro mt3">Внутренний баланс</div>
-    <div class="equity mt2" id="nxBalance">0.00</div>
-    <div class="small mt2" style="color:var(--txt2);">Токен платформы · скидки VIP · награды</div>
-    <div class="row gap2 mt4">
-      <button class="btn btn-gold grow" id="nxDepositBtn">Пополнить</button>
-      <button class="btn btn-ghost grow" id="nxWithdrawBtn">Вывести</button>
-    </div>
-    <button class="btn btn-ghost btn-block mt2" id="nxDemoCredit" style="font-size:12px;">+100 NEXUS (демо)</button>
-  </div>
-  <div class="card mt3">
-    <div class="micro" style="color:var(--gold);margin-bottom:10px;">PHANTOM WALLET</div>
-    <button type="button" class="ph-btn" id="phantomBtn">
-      <img src="https://phantom.app/img/phantom-icon-purple.png" alt="" onerror="this.style.display='none'"/>
-      <span id="phantomBtnText">Подключить Phantom</span>
-    </button>
-    <div class="ph-addr" id="phantomAddr"></div>
-    <div class="row gap2 mt3">
-      <button class="btn btn-ghost btn-sm grow" id="phantomCopy" style="display:none;">Скопировать</button>
-      <button class="btn btn-ghost btn-sm grow" id="phantomDisc" style="display:none;">Отключить</button>
-    </div>
-    <div class="micro mt2" style="color:var(--txt3);line-height:1.45;">Кошелёк используется для вывода NEXUS и подписи. В Telegram откроет приложение Phantom.</div>
-  </div>
-
-  <div class="card mt3" id="nxHistoryCard">
-    <div class="micro" style="color:var(--gold);margin-bottom:8px;">ИСТОРИЯ NEXUS</div>
-    <div id="nxHistory"><div class="mut small">Пока пусто</div></div>
-  </div>
-
-  <div class="hero-card mt4">
-    <div class="micro">Доступно к выводу (профит челленджа)</div>
+  <div class="hero-card">
+    <div class="micro">Доступно к выводу</div>
     <div class="equity mt2" id="wPayout">$0.00</div>
     <div class="small mt2">Профит-сплит <b style="color:var(--gold);">до 80%</b> · выплаты в стейблкоинах</div>
     <div id="payoutBox" class="mt4"></div>
@@ -992,10 +915,9 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
     <div class="wallet-field mt3"><label>USDT · BEP-20 (BNB Chain)</label><input class="input mono" id="addr_bep20" placeholder="0x..."></div>
     <div class="wallet-field mt3"><label>TON</label><input class="input mono" id="addr_ton" placeholder="UQ... / EQ..."></div>
     <div class="wallet-field mt3"><label>ETH · ERC-20</label><input class="input mono" id="addr_eth" placeholder="0x..."></div>
-    <div class="wallet-field mt3"><label>Solana (NEXUS / USDC)</label><input class="input mono" id="addr_sol" placeholder="Base58..."></div>
     <button class="btn btn-gold btn-block mt4" id="saveWallet">Сохранить адреса</button>
   </div>
-  <div class="note-box mt4">⚠️ Проверяйте сеть перед выводом. NEXUS — SPL-токен Solana. Ончейн-выводы обрабатывает команда после заявки.</div>
+  <div class="note-box mt4">⚠️ Проверяйте сеть перед выводом. Отправка в неверную сеть приведёт к потере средств. Реальные выплаты подключаются на стороне сервера/провайдера.</div>
 </section>
 
 
@@ -1006,8 +928,8 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
     <button class="icon-btn" data-go="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </div>
   <div class="seg-lg" id="chTypeSeg">
-    <button class="seg-lg-b active" data-cht="base"><b data-i18n="base">Базовый</b><span data-i18n="base_sub">2 этапа</span></button>
-    <button class="seg-lg-b" data-cht="fast"><b data-i18n="fast">Ускоренный</b><span data-i18n="fast_sub">1 этап</span></button>
+    <button class="seg-lg-b active" data-cht="base"><b>Базовый</b><span>2 этапа</span></button>
+    <button class="seg-lg-b" data-cht="fast"><b>Ускоренный</b><span>1 этап</span></button>
   </div>
   <div id="chRules" class="mt4"></div>
   <div class="h2 mt5" style="margin-bottom:12px;">Размер счёта</div>
@@ -1060,11 +982,11 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
 
 <!-- ================= TABBAR ================= -->
 <nav class="tabbar" id="tabbar">
-  <button class="tab active" data-go="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg><span data-i18n="nav_home">Главная</span></button>
-  <button class="tab" data-go="accounts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M7 15h4"/></svg><span data-i18n="nav_accounts">Счета</span></button>
-  <button class="tab" data-go="market"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg><span data-i18n="nav_trade">Торговля</span></button>
-  <button class="tab" data-go="signals"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14a8 8 0 018-8M4 20a14 14 0 0114-14"/><circle cx="5" cy="19" r="1.4" fill="currentColor" stroke="none"/></svg><span data-i18n="nav_signals">Сигналы</span></button>
-  <button class="tab" data-go="portfolio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M16 3H8a2 2 0 00-2 2v2h12V5a2 2 0 00-2-2z"/></svg><span data-i18n="nav_portfolio">Портфель</span></button>
+  <button class="tab active" data-go="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg><span>Главная</span></button>
+  <button class="tab" data-go="accounts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M7 15h4"/></svg><span>Счета</span></button>
+  <button class="tab" data-go="market"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg><span>Торговля</span></button>
+  <button class="tab" data-go="signals"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14a8 8 0 018-8M4 20a14 14 0 0114-14"/><circle cx="5" cy="19" r="1.4" fill="currentColor" stroke="none"/></svg><span>Сигналы</span></button>
+  <button class="tab" data-go="portfolio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M16 3H8a2 2 0 00-2 2v2h12V5a2 2 0 00-2-2z"/></svg><span>Портфель</span></button>
 </nav>
 
 <!-- ================= SHEET ================= -->
@@ -1080,159 +1002,6 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
 <script>
 (function(){
 "use strict";
-
-/* ============ I18N ============ */
-const LANGS = {
-  ru:{flag:'🇷🇺',name:'Русский'},
-  en:{flag:'🇬🇧',name:'English'},
-  zh:{flag:'🇨🇳',name:'中文'},
-  fr:{flag:'🇫🇷',name:'Français'},
-  de:{flag:'🇩🇪',name:'Deutsch'},
-  es:{flag:'🇪🇸',name:'Español'},
-  pt:{flag:'🇧🇷',name:'Português'},
-  ar:{flag:'🇸🇦',name:'العربية'}
-};
-const I18N = {
-  ru:{
-    nav_home:'Главная', nav_accounts:'Счета', nav_trade:'Торговля', nav_signals:'Сигналы', nav_portfolio:'Портфель',
-    settings:'Настройки', trader:'Трейдер', demo:'ДЕМО-СЧЁТ', stage:'ЭТАП', trade_title:'Торговля',
-    positions:'Позиции', history:'История', stats:'Статистика', signals:'Сигналы', analytics:'Аналитика', ai:'ИИ-аналитик',
-    long:'▲ LONG', short:'▼ SHORT', all:'Все', gain:'🔥 Растут', lose:'Падают',
-    base:'Базовый', base_sub:'2 этапа', fast:'Ускоренный', fast_sub:'1 этап',
-    account:'Аккаунт', tariff:'Тариф', academy:'Академия', deals_hist:'Сделок в истории',
-    data:'ДАННЫЕ', export_csv:'📤 Выгрузить историю сделок (CSV)', clear_draws:'🧹 Очистить все построения на графиках',
-    reset_demo:'♻️ Сбросить демо-счёт', reset_q:'Сбросить демо-счёт?', reset_desc:'Баланс вернётся к $10 000, позиции и история будут удалены. Академия и настройки сохранятся.',
-    yes_reset:'Да, сбросить', cancel:'Отмена', lang:'Язык', guest:'Гость',
-    risk_note:'Nexus Prop · демо-режим<br>Торговля сопряжена с риском потери средств.<br>Материалы не являются инвестиционной рекомендацией.',
-    toast_reset:'Демо-счёт сброшен', toast_draws:'Построения очищены', toast_empty:'История пуста',
-    online:'online', title:'Nexus Prop — Trade like a boss'
-  },
-  en:{
-    nav_home:'Home', nav_accounts:'Accounts', nav_trade:'Trade', nav_signals:'Signals', nav_portfolio:'Portfolio',
-    settings:'Settings', trader:'Trader', demo:'DEMO ACCOUNT', stage:'STAGE', trade_title:'Trade',
-    positions:'Positions', history:'History', stats:'Stats', signals:'Signals', analytics:'Analytics', ai:'AI Analyst',
-    long:'▲ LONG', short:'▼ SHORT', all:'All', gain:'🔥 Gainers', lose:'Losers',
-    base:'Standard', base_sub:'2 stages', fast:'Accelerated', fast_sub:'1 stage',
-    account:'Account', tariff:'Plan', academy:'Academy', deals_hist:'Trades in history',
-    data:'DATA', export_csv:'📤 Export trade history (CSV)', clear_draws:'🧹 Clear all chart drawings',
-    reset_demo:'♻️ Reset demo account', reset_q:'Reset demo account?', reset_desc:'Balance returns to $10,000. Positions and history will be deleted. Academy and settings are kept.',
-    yes_reset:'Yes, reset', cancel:'Cancel', lang:'Language', guest:'Guest',
-    risk_note:'Nexus Prop · demo mode<br>Trading involves risk of loss.<br>Materials are not investment advice.',
-    toast_reset:'Demo account reset', toast_draws:'Drawings cleared', toast_empty:'History is empty',
-    online:'online', title:'Nexus Prop — Trade like a boss'
-  },
-  zh:{
-    nav_home:'首页', nav_accounts:'账户', nav_trade:'交易', nav_signals:'信号', nav_portfolio:'资产',
-    settings:'设置', trader:'交易者', demo:'模拟账户', stage:'阶段', trade_title:'交易',
-    positions:'持仓', history:'历史', stats:'统计', signals:'信号', analytics:'分析', ai:'AI分析师',
-    long:'▲ 做多', short:'▼ 做空', all:'全部', gain:'🔥 上涨', lose:'下跌',
-    base:'标准', base_sub:'2阶段', fast:'加速', fast_sub:'1阶段',
-    account:'账户', tariff:'套餐', academy:'学院', deals_hist:'历史成交',
-    data:'数据', export_csv:'📤 导出交易历史 (CSV)', clear_draws:'🧹 清除所有图表标记',
-    reset_demo:'♻️ 重置模拟账户', reset_q:'重置模拟账户？', reset_desc:'余额将恢复为 $10,000，持仓与历史将被删除。学院与设置会保留。',
-    yes_reset:'确认重置', cancel:'取消', lang:'语言', guest:'访客',
-    risk_note:'Nexus Prop · 模拟模式<br>交易存在亏损风险。<br>内容不构成投资建议。',
-    toast_reset:'模拟账户已重置', toast_draws:'标记已清除', toast_empty:'暂无历史',
-    online:'在线', title:'Nexus Prop — Trade like a boss'
-  },
-  fr:{
-    nav_home:'Accueil', nav_accounts:'Comptes', nav_trade:'Trading', nav_signals:'Signaux', nav_portfolio:'Portefeuille',
-    settings:'Paramètres', trader:'Trader', demo:'COMPTE DÉMO', stage:'ÉTAPE', trade_title:'Trading',
-    positions:'Positions', history:'Historique', stats:'Stats', signals:'Signaux', analytics:'Analyse', ai:'Analyste IA',
-    long:'▲ LONG', short:'▼ SHORT', all:'Tous', gain:'🔥 Hausse', lose:'Baisse',
-    base:'Standard', base_sub:'2 étapes', fast:'Accéléré', fast_sub:'1 étape',
-    account:'Compte', tariff:'Offre', academy:'Académie', deals_hist:'Trades en historique',
-    data:'DONNÉES', export_csv:'📤 Exporter l’historique (CSV)', clear_draws:'🧹 Effacer les dessins',
-    reset_demo:'♻️ Réinitialiser la démo', reset_q:'Réinitialiser le compte démo ?', reset_desc:'Le solde revient à 10 000 $. Positions et historique seront supprimés.',
-    yes_reset:'Oui, réinitialiser', cancel:'Annuler', lang:'Langue', guest:'Invité',
-    risk_note:'Nexus Prop · mode démo<br>Le trading comporte un risque de perte.<br>Ceci n’est pas un conseil d’investissement.',
-    toast_reset:'Compte démo réinitialisé', toast_draws:'Dessins effacés', toast_empty:'Historique vide',
-    online:'en ligne', title:'Nexus Prop — Trade like a boss'
-  },
-  de:{
-    nav_home:'Start', nav_accounts:'Konten', nav_trade:'Handel', nav_signals:'Signale', nav_portfolio:'Portfolio',
-    settings:'Einstellungen', trader:'Trader', demo:'DEMO-KONTO', stage:'PHASE', trade_title:'Handel',
-    positions:'Positionen', history:'Verlauf', stats:'Statistik', signals:'Signale', analytics:'Analyse', ai:'KI-Analyst',
-    long:'▲ LONG', short:'▼ SHORT', all:'Alle', gain:'🔥 Gewinner', lose:'Verlierer',
-    base:'Standard', base_sub:'2 Phasen', fast:'Beschleunigt', fast_sub:'1 Phase',
-    account:'Konto', tariff:'Tarif', academy:'Akademie', deals_hist:'Trades in Verlauf',
-    data:'DATEN', export_csv:'📤 Trade-Historie exportieren (CSV)', clear_draws:'🧹 Alle Zeichnungen löschen',
-    reset_demo:'♻️ Demo zurücksetzen', reset_q:'Demo-Konto zurücksetzen?', reset_desc:'Guthaben kehrt auf $10.000 zurück. Positionen und Verlauf werden gelöscht.',
-    yes_reset:'Ja, zurücksetzen', cancel:'Abbrechen', lang:'Sprache', guest:'Gast',
-    risk_note:'Nexus Prop · Demo-Modus<br>Handel birgt Verlustrisiko.<br>Keine Anlageberatung.',
-    toast_reset:'Demo-Konto zurückgesetzt', toast_draws:'Zeichnungen gelöscht', toast_empty:'Verlauf leer',
-    online:'online', title:'Nexus Prop — Trade like a boss'
-  },
-  es:{
-    nav_home:'Inicio', nav_accounts:'Cuentas', nav_trade:'Trading', nav_signals:'Señales', nav_portfolio:'Cartera',
-    settings:'Ajustes', trader:'Trader', demo:'CUENTA DEMO', stage:'ETAPA', trade_title:'Trading',
-    positions:'Posiciones', history:'Historial', stats:'Estadísticas', signals:'Señales', analytics:'Análisis', ai:'Analista IA',
-    long:'▲ LONG', short:'▼ SHORT', all:'Todos', gain:'🔥 Suben', lose:'Bajan',
-    base:'Estándar', base_sub:'2 etapas', fast:'Acelerado', fast_sub:'1 etapa',
-    account:'Cuenta', tariff:'Plan', academy:'Academia', deals_hist:'Trades en historial',
-    data:'DATOS', export_csv:'📤 Exportar historial (CSV)', clear_draws:'🧹 Borrar dibujos del gráfico',
-    reset_demo:'♻️ Reiniciar demo', reset_q:'¿Reiniciar cuenta demo?', reset_desc:'El saldo vuelve a $10,000. Posiciones e historial se eliminarán.',
-    yes_reset:'Sí, reiniciar', cancel:'Cancelar', lang:'Idioma', guest:'Invitado',
-    risk_note:'Nexus Prop · modo demo<br>El trading implica riesgo de pérdida.<br>No es asesoramiento de inversión.',
-    toast_reset:'Cuenta demo reiniciada', toast_draws:'Dibujos borrados', toast_empty:'Historial vacío',
-    online:'en línea', title:'Nexus Prop — Trade like a boss'
-  },
-  pt:{
-    nav_home:'Início', nav_accounts:'Contas', nav_trade:'Trading', nav_signals:'Sinais', nav_portfolio:'Portfólio',
-    settings:'Configurações', trader:'Trader', demo:'CONTA DEMO', stage:'ETAPA', trade_title:'Trading',
-    positions:'Posições', history:'Histórico', stats:'Estatísticas', signals:'Sinais', analytics:'Análise', ai:'Analista IA',
-    long:'▲ LONG', short:'▼ SHORT', all:'Todos', gain:'🔥 Alta', lose:'Baixa',
-    base:'Padrão', base_sub:'2 etapas', fast:'Acelerado', fast_sub:'1 etapa',
-    account:'Conta', tariff:'Plano', academy:'Academia', deals_hist:'Trades no histórico',
-    data:'DADOS', export_csv:'📤 Exportar histórico (CSV)', clear_draws:'🧹 Limpar desenhos do gráfico',
-    reset_demo:'♻️ Resetar demo', reset_q:'Resetar conta demo?', reset_desc:'Saldo volta a $10.000. Posições e histórico serão apagados.',
-    yes_reset:'Sim, resetar', cancel:'Cancelar', lang:'Idioma', guest:'Convidado',
-    risk_note:'Nexus Prop · modo demo<br>Trading envolve risco de perda.<br>Não é recomendação de investimento.',
-    toast_reset:'Conta demo resetada', toast_draws:'Desenhos limpos', toast_empty:'Histórico vazio',
-    online:'online', title:'Nexus Prop — Trade like a boss'
-  },
-  ar:{
-    nav_home:'الرئيسية', nav_accounts:'الحسابات', nav_trade:'التداول', nav_signals:'الإشارات', nav_portfolio:'المحفظة',
-    settings:'الإعدادات', trader:'متداول', demo:'حساب تجريبي', stage:'المرحلة', trade_title:'التداول',
-    positions:'المراكز', history:'السجل', stats:'إحصائيات', signals:'إشارات', analytics:'تحليل', ai:'محلل ذكاء',
-    long:'▲ شراء', short:'▼ بيع', all:'الكل', gain:'🔥 صاعدة', lose:'هابطة',
-    base:'أساسي', base_sub:'مرحلتان', fast:'مسرع', fast_sub:'مرحلة واحدة',
-    account:'الحساب', tariff:'الخطة', academy:'الأكاديمية', deals_hist:'صفقات في السجل',
-    data:'البيانات', export_csv:'📤 تصدير السجل (CSV)', clear_draws:'🧹 مسح رسوم الرسم البياني',
-    reset_demo:'♻️ إعادة ضبط التجريبي', reset_q:'إعادة ضبط الحساب التجريبي؟', reset_desc:'سيعود الرصيد إلى 10,000$. سيتم حذف المراكز والسجل.',
-    yes_reset:'نعم، إعادة الضبط', cancel:'إلغاء', lang:'اللغة', guest:'ضيف',
-    risk_note:'Nexus Prop · وضع تجريبي<br>التداول ينطوي على مخاطر الخسارة.<br>المحتوى ليس نصيحة استثمارية.',
-    toast_reset:'تمت إعادة ضبط الحساب التجريبي', toast_draws:'تم مسح الرسوم', toast_empty:'السجل فارغ',
-    online:'متصل', title:'Nexus Prop — Trade like a boss'
-  }
-};
-let LANG = localStorage.getItem('nx_lang') || (navigator.language||'ru').slice(0,2);
-if(!I18N[LANG]) LANG = 'ru';
-function t(key){ const d=I18N[LANG]||I18N.ru; return (d&&d[key]!=null)?d[key]:((I18N.ru[key]!=null)?I18N.ru[key]:key); }
-function setLang(code){
-  if(!I18N[code]) return;
-  LANG=code;
-  try{ localStorage.setItem('nx_lang', code); }catch(e){}
-  document.documentElement.lang = code;
-  document.documentElement.dir = (code==='ar') ? 'rtl' : 'ltr';
-  applyI18n();
-  try{ if(typeof renderAll==='function') renderAll(); }catch(e){}
-}
-function applyI18n(){
-  document.querySelectorAll('[data-i18n]').forEach(el=>{
-    const k=el.getAttribute('data-i18n');
-    if(!k) return;
-    const v=t(k);
-    if(el.tagName==='INPUT'||el.tagName==='TEXTAREA') el.placeholder=v;
-    else if(el.hasAttribute('data-i18n-html')) el.innerHTML=v;
-    else el.textContent=v;
-  });
-  document.querySelectorAll('[data-i18n-aria]').forEach(el=>{
-    el.setAttribute('aria-label', t(el.getAttribute('data-i18n-aria')));
-  });
-  try{ document.title = t('title'); }catch(e){}
-}
-
 
 /* ============ TELEGRAM ============ */
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
@@ -1285,11 +1054,11 @@ const CH_RULES = {
   fast:{ name:'Ускоренный', stages:'1 этап', rows:[['Этап 1','+10%','−3%','−6%','3'],['Фандед','∞','−3%','−6%','5']] }
 };
 const CH_SIZES = {
-  base:[ {name:'Легенда рынка',size:200000,price:1399,pro:false,vipGift:true},{name:'Выбор топов',size:100000,price:799,pro:true,vipGift:true},
-         {name:'Уверенный вход',size:50000,price:399,vipGift:true},{name:'Оптимальный',size:25000,price:249,hot:true},
+  base:[ {name:'Легенда рынка',size:200000,price:1399,pro:false},{name:'Выбор топов',size:100000,price:799,pro:true},
+         {name:'Уверенный вход',size:50000,price:399},{name:'Оптимальный',size:25000,price:249,hot:true},
          {name:'Плавный старт',size:10000,price:119},{name:'Минимум риска',size:5000,price:69} ],
-  fast:[ {name:'Король рынка',size:200000,price:1499,pro:false,vipGift:true},{name:'Сильный старт',size:100000,price:899,pro:true,vipGift:true},
-         {name:'Баланс силы',size:50000,price:459,vipGift:true},{name:'Золотая середина',size:25000,price:259,hot:true},
+  fast:[ {name:'Король рынка',size:200000,price:1499,pro:false},{name:'Сильный старт',size:100000,price:899,pro:true},
+         {name:'Баланс силы',size:50000,price:459},{name:'Золотая середина',size:25000,price:259,hot:true},
          {name:'Топ за свои',size:10000,price:129},{name:'Пробуй смело',size:5000,price:79} ]
 };
 const RULES = { target1:5, target2:8, dailyLoss:5, maxDD:10, profitDays:3, split:80 };
@@ -1300,10 +1069,10 @@ const S = {
   prices:{},      // symbol -> {price, change24h}
   klines:{},      // symbol_interval -> [{t,o,h,l,c,v}]
   term:{ symbol:'BTCUSDT', interval:'1h', hover:null, tool:'cursor', pend:null, layout:null, view:null, type:'candle', pScale:1, oScale:[1,1,1,1], priceH:300, oscH:70 },
-  marketFilter:'all', search:'', coinMeta:{}, mktLimit:100, chType:'base', chSel:null, adminStat:null, activePromo:null,
+  marketFilter:'all', search:'', coinMeta:{}, mktLimit:60, chType:'base', chSel:null, adminStat:null, activePromo:null,
   acc:{ active:true, tier:10000, stage:1, balance:10000, startDay:10000, profitDays:0, dayPnlPeak:0, status:'RUN' },
   accounts:[], activeAccId:null, positions:[], history:[], nextId:1, payoutReq:[],
-  equityHist:[], alerts:[], ptab:'pos', stab:'signals', tier:'free', wallet:{}, nexus:{balance:0,history:[],mint:null,vault:null}, chat:[], user:null,
+  equityHist:[], alerts:[], ptab:'pos', stab:'signals', tier:'free', wallet:{}, chat:[], user:null,
   indA:[{n:'EMA',p:{p:21}},{n:'RSI',p:{p:14,lo:30,hi:70}}], showOB:false, draws:{}, src:'DEMO'
 };
 
@@ -1314,11 +1083,11 @@ function fUsd(n){ return (n<0?'-$':'$')+fmt(Math.abs(n)); }
 function decOf(sym){ const a=ASSETS.find(x=>x.s===sym); return a?a.d:2; }
 function hash(x){ let h=0; for(let i=0;i<x.length;i++) h=(Math.imul(31,h)+x.charCodeAt(i))|0; return h; }
 function rng(seed){ let s=seed%2147483647; if(s<=0)s+=2147483646; return()=>{ s=(s*16807)%2147483647; return (s-1)/2147483646; }; }
-function toast(msg, icon){ if(typeof _chartFs!=='undefined' && _chartFs) return; $('toastText').textContent=msg; $('toastIcon').textContent=icon||'✅';
+function toast(msg, icon){ $('toastText').textContent=msg; $('toastIcon').textContent=icon||'✅';
   const t=$('toast'); t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'), 2400); }
 
 /* ============ DATA (live Binance + demo fallback) ============ */
-function demoKlines(sym, interval, n){ n=n||500;
+function demoKlines(sym, interval, n){
   n=n||110; const r=rng(hash(sym+interval+Math.floor(Date.now()/36e5)));
   const b=BASE[sym]||100, step=IMS[interval]; const now=Math.floor(Date.now()/step)*step;
   let p=b*(0.985+r()*0.03); const out=[];
@@ -1352,7 +1121,6 @@ async function loadMarkets(){
     });
     if(list.length<20) throw 0;
     ASSETS = list;
-    _klinesReady=false;
     S.live=true; S.src='CoinGecko';
     return true;
   }catch(e){ return false; }
@@ -1392,22 +1160,19 @@ function parseCdcCandle(x){
 }
 async function loadKlines(sym, interval){
   const key=sym+'_'+interval;
-  // уже есть нормальные данные — не перезатираем
-  if(S.klines[key] && S.klines[key].length>=80 && S.klines[key]._live) return S.klines[key];
   try{
-    if(!CDC[sym]) throw new Error('no cdc');
-    const url='https://api.crypto.com/exchange/v1/public/get-candlestick?instrument_name='+CDC[sym]+'&timeframe='+CDC_TF[interval]+'&count=1000';
+    const url='https://api.crypto.com/exchange/v1/public/get-candlestick?instrument_name='+CDC[sym]+'&timeframe='+CDC_TF[interval]+'&count=300';
     const raw=await fetchJson(url);
     const arr=raw && raw.result && raw.result.data;
     if(!Array.isArray(arr)||arr.length<20) throw new Error('bad');
     const ks=arr.map(parseCdcCandle).filter(o=>isFinite(o.c)&&isFinite(o.t));
     ks.sort((a,b)=>a.t-b.t);
-    S.klines[key]=ks; S.klines[key]._live=1; return S.klines[key];
+    S.klines[key]=ks; return S.klines[key];
   }catch(e){}
   try{
-    const raw=await fetchJson('https://fapi.binance.com/fapi/v1/klines?symbol='+sym+'&interval='+interval+'&limit=1000');
+    const raw=await fetchJson('https://fapi.binance.com/fapi/v1/klines?symbol='+sym+'&interval='+interval+'&limit=300');
     if(!Array.isArray(raw)||raw.length<20) throw new Error('bad');
-    S.klines[key]=raw.map(r=>({t:r[0],o:+r[1],h:+r[2],l:+r[3],c:+r[4],v:+r[5]})); S.klines[key]._live=1;
+    S.klines[key]=raw.map(r=>({t:r[0],o:+r[1],h:+r[2],l:+r[3],c:+r[4],v:+r[5]}));
     return S.klines[key];
   }catch(e){}
   // fallback: строим свечи из 7д-спарклайна CoinGecko, если есть
@@ -1447,80 +1212,28 @@ function startWS(){
     feedCandle(sym, last);
     wsAlive=true; S.live=true; S.src='Crypto.com \u26a1';
     rtDirty=true;
-    try{ riskOnTick(); }catch(e){}
     if(S.screen==='terminal' && S.term.symbol===sym) drawTermChart();
   };
   ws.onclose=()=>{ wsAlive=false; setTimeout(startWS, 4000); };
   ws.onerror=()=>{ try{ ws.close(); }catch(e){} };
 }
-/** Реальная цена. НИКОГДА не подставляем 100 для неизвестных монет. */
-function hasLivePrice(sym){
-  const r = S.prices && S.prices[sym];
-  return !!(r && isFinite(r.price) && r.price > 0);
-}
-function priceOf(sym){
-  const r = S.prices && S.prices[sym];
-  if(r && isFinite(r.price) && r.price > 0) return r.price;
-  // fallback только для известных CORE из BASE (не для CC/PUMP и т.п.)
-  if(BASE[sym] && isFinite(BASE[sym]) && BASE[sym] > 0) return BASE[sym];
-  return null;
-}
-/** Цена «здравая» относительно входа (защита от кривых тикеров). */
-function isSanePrice(price, entry){
-  if(!isFinite(price) || price <= 0) return false;
-  if(entry && isFinite(entry) && entry > 0){
-    if(price > entry * 15 || price < entry / 15) return false; // >15x — мусор данных
-  }
-  return true;
-}
-function posPnl(p){
-  if(!p || !p.entry || !p.qty) return 0;
-  let cur = priceOf(p.symbol);
-  if(cur == null || !isSanePrice(cur, p.entry)){
-    // нет цены / мусор — не рисуем фейковый PnL, считаем 0 до появления валидной котировки
-    return 0;
-  }
-  const dir = p.side==='LONG' ? 1 : -1;
-  let pnl = (cur - p.entry) * p.qty * dir;
-  // isolated margin: убыток не больше маржи (ликвидция)
-  const maxLoss = (p.margin || 0);
-  if(maxLoss > 0 && pnl < -maxLoss) pnl = -maxLoss;
-  return pnl;
-}
-function equity(){
-  const a = S.acc || {balance:0};
-  const upl = (S.positions||[]).reduce((s,p)=>s+posPnl(p),0);
-  return (a.balance||0) + upl;
-}
-function usedMargin(){ return (S.positions||[]).reduce((s,p)=>s+(p.margin||0),0); }
-function freeMargin(){ return Math.max(0, (S.acc&&S.acc.balance||0) - usedMargin()); }
-function liqPrice(p){
-  if(!p || !p.entry || !p.lev) return null;
-  const dir = p.side==='LONG' ? 1 : -1;
-  return p.entry * (1 - dir * (1/p.lev) * 0.95);
-}
+function priceOf(sym){ return S.prices[sym] ? S.prices[sym].price : (BASE[sym]||100); }
+function posPnl(p){ const cur=priceOf(p.symbol); const dir=p.side==='LONG'?1:-1; return (cur-p.entry)*p.qty*dir; }
+function equity(){ const a=S.acc||{balance:0}; return (a.balance||0) + (S.positions||[]).reduce((s,p)=>s+posPnl(p),0); }
+function usedMargin(){ return S.positions.reduce((s,p)=>s+p.margin,0); }
+function freeMargin(){ return Math.max(0, S.acc.balance - usedMargin()); }
+function liqPrice(p){ const dir=p.side==='LONG'?1:-1; return p.entry*(1 - dir*(1/p.lev)*0.95); }
 
 function openPosition(side){
-  bindAcc();
   const blk=tradingBlocked();
   if(blk){ toast(blk,'🚫'); haptic('err'); return; }
-  if(!S.acc || (S.acc.status!=='RUN' && S.acc.status!=='PASS')){ toast('Счёт неактивен','⚠️'); haptic('err'); return; }
-  if(S.acc.kind==='challenge' && S.acc.status==='RUN'){
-    const eqNow=equity();
-    if(eqNow<=challengeStop() || eqNow<=dayStop()){
-      riskOnTick(); toast('Лимит просадки — сделки закрыты','🚫'); haptic('err'); return;
-    }
-  }
+  if(S.acc.status!=='RUN' && S.acc.status!=='PASS'){ toast('Счёт неактивен','⚠️'); haptic('err'); return; }
   const margin=parseFloat($('termMargin').value)||0;
   const lev=parseInt($('levSlider').value)||1;
   if(margin<10){ toast('Минимальная маржа — $10','⚠️'); haptic('err'); return; }
-  if(margin>freeMargin()+1e-9){ toast('Недостаточно свободной маржи','⚠️'); haptic('err'); return; }
-  const sym=S.term.symbol;
-  if(!hasLivePrice(sym)){ toast('Нет живой цены — подождите котировку','⚠️'); haptic('err'); return; }
-  const entry=priceOf(sym);
-  if(!entry||!isFinite(entry)||entry<=0){ toast('Нет цены инструмента','⚠️'); haptic('err'); return; }
+  if(margin>freeMargin()){ toast('Недостаточно свободной маржи','⚠️'); haptic('err'); return; }
+  const sym=S.term.symbol, entry=priceOf(sym);
   const qty=margin*lev/entry;
-  if(!isFinite(qty)||qty<=0){ toast('Некорректный объём','⚠️'); haptic('err'); return; }
   const ts=readTPSL(side, entry);
   bindAcc();
   S.positions.push({ id:S.nextId++, symbol:sym, side, margin, lev, entry, qty, opened:Date.now(), tp:ts.tp, sl:ts.sl });
@@ -1530,50 +1243,17 @@ function openPosition(side){
   setTimeout(()=>{ if(S.coachOn!==false) coachTip(true); }, 700);
   renderAll();
 }
-function closePosition(id, reason, opts){
-  opts = opts || {};
-  bindAcc();
-  const i=S.positions.findIndex(p=>p.id===id); if(i<0) return null;
-  const p=S.positions[i];
-  let exit = priceOf(p.symbol);
-  if(reason==='TP' && p.tp && isFinite(p.tp)) exit = p.tp;
-  if(reason==='SL' && p.sl && isFinite(p.sl)) exit = p.sl;
-  if(reason==='LIQ'){ const lp=liqPrice(p); if(lp!=null) exit = lp; }
-  if(opts.exitPrice!=null && isFinite(opts.exitPrice) && opts.exitPrice>0) exit = opts.exitPrice;
-
-  // если цены нет или она «сломана» относительно входа — закрываем по входу (pnl=0) либо по SL/liq
-  if(exit==null || !isFinite(exit) || exit<=0 || !isSanePrice(exit, p.entry)){
-    if(reason==='SL' && p.sl && isSanePrice(p.sl, p.entry)) exit = p.sl;
-    else if(reason==='LIQ'){ const lp=liqPrice(p); exit = (lp!=null?lp:p.entry); }
-    else exit = p.entry; // безопасный выход без фейкового PnL
-  }
-
-  const dir = p.side==='LONG'?1:-1;
-  let pnl = (exit - p.entry) * p.qty * dir;
-  // isolated: нельзя потерять больше маржи
-  const maxLoss = Math.max(0, p.margin||0);
-  if(maxLoss>0 && pnl < -maxLoss){ pnl = -maxLoss; exit = p.entry - dir * (maxLoss / Math.max(p.qty,1e-12)); }
-  // защита от абсурдно огромного профита за тик (баг данных)
-  const maxWin = maxLoss * Math.max(3, (p.lev||1));
-  if(maxLoss>0 && pnl > maxWin) pnl = maxWin;
-
-  S.acc.balance = (S.acc.balance||0) + pnl;
-  // баланс не уводим в глубокий минус от одной сделки
-  if(S.acc.kind==='challenge' && S.acc.balance < 0) S.acc.balance = 0;
-
+function closePosition(id, reason){
+  const i=S.positions.findIndex(p=>p.id===id); if(i<0) return;
+  const p=S.positions[i]; const pnl=posPnl(p); const exit=priceOf(p.symbol);
+  S.acc.balance+=pnl;
   S.history.unshift({ ...p, exit, pnl, closed:Date.now(), auto:reason||null });
-  if(S.history.length > 200) S.history.length = 200;
+  persistState();
   S.positions.splice(i,1);
-  if(!opts.silent){
-    const label = reason==='TP'?'Тейк-профит: ':reason==='SL'?'Стоп-лосс: ':reason==='LIQ'?'Ликвидация: ':(reason==='maxDD'||reason==='dailyLoss')?'Лимит: ':'Закрыто: ';
-    haptic(pnl>=0?'ok':'err');
-    toast(label+(pnl>=0?'+':'')+fUsd(pnl), pnl>=0?'💰':'📉');
-  }
-  if(!opts.skipCheck) checkChallenge();
-  if(!opts.silent){ persistState(); renderAll(); }
-  return pnl;
+  haptic('ok'); toast((reason==='TP'?'Тейк-профит: ':reason==='SL'?'Стоп-лосс: ':'Закрыто: ')+(pnl>=0?'+':'')+fUsd(pnl), pnl>=0?'💰':'📉');
+  checkChallenge(); renderAll();
 }
-function closeAll(reason){ [...S.positions].forEach(p=>closePosition(p.id, reason||null, {silent:true, skipCheck:true})); persistState(); checkChallenge(); renderAll(); }
+function closeAll(){ [...S.positions].forEach(p=>closePosition(p.id)); }
 
 const PAYOUT_HOLD_DAYS = 14;
 function isFunded(){ return S.acc && S.acc.status==='PASS'; }
@@ -1599,15 +1279,11 @@ function dayStop(){ return S.acc.startDay*(1-RULES.dailyLoss/100); }
 function forceCloseAll(reason){
   bindAcc();
   [...S.positions].forEach(p=>{
-    closePosition(p.id, reason, {silent:true, skipCheck:true});
+    const pnl=posPnl(p), exit=priceOf(p.symbol);
+    S.acc.balance+=pnl;
+    S.history.unshift({ ...p, exit, pnl, closed:Date.now(), auto:reason });
   });
-  S.positions = [];
-  // Clamp: equity не уходит ниже лимита челленджа
-  if(reason==='maxDD' || reason==='dailyLoss'){
-    const floor = reason==='maxDD' ? challengeStop() : dayStop();
-    if(S.acc.balance < floor) S.acc.balance = Math.max(0, floor);
-    if(S.acc.balance < 0) S.acc.balance = 0;
-  }
+  S.positions=[];
 }
 function tradingBlocked(){
   if(!S.acc) return false;
@@ -1616,6 +1292,93 @@ function tradingBlocked(){
 }
 
 
+
+
+/* ============ РЕЖИМ ТЕХНИЧЕСКОГО ОБСЛУЖИВАНИЯ ============ */
+/* Два независимых контура:
+     prop — это приложение (челленджи, терминал, оплаты) → экран техработ
+     bot  — Telegram-бот (уведомления) → приложение работает, молчат только уведомления
+   Поэтому здесь смотрим строго на контур prop: обслуживание бота закрывать
+   людям доступ к их счетам не должно. */
+let _maintFx=null;
+/** Контур из ответа /api/config с запасом на старый плоский формат. */
+function cfgScope(c, name){
+  if(!c) return {maintenance:false,message:'',until:''};
+  if(c[name]) return c[name];
+  // старый сервер отдавал только {maintenance,message,until} — это был prop
+  if(name==='prop') return {maintenance:!!c.maintenance, message:c.message||'', until:c.until||''};
+  return {maintenance:false,message:'',until:''};
+}
+async function checkMaintenance(){
+  try{
+    const r=await fetch(API_BASE+'/api/config?t='+Date.now());
+    if(!r.ok) return false;
+    const c=await r.json();
+    S.appConfig=c;
+    const prop=cfgScope(c,'prop');
+    if(prop.maintenance){
+      // владелец заходит всегда
+      if(isAdmin()){ toast('Режим обслуживания включён (вы видите приложение как админ)','🔧'); return false; }
+      showMaintenance(prop);
+      return true;
+    }
+    hideMaintenance();
+    return false;
+  }catch(e){ return false; }
+}
+function showMaintenance(c){
+  const el=$('screen-maint'); if(!el) return;
+  if(c && c.message) $('mtMsg').textContent=c.message;
+  const u=$('mtUntil');
+  if(c && c.until){ u.textContent='Планируем завершить: '+c.until; u.style.display='inline-block'; }
+  else u.style.display='none';
+  el.style.display='flex';
+  const sp=$('screen-splash'); if(sp) sp.style.display='none';
+  startMaintFx();
+  const btn=$('mtRetry');
+  if(btn && !btn._b){ btn._b=1; btn.addEventListener('click', async ()=>{
+    btn.textContent='Проверяем…'; haptic();
+    const still=await checkMaintenance();
+    btn.textContent = still ? 'Ещё идут работы — проверить снова' : 'Проверить снова';
+    if(!still){ toast('Приложение снова доступно','✅'); haptic('ok'); }
+  }); }
+  // автопроверка каждые 30 секунд
+  clearInterval(S._mtTimer);
+  S._mtTimer=setInterval(checkMaintenance, 30000);
+}
+function hideMaintenance(){
+  const el=$('screen-maint'); if(el) el.style.display='none';
+  clearInterval(S._mtTimer);
+  if(_maintFx){ cancelAnimationFrame(_maintFx); _maintFx=null; }
+}
+function startMaintFx(){
+  const cv=$('mtFx'); if(!cv || _maintFx) return;
+  const x=cv.getContext('2d'), dpr=Math.min(2,window.devicePixelRatio||1);
+  let W,H,parts=[];
+  const size=()=>{ W=cv.width=cv.clientWidth*dpr; H=cv.height=cv.clientHeight*dpr; };
+  size();
+  for(let i=0;i<45;i++) parts.push({x:Math.random()*W,y:Math.random()*H,
+    r:(Math.random()*1.6+0.5)*dpr, sp:(Math.random()*0.35+0.12)*dpr, a:Math.random()*0.5+0.2,
+    hue:Math.random()<0.25?'#EAC97A':'#22E4FF'});
+  let t=0;
+  const loop=()=>{
+    t+=0.016; x.clearRect(0,0,W,H);
+    // сетка
+    x.strokeStyle='rgba(34,228,255,0.035)'; x.lineWidth=1;
+    const g=44*dpr;
+    for(let i=0;i<W;i+=g){ x.beginPath(); x.moveTo(i,0); x.lineTo(i,H); x.stroke(); }
+    for(let i=0;i<H;i+=g){ x.beginPath(); x.moveTo(0,i); x.lineTo(W,i); x.stroke(); }
+    parts.forEach(p=>{
+      p.y-=p.sp; if(p.y<-4){ p.y=H+4; p.x=Math.random()*W; }
+      x.globalAlpha=p.a*(0.6+0.4*Math.sin(t*2+p.x));
+      x.fillStyle=p.hue; x.shadowColor=p.hue; x.shadowBlur=8*dpr;
+      x.beginPath(); x.arc(p.x,p.y,p.r,0,6.283); x.fill();
+    });
+    x.globalAlpha=1; x.shadowBlur=0;
+    _maintFx=requestAnimationFrame(loop);
+  };
+  _maintFx=requestAnimationFrame(loop);
+}
 
 /* ============ УВЕДОМЛЕНИЯ О ЧЕЛЛЕНДЖЕ ============ */
 function tgNotify(type, data){
@@ -1746,30 +1509,6 @@ function checkMilestone(a, eq){
   }
 }
 
-
-const VIP_ACC_MIN = 50000; // счета от $50k → VIP автоматически
-function hasVipAccount(){
-  return (S.accounts||[]).some(a=>a && a.kind==='challenge' && (Number(a.tier)||0) >= VIP_ACC_MIN);
-}
-/** Выдать VIP если есть счёт ≥ $50k (в т.ч. уже купленные). */
-function syncVipFromAccounts(silent){
-  if(!hasVipAccount()) return false;
-  if(tierRank(S.tier) >= 2) return false;
-  S.tier = 'vip';
-  try{ saveMeta(); }catch(e){}
-  try{ persistState(); }catch(e){}
-  if(!silent) toast('VIP активирован за счёт от $50k','👑');
-  return true;
-}
-function grantVipForSize(size, silent){
-  if((Number(size)||0) < VIP_ACC_MIN) return false;
-  if(tierRank(S.tier) >= 2) return true;
-  S.tier = 'vip';
-  try{ saveMeta(); }catch(e){}
-  if(!silent) toast('VIP в подарок · счёт от $50k','👑');
-  return true;
-}
-
 /* ============ АКТИВАЦИЯ КУПЛЕННЫХ СЧЕТОВ ============ */
 async function checkMyPayments(silent){
   if(!S.user) return;
@@ -1793,9 +1532,7 @@ async function checkMyPayments(silent){
         const size=(p.meta&&p.meta.size) || parseChallengeSize(p.plan);
         const stages=(p.meta&&p.meta.stages) || (/ускорен/i.test(p.plan)?1:2);
         const a=addChallengeAcc(size, p.plan.split('·')[0].trim(), stages);
-        if(a){ grantVipForSize(size, true); haptic('ok'); showAccActivated(a);
-          if((Number(size)||0)>=VIP_ACC_MIN) toast('VIP активирован · счёт от $50k','👑');
-        }
+        if(a){ haptic('ok'); showAccActivated(a); }
       }
       S.appliedPays.push(p.id);
       fetch(API_BASE+'/api/payments',{method:'POST',headers:{'Content-Type':'application/json'},
@@ -1813,11 +1550,9 @@ function parseChallengeSize(plan){
   return 10000;
 }
 function showAccActivated(a){
-  const vipGift = (Number(a.tier)||0) >= VIP_ACC_MIN;
   $('sheetContent').innerHTML='<div style="text-align:center;padding:6px 0;">'+
-    '<div style="font-size:52px;">'+(vipGift?'👑':'💼')+'</div>'+
+    '<div style="font-size:52px;">💼</div>'+
     '<div class="h2 mt3">Счёт активирован</div>'+
-    (vipGift?'<div class="badge b-green mt2">VIP В ПОДАРОК</div>':'')+
     '<div class="equity mt3" style="color:var(--gold);">$'+fmt(a.tier,0)+'</div>'+
     '<div class="small mt3" style="color:var(--txt2);line-height:1.6;">'+a.label+'<br><br>'+
       'Цель этапа 1: <b style="color:var(--green);">+'+RULES.target1+'%</b> · дневной лимит −'+RULES.dailyLoss+'% · общая просадка −'+RULES.maxDD+'%<br><br>'+
@@ -1870,9 +1605,7 @@ function addChallengeAcc(size, planName, stages){
     tier:size, balance:size, startDay:size, stage:1, status:'RUN',
     stages: stages||2
   });
-  accList().push(a); S.activeAccId=a.id; bindAcc();
-  grantVipForSize(size, false);
-  persistState();
+  accList().push(a); S.activeAccId=a.id; bindAcc(); persistState();
   return a;
 }
 function migrateAccounts(){
@@ -1901,84 +1634,6 @@ function rollDay(){
     S.acc.dayPnlPeak=0;
     if(S.acc.status==='RUN' || S.acc.status==='PASS') persistState();
   }
-}
-
-/** Чистка сломанных позиций и истории с PnL на миллионы */
-function sanitizeBrokenTrades(){
-  const saveId = S.activeAccId;
-  (S.accounts||[]).forEach(a=>{
-    if(!a) return;
-    S.activeAccId = a.id; bindAcc();
-    // открытые позиции без цены / с мусорным entry
-    const keep = [];
-    (S.positions||[]).forEach(p=>{
-      if(!p || !isFinite(p.entry) || p.entry<=0 || !isFinite(p.qty) || p.qty<=0) return;
-      // позиция с «мёртвым» символом без цены — закрыть по входу
-      if(!hasLivePrice(p.symbol) && !(BASE[p.symbol])){
-        // закрываем без PnL
-        S.history = S.history||[];
-        S.history.unshift({...p, exit:p.entry, pnl:0, closed:Date.now(), auto:'bad_price'});
-        return;
-      }
-      keep.push(p);
-    });
-    S.positions = keep; a.positions = keep;
-
-    // история: режем абсурдные PnL
-    if(Array.isArray(S.history)){
-      S.history = S.history.filter(h=>{
-        if(!h) return false;
-        if(!isFinite(h.pnl)) return false;
-        const m = Math.max(1, h.margin||1);
-        // |pnl| > 50x маржи — явный баг данных
-        if(Math.abs(h.pnl) > m * 50) return false;
-        if(h.exit!=null && h.entry && !isSanePrice(h.exit, h.entry) && Math.abs(h.pnl)>m) return false;
-        return true;
-      }).slice(0, 150);
-      a.history = S.history;
-    }
-    // баланс не ниже 0 на челлендже после чистки
-    if(a.kind==='challenge' && (a.balance||0) < 0) a.balance = 0;
-  });
-  S.activeAccId = saveId; bindAcc();
-  try{ persistState(); }catch(e){}
-}
-
-function sanitizeAccountsRisk(){
-  const saveId=S.activeAccId;
-  (S.accounts||[]).forEach(a=>{
-    if(!a) return;
-    S.activeAccId=a.id; bindAcc();
-    // FAIL-счёт не должен держать открытые позиции
-    if(a.status==='FAIL'){
-      if(S.positions && S.positions.length){
-        forceCloseAll(a.failReason&&a.failReason.indexOf('дневн')>=0?'dailyLoss':'maxDD');
-      }
-      if(a.balance < 0) a.balance = 0;
-      return;
-    }
-    const eq = equity();
-    if(a.status==='RUN' && a.kind==='challenge'){
-      const stop = a.tier*(1-RULES.maxDD/100);
-      const dstop = (a.startDay||a.tier)*(1-RULES.dailyLoss/100);
-      if(eq<=stop || eq<=dstop){
-        const reason = eq<=stop ? 'maxDD' : 'dailyLoss';
-        forceCloseAll(reason);
-        a.status='FAIL';
-        a.failReason = reason==='maxDD'
-          ? ('превышена общая просадка −'+RULES.maxDD+'%')
-          : ('превышен дневной лимит −'+RULES.dailyLoss+'%');
-        a.failedAt=Date.now();
-        if(a.balance < 0) a.balance = 0;
-      }
-    }
-    if(a.kind==='demo' && eq < -(a.tier||10000)){
-      forceCloseAll('maxDD');
-      a.balance = Math.max(0, a.balance);
-    }
-  });
-  S.activeAccId=saveId; bindAcc();
-  try{ persistState(); }catch(e){}
 }
 function checkAllAccounts(){
   const saveId=S.activeAccId;
@@ -2056,33 +1711,7 @@ function renderHome(){
   if(S.acc.status==='PASS') $('stageDot3').classList.add('done');
   const name = tg && tg.initDataUnsafe && tg.initDataUnsafe.user ? (tg.initDataUnsafe.user.first_name||'Трейдер') : 'Трейдер';
   $('userName').textContent=name; $('userAva').textContent=name.slice(0,1).toUpperCase();
-  const hbh=$('homeBotHost'); if(hbh) renderBotPanel(hbh);
-  const hnx=$('homeNxBal'); if(hnx) hnx.textContent=fmt((S.nexus&&S.nexus.balance)||0,2);
-  try{ syncVipFromAccounts(true); }catch(e){} try{ sanitizeBrokenTrades(); sanitizeAccountsRisk(); }catch(e){}
-  const htb=$('homeTierBadge');
-  if(htb){
-    htb.textContent=(S.tier||'free').toUpperCase();
-    htb.className='badge '+(S.tier==='vip'?'b-green':S.tier==='prem'?'b-gold':'b-mut');
-  }
-  const bp=$('homeBuyPrem'), bv=$('homeBuyVip');
-  if(bp){ bp.onclick=()=>openSubPay('prem'); bp.disabled=tierRank(S.tier)>=1; bp.style.opacity=tierRank(S.tier)>=1?'.55':'1'; }
-  if(bv){ bv.onclick=()=>openSubPay('vip'); bv.disabled=tierRank(S.tier)>=2; bv.style.opacity=tierRank(S.tier)>=2?'.55':'1'; }
 }
-function openSubPay(tierId){
-  const t=(typeof TIERS_SUB!=='undefined'?TIERS_SUB:[]).find(x=>x.id===tierId);
-  if(!t){ toast('Тариф не найден','⚠️'); return; }
-  if(tierId==='prem' && tierRank(S.tier)>=1){ toast('У вас уже Премиум или выше','⭐'); return; }
-  if(tierId==='vip' && tierRank(S.tier)>=2){ toast('У вас уже ВИП','👑'); return; }
-  if(typeof openPay==='function'){
-    openPay('subscription', t.name+' · '+tierId, t.price, function(){
-      toast('Заявка на '+(tierId==='vip'?'ВИП':'Премиум')+' отправлена — ждём подтверждения','📨');
-      closeSheet();
-    }, { sub: tierId });
-  } else {
-    toast('Оплата временно недоступна','⚠️');
-  }
-}
-
 
 /* ============ RENDER: ACCOUNTS ============ */
 function renderAccounts(){
@@ -2279,7 +1908,6 @@ function updateMarketPrices(){
 /* ============ RENDER: TERMINAL ============ */
 async function openTerminal(sym){
   S.term.symbol=sym; S.term.view=null; S.term.hover=null; S.term.pend=null; go('terminal');
-  destroyTvChart();
   await loadKlines(sym, S.term.interval);
   renderTerminal();
 }
@@ -2493,7 +2121,7 @@ function normInd(list){ return (list||[]).map(x=>{
   } return {n:x.n, p:Object.assign(defParams(indByName(x.n)||INDS[1]), x.p||{})}; }); }
 function oscList(){ return (S.indA||[]).filter(it=>{const d=indByName(it.n);return d&&d[1]==='os';}).slice(0,4); }
 function oscH(){ return S.term.oscH||70; }
-function chartWrapH(){ return Math.max(300, Math.min(window.innerHeight*0.52, 440)); }
+function chartWrapH(){ return (S.term.priceH||300) + oscList().length*(oscH()+10); }
 
 /* ================= ORDER BLOCKS ================= */
 let _obC={};
@@ -2548,213 +2176,8 @@ function saveDraws(){ try{ localStorage.setItem('nx_draws', JSON.stringify(S.dra
 function loadDraws(){ try{ const d=localStorage.getItem('nx_draws'); if(d) S.draws=JSON.parse(d); }catch(e){} }
 function saveInd(){ try{ localStorage.setItem('nx_indA', JSON.stringify(S.indA)); }catch(e){} }
 
-/* ================= CHART: full TradingView Advanced Chart ================= */
-let _tvWidget = null;
-let _tvWidgetKey = '';
-
-const TV_INTERVAL = {
-  '1m':'1','3m':'3','5m':'5','15m':'15','30m':'30',
-  '1h':'60','2h':'120','4h':'240','6h':'360','12h':'720',
-  '1d':'D','3d':'3D','1w':'W','1M':'M'
-};
-
-/** Карта символов TradingView: Binance + альтернативы (delisted / нет пары) */
-const TV_SYM_MAP = {
-  // Monero и др. нет на Binance spot
-  XMRUSDT: 'KUCOIN:XMRUSDT',
-  XMRUSD: 'KUCOIN:XMRUSDT',
-  TONUSDT: 'BINANCE:TONUSDT',
-  BCHUSDT: 'BINANCE:BCHUSDT',
-  LTCUSDT: 'BINANCE:LTCUSDT',
-  ADAUSDT: 'BINANCE:ADAUSDT',
-  DOTUSDT: 'BINANCE:DOTUSDT',
-  LINKUSDT: 'BINANCE:LINKUSDT',
-  ATOMUSDT: 'BINANCE:ATOMUSDT',
-  NEARUSDT: 'BINANCE:NEARUSDT',
-  APTUSDT: 'BINANCE:APTUSDT',
-  ARBUSDT: 'BINANCE:ARBUSDT',
-  OPUSDT: 'BINANCE:OPUSDT',
-  SUIUSDT: 'BINANCE:SUIUSDT',
-  INJUSDT: 'BINANCE:INJUSDT',
-  STXUSDT: 'BINANCE:STXUSDT',
-  TIAUSDT: 'BINANCE:TIAUSDT',
-  SEIUSDT: 'BINANCE:SEIUSDT',
-  RENDERUSDT: 'BINANCE:RENDERUSDT',
-  FETUSDT: 'BINANCE:FETUSDT',
-  TAOUSDT: 'BINANCE:TAOUSDT',
-  WLDUSDT: 'BINANCE:WLDUSDT',
-  PEPEUSDT: 'BINANCE:PEPEUSDT',
-  WIFUSDT: 'BINANCE:WIFUSDT',
-  BONKUSDT: 'BINANCE:BONKUSDT',
-  FLOKIUSDT: 'BINANCE:FLOKIUSDT',
-  SHIBUSDT: 'BINANCE:SHIBUSDT',
-  TRXUSDT: 'BINANCE:TRXUSDT',
-  AVAXUSDT: 'BINANCE:AVAXUSDT',
-  MATICUSDT: 'BINANCE:MATICUSDT',
-  POLUSDT: 'BINANCE:POLUSDT',
-  ICPUSDT: 'BINANCE:ICPUSDT',
-  FILUSDT: 'BINANCE:FILUSDT',
-  HYPEUSDT: 'BYBIT:HYPEUSDT',
-  // стейблы / обёртки
-  USDCUSDT: 'BINANCE:USDCUSDT',
-  DAIOUSDT: 'BINANCE:DAIUSDT',
-  WBTCUSDT: 'BINANCE:WBTCUSDT'
-};
-function tvSymbol(sym){
-  const s = String(sym||'BTCUSDT').toUpperCase().replace('/','').replace('-','');
-  if(TV_SYM_MAP[s]) return TV_SYM_MAP[s];
-  // CoinGecko иногда отдаёт символы без USDT-пары на Binance — пробуем популярные биржи
-  const base = s.replace(/USDT$|USD$|USDC$/,'');
-  // HYPE и новые мемкоины чаще на Bybit
-  if(['HYPE','WIF','BONK','POPCAT','MEW','PNUT'].includes(base))
-    return 'BYBIT:'+base+'USDT';
-  return 'BINANCE:' + (s.endsWith('USDT')?s:s+'USDT');
-}
-
-
-let _chartFs = false;
-function toggleChartFullscreen(force){
-  _chartFs = force===undefined ? !_chartFs : !!force;
-  document.body.classList.toggle('chart-fs-active', _chartFs);
-  // спрятать риск-баннеры, coach, тосты, торговую панель
-  try{ hideCoach(); }catch(e){}
-  document.querySelectorAll('.note-box, [data-risk-banner], .risk-banner, #coachBox, .coach').forEach(el=>{
-    if(_chartFs){ el.dataset._fsHide='1'; el.style.setProperty('display','none','important'); }
-    else if(el.dataset._fsHide){ el.style.removeProperty('display'); delete el.dataset._fsHide; }
-  });
-  const term = document.getElementById('screen-terminal');
-  if(term){
-    Array.from(term.children).forEach(ch=>{
-      if(ch.classList && ch.classList.contains('term-chart-card')) return;
-      if(_chartFs){ ch.dataset._fsHide='1'; ch.style.setProperty('display','none','important'); }
-      else if(ch.dataset._fsHide){ ch.style.removeProperty('display'); delete ch.dataset._fsHide; }
-    });
-  }
-  const toastEl = $('toast');
-  if(toastEl){
-    if(_chartFs){ toastEl.classList.remove('show'); toastEl.style.setProperty('display','none','important'); }
-    else { toastEl.style.removeProperty('display'); }
-  }
-  let bar = document.getElementById('chartFsBar');
-  if(_chartFs){
-    if(!bar){
-      bar = document.createElement('div');
-      bar.id = 'chartFsBar';
-      bar.className = 'chart-fs-bar';
-      bar.innerHTML = '<span class="micro" style="color:rgba(234,247,255,.7);font-weight:600;">Режим разметки · полный экран</span>'+
-        '<button type="button" id="chartFsClose">✕ Закрыть</button>';
-      document.body.appendChild(bar);
-      bar.querySelector('#chartFsClose').onclick = ()=>toggleChartFullscreen(false);
-    }
-    bar.style.display = 'flex';
-    // блокируем скролл страницы под графиком
-    document.documentElement.style.overflow = 'hidden';
-    document.body.style.overflow = 'hidden';
-  } else if(bar){
-    bar.style.display = 'none';
-    document.documentElement.style.overflow = '';
-    document.body.style.overflow = '';
-  }
-  setTimeout(()=>{ destroyTvChart(); drawTermChart(); }, 100);
-}
-
-function destroyTvChart(){
-  try{
-    if(_tvWidget){
-      if(typeof _tvWidget.remove === 'function') _tvWidget.remove();
-      else if(_tvWidget._ready && typeof _tvWidget.chart === 'function'){ /* iframe widget */ }
-    }
-  }catch(e){}
-  _tvWidget = null;
-  _tvWidgetKey = '';
-  const el = document.getElementById('tvChart');
-  if(el) el.innerHTML = '';
-}
-
-function ensureTvChart(){
-  const wrap = document.getElementById('tvChart');
-  if(!wrap) return null;
-  if(typeof TradingView === 'undefined') return null;
-
-  const key = S.term.symbol + '_' + S.term.interval;
-  if(_tvWidget && _tvWidgetKey === key) return _tvWidget;
-
-  destroyTvChart();
-
-  const h = Math.max(280, (document.getElementById('termChartWrap')||wrap).clientHeight || 320);
-  wrap.style.height = h + 'px';
-
-  // Full Advanced Chart — инструменты, индикаторы, зум/скролл как на TradingView
-  _tvWidget = new TradingView.widget({
-    autosize: true,
-    symbol: tvSymbol(S.term.symbol),
-    interval: TV_INTERVAL[S.term.interval] || '60',
-    timezone: 'Europe/Moscow',
-    theme: 'dark',
-    style: '1',
-    locale: 'ru',
-    toolbar_bg: '#0b1218',
-    enable_publishing: false,
-    hide_top_toolbar: false,
-    hide_legend: false,
-    hide_side_toolbar: false, withdateranges: true, details: true,
-    allow_symbol_change: true,
-    save_image: false,
-    container_id: 'tvChart',
-    studies_overrides: {},
-    overrides: {
-      'paneProperties.background': '#0a1016',
-      'paneProperties.backgroundType': 'solid',
-      'paneProperties.vertGridProperties.color': 'rgba(34,228,255,0.06)',
-      'paneProperties.horzGridProperties.color': 'rgba(34,228,255,0.06)',
-      'scalesProperties.textColor': 'rgba(234,247,255,0.55)',
-      'mainSeriesProperties.candleStyle.upColor': '#2BFF9E',
-      'mainSeriesProperties.candleStyle.downColor': '#FF3B57',
-      'mainSeriesProperties.candleStyle.borderUpColor': '#2BFF9E',
-      'mainSeriesProperties.candleStyle.borderDownColor': '#FF3B57',
-      'mainSeriesProperties.candleStyle.wickUpColor': '#2BFF9E',
-      'mainSeriesProperties.candleStyle.wickDownColor': '#FF3B57'
-    },
-    disabled_features: [
-      'header_symbol_search',
-      'header_compare',
-      'header_saveload',
-      'display_market_status'
-    ],
-    enabled_features: [
-      'side_toolbar_in_fullscreen_mode',
-      'header_in_fullscreen_mode',
-      'same_data_requery',
-      'left_toolbar',
-      'edit_buttons_in_legend',
-      'context_menus',
-      'control_bar',
-      'timeframes_toolbar'
-    ],
-    // Базовые индикаторы как на TV — пользователь добавляет любые через «Индикаторы»
-    studies: [
-      'Volume@tv-basicstudies'
-    ],
-    loading_screen: { backgroundColor: '#0a1016', foregroundColor: '#22E4FF' }
-  });
-
-  _tvWidgetKey = key;
-  return _tvWidget;
-}
-
+/* ================= CHART ================= */
 function drawTermChart(){
-  // Пересоздаём/обновляем полноценный TradingView виджет
-  try {
-    ensureTvChart();
-  } catch(e) {
-    console.warn('TV widget', e);
-    try { drawTermChartLegacy && drawTermChartLegacy(); } catch(e2){}
-  }
-}
-
-/* ================= CHART LEGACY (canvas fallback) ================= */
-function drawTermChartLegacy(){
-
   const cv=$('termChart'), wrap=$('termChartWrap');
   const k=S.klines[S.term.symbol+'_'+S.term.interval]; if(!cv||!k||!k.length) return;
   let V=S.term.view;
@@ -3198,7 +2621,6 @@ function drawLoupe(pos){
 function renderPortfolio(){
   const eq=equity(), start=S.acc.tier, pnl=eq-start, pct=pnl/start*100;
   $('pfEquity').textContent=fUsd(eq);
-  const bh=$('botHost'); if(bh) renderBotPanel(bh);
   $('pfPnl').innerHTML=`<span class="${pnl>=0?'up':'down'}">${pnl>=0?'+':''}${fUsd(pnl)} (${pnl>=0?'+':''}${pct.toFixed(2)}%)</span>`;
   $('cntPos').textContent=S.positions.length;
   $('cntHist').textContent=S.history.length;
@@ -3303,7 +2725,7 @@ document.addEventListener('click', e=>{
 });
 document.addEventListener('click', e=>{
   if(e.target.id==='saveWallet'){
-    ['trc20','bep20','ton','eth','sol'].forEach(k=>{ const el=$('addr_'+k); if(el) S.wallet[k]=el.value.trim(); });
+    ['trc20','bep20','ton','eth'].forEach(k=>{ const el=$('addr_'+k); if(el) S.wallet[k]=el.value.trim(); });
     saveMeta(); toast('Адреса сохранены','💾'); haptic('ok');
   }
   if(e.target.id==='authTg'){ authTelegram(); return; }
@@ -3329,7 +2751,6 @@ document.querySelectorAll('[data-mf]').forEach(c=>c.addEventListener('click', ()
   c.classList.add('active'); S.marketFilter=c.dataset.mf; renderMarket();
 }));
 $('tfBtn').addEventListener('click', openTfSheet);
-const _fsb=$('chartFsBtn'); if(_fsb) _fsb.addEventListener('click', ()=>toggleChartFullscreen());
 function openTfSheet(){
   const TFS=Object.keys(IMS);
   $('sheetContent').innerHTML='<div class="h2" style="text-align:center;">Таймфрейм</div>'+
@@ -3339,7 +2760,6 @@ function openTfSheet(){
     S.term.interval=btn.dataset.tf; S.term.view=null; _klinesReady=false;
     $('tfCur').textContent=TF_LABEL[S.term.interval];
     closeSheet(); haptic();
-    destroyTvChart();
     await loadKlines(S.term.symbol, S.term.interval); drawTermChart();
   }));
 }
@@ -3799,7 +3219,6 @@ function coachTip(force){
   showCoach(r.t, r.m(st), r.p>=8?'warn':'info');
 }
 function showCoach(title, text, kind){
-  if(typeof _chartFs!=='undefined' && _chartFs) return;
   let box=$('coachBox');
   if(!box){
     box=document.createElement('div'); box.id='coachBox'; box.className='coach';
@@ -4101,9 +3520,16 @@ function aiLastImpulse(){
   return best;
 }
 function aiMarkup(){
-  // Базовая авторазметка доступна всем; глубокий разбор — без блокировки UI
-  const run = ()=>{
-  const k=curK(); if(!k||k.length<80){ toast('Мало данных для анализа — подождите загрузку свечей','⚠️'); loadKlines(S.term.symbol,S.term.interval).then(()=>{ if((curK()||[]).length>=80) aiMarkup(); else toast('Не удалось загрузить историю','⚠️'); }); return; }
+  if(tierRank(S.tier)<1){
+    $('sheetContent').innerHTML='<div style="text-align:center;padding:8px 0;">'+
+      '<div style="font-size:46px;">🤖</div><div class="h2 mt3">ИИ-аналитик графика</div>'+
+      '<div class="small mt3" style="color:var(--txt2);line-height:1.6;">Поиск паттернов с проверкой по 12–18 критериям, построение Фибоначчи, ордер-блоки и разбор каждого сетапа по базе знаний.<br><br>Доступно с подпиской <b style="color:var(--gold);">Премиум</b>.</div>'+
+      '<button class="btn btn-gold btn-block mt4" id="aiUp">Открыть Премиум · $20</button></div>';
+    $('sheetVeil').classList.add('open');
+    $('aiUp').addEventListener('click',()=>{ closeSheet(); go('signals'); S.stab='signals'; renderSignals(); });
+    return;
+  }
+  const k=curK(); if(!k||k.length<80){ toast('Мало данных для анализа','⚠️'); return; }
   const pats=aiDetect(50), imp=aiLastImpulse();
   const C=ctxSnapshot(k), n=k.length;
   const trendTxt = C.trend>0 ? 'восходящий' : 'нисходящий';
@@ -4172,8 +3598,6 @@ function aiMarkup(){
   $('sheetContent').querySelectorAll('[data-pat]').forEach(el=>el.addEventListener('click',()=>{
     openPatternDetail(pats[+el.dataset.pat], drawPat);
   }));
-  }; // end run
-  run();
 }
 function openPatternDetail(v, drawPat){
   const kb=v.kb;
@@ -4298,197 +3722,21 @@ function openDepthSheet(){
   clearInterval(depthTimer); load(); depthTimer=setInterval(load, 3000);
 }
 
-/* ============ AI TRADING BOT ============ */
-S.bot = S.bot || { on:false, riskPct:1, maxPos:2, lastTrade:0, log:[] };
-function botSave(){ try{ localStorage.setItem('nx_bot', JSON.stringify(S.bot)); }catch(e){} }
-function botLoad(){ try{ const b=localStorage.getItem('nx_bot'); if(b) S.bot=Object.assign(S.bot||{}, JSON.parse(b)); }catch(e){} }
-
-function botCanTrade(){
-  if(!S.bot || !S.bot.on) return false;
-  if(!S.acc || (S.acc.status!=='RUN' && S.acc.status!=='PASS')) return false;
-  if(tradingBlocked()) return false;
-  if((S.positions||[]).length >= (S.bot.maxPos||2)) return false;
-  if(Date.now()-(S.bot.lastTrade||0) < 120000) return false; // не чаще 1 раз / 2 мин
-  return true;
-}
-
-function botOpenFromSignal(sg){
-  if(!botCanTrade() || !sg) return false;
-  bindAcc();
-  const sym = sg.symbol;
-  // Только монеты с живой ценой; без фейкового BASE=100
-  if(!hasLivePrice(sym)) return false;
-  // Бот торгует только ликвидное ядро + топ по объёму с валидной ценой
-  const base = String(sym).replace('USDT','');
-  const illiquid = /^(CC|PUMP|1000|BABY|MOG|NEIRO|TURBO|MYRO|POPCAT|MEW|PNUT)$/i.test(base);
-  // мемкоины без стабильной котировки на WS — пропускаем
-  if(illiquid && !CORE_SYMS.includes(sym)) return false;
-
-  const entry = priceOf(sym);
-  if(!entry || !isFinite(entry) || entry <= 0) return false;
-
-  if((S.positions||[]).some(p=>p.symbol===sym)) return false;
-
-  const eq = equity();
-  if(!isFinite(eq) || eq <= 0) return false;
-  const riskUsd = Math.max(5, Math.min(eq * ((S.bot.riskPct||1)/100), eq * 0.02));
-
-  let sl = sg.sl, tp = sg.tp;
-  // если сигнала SL/TP нет или они «сломаны» — ставим 1% / 2%
-  if(!sl || !isSanePrice(sl, entry)){
-    sl = sg.dir==='LONG' ? entry * 0.99 : entry * 1.01;
-  }
-  if(!tp || !isSanePrice(tp, entry)){
-    tp = sg.dir==='LONG' ? entry * 1.02 : entry * 0.98;
-  }
-  // риск на единицу
-  let riskPerUnit = Math.abs(entry - sl);
-  if(riskPerUnit <= 0 || riskPerUnit/entry > 0.15){
-    // стоп слишком широкий — 1%
-    sl = sg.dir==='LONG' ? entry * 0.99 : entry * 1.01;
-    riskPerUnit = Math.abs(entry - sl);
-  }
-  const qty = riskUsd / riskPerUnit;
-  const notional = qty * entry;
-  const lev = Math.min(5, Math.max(2, Math.round(notional / Math.max(riskUsd,1))));
-  const margin = Math.max(10, notional / lev);
-  if(margin > freeMargin()) return false;
-
-  if(S.acc.kind==='challenge' && S.acc.status==='RUN'){
-    if(eq - riskUsd <= challengeStop() || eq - riskUsd <= dayStop()) return false;
-  }
-
-  const side = sg.dir==='LONG' ? 'LONG' : 'SHORT';
-  S.positions.push({
-    id:S.nextId++, symbol:sym, side, margin, lev, entry, qty,
-    opened:Date.now(), tp, sl, bot:true
-  });
-  S.bot.lastTrade = Date.now();
-  S.bot.log = (S.bot.log||[]).slice(-40);
-  S.bot.log.unshift({ t:Date.now(), side, sym, entry, tp, sl, margin });
-  botSave(); persistState();
-  toast('🤖 Бот: '+side+' '+base+' x'+lev, '🤖');
-  haptic('ok'); renderAll();
-  return true;
-}
-
-async function botTick(){
-  if(!botCanTrade()) return;
-  let sigs = [];
-  try{ sigs = allSignals().filter(s=>s && s.strength>=65); }catch(e){ return; }
-  // сначала ликвидное ядро
-  const core = sigs.filter(s=>CORE_SYMS.includes(s.symbol));
-  const rest = sigs.filter(s=>!CORE_SYMS.includes(s.symbol) && hasLivePrice(s.symbol));
-  const ordered = core.concat(rest).slice(0,8);
-  for(const sg of ordered){
-    if(botOpenFromSignal(sg)) break;
-  }
-}
-
-function renderBotPanel(host){
-  if(!host) return;
-  const b=S.bot||{on:false,riskPct:1,maxPos:2};
-  host.innerHTML =
-    '<div class="card mt3" style="border-color:'+(b.on?'rgba(34,228,255,.45)':'var(--line)')+';">'+
-    '<div class="row between"><div><span class="h3" style="font-size:15px;">🤖 ИИ-торговый бот</span>'+
-    '<div class="micro mt1" style="color:'+(b.on?'var(--green)':'var(--txt3)')+';">'+(b.on?'● Активен — торгует по сигналам':'○ Выключен')+'</div></div>'+
-    '<button class="btn btn-sm '+(b.on?'btn-gold':'btn-ghost')+'" id="botToggle">'+(b.on?'ВЫКЛ':'ВКЛ')+'</button></div>'+
-    '<div class="micro mt2" style="color:var(--txt2);line-height:1.55;">Сканирует <b>топ-100</b> монет, открывает сделки <b>только со стопом и тейком</b>. Риск ~'+(b.riskPct||1)+'% equity на вход, не чаще 1 раза / 2 мин, макс '+(b.maxPos||2)+' позиций. Учитывает лимиты челленджа.</div>'+
-    '<div class="row gap2 mt3"><div class="grow"><div class="micro">Риск на сделку %</div>'+
-    '<input class="input mono" id="botRisk" type="number" min="0.5" max="3" step="0.5" value="'+(b.riskPct||1)+'"></div>'+
-    '<div class="grow"><div class="micro">Макс. позиций</div>'+
-    '<input class="input mono" id="botMax" type="number" min="1" max="5" value="'+(b.maxPos||2)+'"></div></div>'+
-    '<div class="micro mt3">Последние: '+(b.log&&b.log.length? b.log.slice(0,4).map(x=>x.side+' '+String(x.sym).replace('USDT','')).join(' · ') : 'сделок ещё не было')+'</div></div>';
-  const tog=$('botToggle'); if(tog) tog.onclick=()=>{ S.bot.on=!S.bot.on; botSave(); renderBotPanel(host); toast(S.bot.on?'🤖 Бот включён — ищет сигналы':'Бот выключен','🤖'); haptic('ok'); };
-  const r=$('botRisk'); if(r) r.onchange=()=>{ S.bot.riskPct=Math.max(0.5,Math.min(3,+r.value||1)); botSave(); };
-  const m=$('botMax'); if(m) m.onchange=()=>{ S.bot.maxPos=Math.max(1,Math.min(5,+m.value||2)); botSave(); };
-}
-
 /* ============ SIGNALS ENGINE ============ */
-let _klinesReady=false, _klinesLoading=false, _sigScanGen=0;
-function sigUniverse(){
-  const list = (ASSETS||[]).slice();
-  list.sort((a,b)=>{
-    const ca=(S.coinMeta[a.s]&&S.coinMeta[a.s].cap)||0;
-    const cb=(S.coinMeta[b.s]&&S.coinMeta[b.s].cap)||0;
-    return cb-ca;
-  });
-  // ядро всегда в начале
-  const core = (CORE_SYMS||[]).map(s=>{
-    const a = list.find(x=>x.s===s) || {s:s, t:s.replace('USDT',''), n:s};
-    return a;
-  });
-  const rest = list.filter(a=>!(CORE_SYMS||[]).includes(a.s));
-  return core.concat(rest).slice(0, 40); // 40 достаточно, меньше rate-limit
-}
-/** Мгновенно кладём demo/spark свечи, чтобы UI не пустел */
-function seedKlinesQuick(){
-  (CORE_SYMS||[]).forEach(s=>{
-    ['4h','1h'].forEach(tf=>{
-      const key=s+'_'+tf;
-      if(S.klines[key] && S.klines[key].length>=50) return;
-      const meta=S.coinMeta[s];
-      if(meta && meta.spark && meta.spark.length>15){
-        const sp=meta.spark, out=[], now=Date.now();
-        const step = tf==='4h'?1.44e7:3.6e6;
-        for(let i=1;i<sp.length;i++){
-          const o=sp[i-1], c=sp[i];
-          out.push({t:now-(sp.length-i)*step, o, h:Math.max(o,c)*1.002, l:Math.min(o,c)*0.998, c, v:1000+i});
-        }
-        if(out.length>=20){ S.klines[key]=out; return; }
-      }
-      S.klines[key]=demoKlines(s, tf, 120);
-    });
-  });
-}
+let _klinesReady=false;
+function sigUniverse(){ return ASSETS.slice(0,14); }
 function ensureKlines(cb){
-  seedKlinesQuick();
-  if(_klinesReady){ if(typeof cb==='function') cb(); return; }
-  if(_klinesLoading){
-    // уже грузим — не запускаем второй цикл (анти-мигание)
-    if(typeof cb==='function'){
-      const wait=setInterval(()=>{
-        if(_klinesReady || !_klinesLoading){ clearInterval(wait); cb(); }
-      }, 400);
-      setTimeout(()=>clearInterval(wait), 20000);
-    }
-    return;
-  }
-  _klinesLoading=true;
-  const gen=++_sigScanGen;
-  const uni=sigUniverse();
-  (async()=>{
-    // 1) ядро — сеть
-    for(const s of (CORE_SYMS||[]).slice(0,7)){
-      if(gen!==_sigScanGen) return;
-      await Promise.all([
-        loadKlines(s,'4h').catch(()=>null),
-        loadKlines(s,'1h').catch(()=>null)
-      ]);
-    }
-    // один callback после ядра
-    if(gen===_sigScanGen && typeof cb==='function') cb();
-    // 2) остальные топ (тихо, без перерисовки каждый батч)
-    for(let i=0;i<uni.length;i+=5){
-      if(gen!==_sigScanGen) return;
-      const batch=uni.slice(i,i+5);
-      await Promise.all(batch.map(a=>loadKlines(a.s,'4h').catch(()=>null)));
-    }
-    if(gen===_sigScanGen){
-      _klinesReady=true;
-      _klinesLoading=false;
-      if(typeof cb==='function') cb();
-    }
-  })().catch(()=>{
-    _klinesReady=true; _klinesLoading=false;
-    if(typeof cb==='function') cb();
-  });
+  if(_klinesReady){ cb(); return; }
+  // сигналы строим на 4H — свинг-подход, а не скальпинг
+  const need=sigUniverse().filter(a=>!S.klines[a.s+'_4h']||S.klines[a.s+'_4h'].length<60);
+  if(!need.length){ _klinesReady=true; cb(); return; }
+  Promise.all(need.map(a=>loadKlines(a.s,'4h'))).then(()=>{ _klinesReady=true; cb(); }).catch(cb);
 }
 
-/* ============ ДВИЖОК СИГНАЛОВ ============ */
-const SIG_MIN_MOVE = 0.8;   // %
-const SIG_MIN_RR   = 1.1;
-const SIG_MIN_PASS = 6;
+/* ============ ДВИЖОК СИГНАЛОВ (swing, потенциал ≥2%) ============ */
+const SIG_MIN_MOVE = 2.0;   // минимальный потенциал до цели, %
+const SIG_MIN_RR   = 1.8;   // минимальное соотношение риск/прибыль
+const SIG_MIN_PASS = 13;    // минимум подтверждений из 20
 
 function structLevels(k, dep){
   // подбираем глубину так, чтобы получить достаточно опорных точек
@@ -4510,9 +3758,7 @@ function nearestBelow(levels, price, minGapPct){
 }
 
 function computeSignal(sym){
-  let k=S.klines[sym+'_4h'], tfUsed='4H';
-  if(!k||k.length<50){ k=S.klines[sym+'_1h']; tfUsed='1H'; }
-  if(!k||k.length<50) return null;
+  const k=S.klines[sym+'_4h']; if(!k||k.length<70) return null;
   const cl=k.map(o=>o.c), n=cl.length, last=cl[n-1];
   const e21=emaArr(cl,21), e50=emaArr(cl,50), e200=emaArr(cl,200);
   const r=rsiArr(cl,14), mac=macdArr(cl), st=stochArr(k,14,3), bb=bbArr(cl,20,2);
@@ -4535,10 +3781,8 @@ function computeSignal(sym){
   else if(structDown && !above200) bias='SHORT';
   else if(emaUp && above200) bias='LONG';
   else if(!emaUp && !above200) bias='SHORT';
-  else if(structUp || (emaUp && rsi>50)) bias='LONG';
-  else if(structDown || (!emaUp && rsi<50)) bias='SHORT';
-  else if(emaUp) bias='LONG';
-  else if(!emaUp) bias='SHORT';
+  else if(structUp) bias='LONG';
+  else if(structDown) bias='SHORT';
   if(!bias) return null;
   const up = bias==='LONG';
 
@@ -4590,7 +3834,7 @@ function computeSignal(sym){
     ['Свеча по направлению', bodyOK, 0.8],
     ['Импульс последних баров', up? higherHigh : lowerLow, 1.1],
     ['Объём не ниже среднего', (k[n-1].v||0) >= volAvg*0.75, 1.0],
-    ['Волатильность достаточная (ATR '+atrPct.toFixed(2)+'%)', atrPct>0.25, 1.0],
+    ['Волатильность достаточная (ATR '+atrPct.toFixed(2)+'%)', atrPct>0.5, 1.3],
     ['Потенциал до цели ≥'+SIG_MIN_MOVE+'% ('+movePct.toFixed(1)+'%)', movePct>=SIG_MIN_MOVE, 2.0],
     ['Соотношение риск/прибыль ≥'+SIG_MIN_RR+' (1:'+rr.toFixed(1)+')', rr>=SIG_MIN_RR, 2.0],
     ['Цель опирается на уровень структуры', tpSrc==='уровень структуры', 1.4],
@@ -4607,7 +3851,7 @@ function computeSignal(sym){
     symbol:sym, dir:bias, strength, passed, total, entry:last, tp, sl, rsi,
     movePct, riskPct, rr,
     reasons:F.filter(f=>f[1]).slice(0,4).map(f=>f[0]),
-    filters:F, d, tf:tfUsed, tpSrc,
+    filters:F, d, tf:'4H', tpSrc,
     horizon: horizonBars<=6 ? 'до 1 дня' : horizonBars<=18 ? '1–3 дня' : '3–7 дней',
     targetLevel: target? target.p : null
   };
@@ -4645,44 +3889,7 @@ function openSignalDetail(sym){
   $('sheetVeil').classList.add('open');
   $('sdTrade').addEventListener('click',()=>{ closeSheet(); openTerminal(sym); });
 }
-function computeMomentumSignal(sym){
-  let k=S.klines[sym+'_1h']||S.klines[sym+'_4h'];
-  if(!k||k.length<30) return null;
-  const cl=k.map(o=>o.c), n=cl.length, last=cl[n-1];
-  if(!last||!isFinite(last)) return null;
-  const e9=emaArr(cl,9), e21=emaArr(cl,21), r=rsiArr(cl,14);
-  const rsi=r[n-1]||50;
-  const up = e9[n-1]>e21[n-1] && last>e21[n-1];
-  const dn = e9[n-1]<e21[n-1] && last<e21[n-1];
-  if(!up && !dn) return null;
-  // фильтр экстремумов
-  if(up && rsi>72) return null;
-  if(dn && rsi<28) return null;
-  const atr=atrArr(k,14), atrV=atr[n-1]||last*0.01;
-  const dir = up?'LONG':'SHORT';
-  const sl = up ? last-atrV*1.4 : last+atrV*1.4;
-  const tp = up ? last+atrV*2.2 : last-atrV*2.2;
-  const risk=Math.abs(last-sl), reward=Math.abs(tp-last);
-  if(risk<=0) return null;
-  const rr=reward/risk;
-  if(rr<1.0) return null;
-  const strength = Math.min(78, Math.round(40 + Math.abs(rsi-50)*0.6 + (rr*8)));
-  return {
-    symbol:sym, dir, strength, passed:6, total:10, entry:last, tp, sl, rsi,
-    movePct: reward/last*100, riskPct: risk/last*100, rr,
-    reasons:['EMA 9/21','RSI '+rsi.toFixed(0),'ATR-цель'],
-    filters:[], d:decOf(sym), tf:(S.klines[sym+'_1h']?'1H':'4H'), tpSrc:'ATR',
-    horizon:'1–2 дня', targetLevel:null, soft:true
-  };
-}
-function allSignals(){
-  const strict = sigUniverse().map(a=>computeSignal(a.s)).filter(Boolean);
-  if(strict.length>=3) return strict.sort((a,b)=>b.strength-a.strength);
-  // добираем мягкими momentum-сигналами по ядру
-  const have = new Set(strict.map(s=>s.symbol));
-  const soft = (CORE_SYMS||[]).map(s=>have.has(s)?null:computeMomentumSignal(s)).filter(Boolean);
-  return strict.concat(soft).sort((a,b)=>b.strength-a.strength);
-}
+function allSignals(){ return sigUniverse().map(a=>computeSignal(a.s)).filter(Boolean).sort((a,b)=>b.strength-a.strength); }
 
 const TIERS_SUB=[
   {id:'free', name:'Free', price:0, feats:['2 сигнала в день','Базовая аналитика','Задержка 15 мин']},
@@ -4700,75 +3907,55 @@ function renderSignals(){
   else if(S.stab==='analytics') renderAnalytics(body);
   else renderAI(body);
 }
-function paintSigList(body){
-  if(!body || S.screen!=='signals'||S.stab!=='signals') return;
-  const sigs=allSignals();
-  const freeLimit=2, unlocked=tierRank(S.tier)>=1;
-  if(!sigs.length){
-    body.innerHTML='<div class="note-box"><b>Сетапы подгружаются…</b><br><span class="micro">Сканер проходит BTC, ETH и топ монет. Если пусто — нажмите обновить через несколько секунд.</span></div>'+
-      '<button class="btn btn-ghost btn-block mt3" id="sigRefresh">🔄 Обновить сканирование</button>';
-    const rb=$('sigRefresh');
-    if(rb) rb.onclick=()=>{
-      _klinesReady=false; _klinesLoading=false; _sigScanGen++;
-      seedKlinesQuick();
-      body.innerHTML='<div class="mut small" style="text-align:center;padding:16px;">Сканирую рынок…</div>';
-      ensureKlines(()=>paintSigList(body));
-    };
-    return;
-  }
-  // continue with existing list rendering — injected via flag below
-  __SIGS_PAINT__(body, sigs, freeLimit, unlocked);
-}
 function renderSigList(body){
-  if(!body) return;
-  seedKlinesQuick();
-  // сразу рисуем что есть (без мигания пустым экраном)
-  if(!_klinesReady){
-    const early=allSignals();
-    if(early.length){
-      paintSigList(body);
-    } else {
-      body.innerHTML='<div class="mut small" style="text-align:center;padding:20px;">🔍 Сканирую рынок…</div>';
-    }
-  } else {
-    paintSigList(body);
-  }
-  ensureKlines(()=>paintSigList(body));
-}
-function __SIGS_PAINT__(body, sigs, freeLimit, unlocked){
-  let html='';
-  sigs.forEach((sg,i)=>{
-    const a=ASSETS.find(x=>x.s===sg.symbol) || {t:sg.symbol.replace('USDT',''), s:sg.symbol};
-    const locked=!unlocked && i>=freeLimit;
-    html+='<div class="sig-card'+(locked?' locked':'')+'">';
-    if(locked) html+='<div class="sig-lock"><div class="lk">🔒</div><div class="small">Доступно в Премиум</div></div>';
-    html+='<div class="sig-inner"><div class="row between"><div class="row gap2"><span class="sig-dir '+(sg.dir==='LONG'?'long':'short')+'">'+(sg.dir==='LONG'?'▲ LONG':'▼ SHORT')+'</span><b>'+(a.t||'?')+'/USDT</b>'+
-      '<span class="tf-mini">'+(sg.tf||'4H')+'</span></div>'+
-      '<span class="flt-badge'+(sg.passed>=10?'':' mid')+'">✓ '+sg.passed+'/'+sg.total+'</span></div>'+
-      '<div class="progress mt3" style="height:6px;"><div class="fill" style="width:'+sg.strength+'%;background:'+(sg.strength>=70?'var(--green)':sg.strength>=55?'var(--gold)':'var(--txt2)')+';"></div></div>'+
-      '<div class="row between mt2"><span class="micro">Сила '+sg.strength+'%'+(sg.soft?' · momentum':'')+'</span>'+
-        '<span class="micro" style="color:'+(sg.dir==='LONG'?'var(--green)':'var(--red)')+'">'+(sg.dir==='LONG'?'+':'-')+sg.movePct.toFixed(1)+'%</span></div>'+
-      '<div class="sig-meta mt3">'+
-        '<div class="sm-i"><span>Потенциал</span><b class="'+(sg.dir==='LONG'?'up':'dn')+'">'+(sg.dir==='LONG'?'+':'-')+sg.movePct.toFixed(1)+'%</b></div>'+
-        '<div class="sm-i"><span>Риск</span><b style="color:var(--red);">−'+sg.riskPct.toFixed(1)+'%</b></div>'+
-        '<div class="sm-i"><span>R:R</span><b style="color:var(--gold);">1:'+sg.rr.toFixed(1)+'</b></div>'+
-        '<div class="sm-i"><span>Горизонт</span><b>'+sg.horizon+'</b></div>'+
-      '</div>'+
-      '<div class="pos-grid mt3">'+
-      '<div><div class="micro">Вход</div><div class="mono" style="font-weight:700;font-size:12.5px;">'+fmt(sg.entry,sg.d)+'</div></div>'+
-      '<div><div class="micro">Тейк</div><div class="mono" style="font-weight:700;font-size:12.5px;color:var(--green);">'+fmt(sg.tp,sg.d)+'</div></div>'+
-      '<div><div class="micro">Стоп</div><div class="mono" style="font-weight:700;font-size:12.5px;color:var(--red);">'+fmt(sg.sl,sg.d)+'</div></div></div>'+
-      '<div class="small mt3" style="color:var(--txt2);">'+((sg.reasons&&sg.reasons.length)?sg.reasons.join(' · '):'')+'</div>'+
-      '<div class="row gap2 mt3">'+
-        '<button class="btn btn-ghost btn-sm grow" data-sigdet="'+sg.symbol+'">Разбор</button>'+
-        '<button class="btn btn-gold btn-sm grow" data-trade="'+sg.symbol+'">В терминал</button>'+
-      '</div></div></div>';
-  });
-  body.innerHTML=html;
-  body.querySelectorAll('[data-trade]').forEach(b=>b.addEventListener('click',()=>openTerminal(b.dataset.trade)));
+  if(!_klinesReady) body.innerHTML='<div class="mut small" style="text-align:center;padding:16px;">Считаю сигналы…</div>';
+  ensureKlines(()=>{
+    if(S.screen!=='signals'||S.stab!=='signals') return;
+    const sigs=allSignals();
+    const freeLimit=2, unlocked=tierRank(S.tier)>=1;
+    if(!sigs.length){ body.innerHTML='<div class="note-box"><b>Качественных сетапов сейчас нет.</b><br><span class="micro">Движок ищет сделки с потенциалом от '+SIG_MIN_MOVE+'%, соотношением R:R от 1:'+SIG_MIN_RR+' и минимум '+SIG_MIN_PASS+' подтверждениями из 20. Такие точки появляются не каждый день — это нормально и правильно.</span></div>'; return; }
+    let html='';
+    sigs.forEach((sg,i)=>{
+      const a=ASSETS.find(x=>x.s===sg.symbol);
+      const locked=!unlocked && i>=freeLimit;
+      html+='<div class="sig-card'+(locked?' locked':'')+'">';
+      if(locked) html+='<div class="sig-lock"><div class="lk">🔒</div><div class="small">Доступно в Премиум</div><button class="btn btn-gold btn-sm" data-stab="analytics" onclick="">Открыть</button></div>';
+      html+='<div class="sig-inner"><div class="row between"><div class="row gap2"><span class="sig-dir '+(sg.dir==='LONG'?'long':'short')+'">'+(sg.dir==='LONG'?'▲ LONG':'▼ SHORT')+'</span><b>'+a.t+'/USDT</b>'+
+        '<span class="tf-mini">'+(sg.tf||'4H')+'</span></div>'+
+        '<span class="flt-badge'+(sg.passed>=16?'':' mid')+'">✓ '+sg.passed+'/'+sg.total+'</span></div>'+
+        '<div class="progress mt3" style="height:6px;"><div class="fill" style="width:'+sg.strength+'%"></div></div>'+
+        '<div class="sig-meta mt3">'+
+          '<div class="sm-i"><span>Потенциал</span><b style="color:var(--green);">+'+sg.movePct.toFixed(1)+'%</b></div>'+
+          '<div class="sm-i"><span>Риск</span><b style="color:var(--red);">−'+sg.riskPct.toFixed(1)+'%</b></div>'+
+          '<div class="sm-i"><span>R:R</span><b style="color:var(--gold);">1:'+sg.rr.toFixed(1)+'</b></div>'+
+          '<div class="sm-i"><span>Горизонт</span><b>'+sg.horizon+'</b></div>'+
+        '</div>'+
+        '<div class="pos-grid mt3">'+
+        '<div><div class="micro">Вход</div><div class="mono" style="font-weight:700;font-size:12.5px;">'+fmt(sg.entry,sg.d)+'</div></div>'+
+        '<div><div class="micro">Тейк</div><div class="mono" style="font-weight:700;font-size:12.5px;color:var(--green);">'+fmt(sg.tp,sg.d)+'</div></div>'+
+        '<div><div class="micro">Стоп</div><div class="mono" style="font-weight:700;font-size:12.5px;color:var(--red);">'+fmt(sg.sl,sg.d)+'</div></div></div>'+
+        '<div class="small mt3" style="color:var(--txt2);">'+sg.reasons.join(' · ')+'</div>'+
+        '<div class="row gap2 mt3">'+
+          '<button class="btn btn-ghost btn-sm grow" data-sigdet="'+sg.symbol+'">Разбор</button>'+
+          '<button class="btn btn-gold btn-sm grow" data-trade="'+sg.symbol+'">В терминал</button>'+
+        '</div></div></div>';
+    });
+    html+='<div class="row between mt6" style="margin-bottom:10px;"><span class="h2">Подписка на сигналы</span></div>';
+    TIERS_SUB.forEach(t=>{
+      const cur=S.tier===t.id;
+      html+='<div class="tier-card '+(t.cls||'')+'"><div class="row between"><div><div class="h3">'+t.name+(t.id==='vip'?' 👑':t.id==='prem'?' ⭐':'')+'</div><div class="tier-price">'+(t.price?('$'+t.price+'<span class="micro"> /мес</span>'):'Бесплатно')+'</div></div>'+
+        (cur?'<span class="badge b-green">Активно</span>':'')+'</div>'+
+        t.feats.map(f=>'<div class="tier-feat"><span style="color:var(--gold);">✓</span> '+f+'</div>').join('')+
+        (cur?'':'<button class="btn '+(t.id==='free'?'btn-ghost':'btn-gold')+' btn-block mt4" data-sub="'+t.id+'">'+(t.price?'Оформить за $'+t.price:'Выбрать')+'</button>')+
+        '</div>';
+    });
+    body.innerHTML=html;
+    body.querySelectorAll('[data-trade]').forEach(b=>b.addEventListener('click',()=>openTerminal(b.dataset.trade)));
   body.querySelectorAll('[data-sigdet]').forEach(b=>b.addEventListener('click',()=>openSignalDetail(b.dataset.sigdet)));
+    body.querySelectorAll('[data-sub]').forEach(b=>b.addEventListener('click',()=>subscribe(b.dataset.sub)));
+    body.querySelectorAll('[data-stab]').forEach(b=>b.addEventListener('click',()=>{ S.stab=b.dataset.stab; renderSignals(); }));
+  });
 }
-
 function subscribe(tier){
   const t=TIERS_SUB.find(x=>x.id===tier); if(!t) return;
   if(t.price===0){ S.tier='free'; saveMeta(); renderSignals(); return; }
@@ -4872,308 +4059,7 @@ function aiAnalyze(sym){
 }
 
 /* ============ WALLET ============ */
-
-
-/* ============ PHANTOM WALLET SDK ============ */
-S.phantom = S.phantom || { pubkey:null, connected:false };
-
-function getPhantomProvider(){
-  if(typeof window==='undefined') return null;
-  const p = (window.phantom && window.phantom.solana) ? window.phantom.solana
-          : (window.solana && window.solana.isPhantom) ? window.solana
-          : null;
-  return p || null;
-}
-
-function shortPk(pk){
-  if(!pk) return '';
-  const s=String(pk);
-  return s.length>12 ? (s.slice(0,4)+'…'+s.slice(-4)) : s;
-}
-
-function savePhantomLocal(){
-  try{ localStorage.setItem('nx_phantom', JSON.stringify({pubkey:S.phantom.pubkey||null})); }catch(e){}
-}
-function loadPhantomLocal(){
-  try{
-    const raw=localStorage.getItem('nx_phantom');
-    if(raw){ const o=JSON.parse(raw); if(o&&o.pubkey){ S.phantom.pubkey=o.pubkey; S.phantom.connected=true; } }
-  }catch(e){}
-}
-
-function renderPhantomUI(){
-  const btn=$('phantomBtn'), txt=$('phantomBtnText'), addr=$('phantomAddr');
-  const cp=$('phantomCopy'), disc=$('phantomDisc');
-  if(!btn) return;
-  const on=!!(S.phantom&&S.phantom.connected&&S.phantom.pubkey);
-  btn.classList.toggle('connected', on);
-  if(txt) txt.textContent = on ? ('Подключено · '+shortPk(S.phantom.pubkey)) : 'Подключить Phantom';
-  if(addr) addr.textContent = on ? S.phantom.pubkey : '';
-  if(cp) cp.style.display = on ? '' : 'none';
-  if(disc) disc.style.display = on ? '' : 'none';
-  // auto-fill sol withdraw address
-  if(on){
-    S.wallet = S.wallet || {};
-    if(!S.wallet.sol) S.wallet.sol = S.phantom.pubkey;
-    const as=$('addr_sol'); if(as && !as.value) as.value = S.phantom.pubkey;
-  }
-}
-
-function phantomDeepLink(){
-  // Открыть текущий mini-app URL внутри Phantom browse
-  const url = encodeURIComponent(window.location.href.split('#')[0]);
-  const ref = encodeURIComponent(window.location.hostname||'nexustrade');
-  return 'https://phantom.app/ul/v1/browse/'+url+'?ref='+ref;
-}
-
-async function connectPhantom(){
-  const provider = getPhantomProvider();
-  if(!provider){
-    // В Telegram WebView провайдера нет — ведём в Phantom
-    const link = phantomDeepLink();
-    try{
-      if(window.Telegram && Telegram.WebApp && Telegram.WebApp.openLink){
-        Telegram.WebApp.openLink(link);
-      } else {
-        window.open(link, '_blank');
-      }
-    }catch(e){ window.location.href = link; }
-    toast('Откройте в Phantom и нажмите Connect','◎');
-    return;
-  }
-  try{
-    // onlyIfTrusted first
-    let resp=null;
-    try{ resp = await provider.connect({ onlyIfTrusted: true }); }catch(e){}
-    if(!resp || !resp.publicKey){
-      resp = await provider.connect();
-    }
-    const pk = resp.publicKey.toString();
-    S.phantom.pubkey = pk;
-    S.phantom.connected = true;
-    S.wallet = S.wallet || {};
-    S.wallet.sol = pk;
-    saveMeta(); savePhantomLocal();
-    renderPhantomUI();
-    toast('Phantom подключён','◎');
-    haptic('ok');
-    // listeners
-    try{
-      provider.on('accountChanged', (publicKey)=>{
-        if(publicKey){
-          S.phantom.pubkey = publicKey.toString();
-          S.wallet.sol = S.phantom.pubkey;
-          savePhantomLocal(); saveMeta(); renderPhantomUI();
-        } else {
-          disconnectPhantom(true);
-        }
-      });
-      provider.on('disconnect', ()=>disconnectPhantom(true));
-    }catch(e){}
-  }catch(e){
-    console.warn('phantom connect', e);
-    toast('Подключение отменено','⚠️');
-  }
-}
-
-function disconnectPhantom(silent){
-  const provider = getPhantomProvider();
-  try{ if(provider && provider.disconnect) provider.disconnect(); }catch(e){}
-  S.phantom.pubkey = null;
-  S.phantom.connected = false;
-  savePhantomLocal();
-  renderPhantomUI();
-  if(!silent) toast('Phantom отключён','◎');
-}
-
-async function phantomSignMessage(message){
-  const provider = getPhantomProvider();
-  if(!provider || !S.phantom.connected){
-    toast('Сначала подключите Phantom','⚠️');
-    return null;
-  }
-  try{
-    const encoded = new TextEncoder().encode(message);
-    const signed = await provider.signMessage(encoded, 'utf8');
-    // signature as base64
-    let sig;
-    if(signed.signature){
-      sig = btoa(String.fromCharCode.apply(null, Array.from(signed.signature)));
-    } else {
-      sig = btoa(String.fromCharCode.apply(null, Array.from(signed)));
-    }
-    return { pubkey: S.phantom.pubkey, signature: sig, message };
-  }catch(e){
-    toast('Подпись отменена','⚠️');
-    return null;
-  }
-}
-
-async function phantomGetBalanceSol(){
-  // optional: via public RPC
-  if(!S.phantom.pubkey) return null;
-  try{
-    const r = await fetch('https://api.mainnet-beta.solana.com', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        jsonrpc:'2.0', id:1, method:'getBalance',
-        params:[S.phantom.pubkey]
-      })
-    });
-    const d=await r.json();
-    return (d.result && d.result.value!=null) ? d.result.value/1e9 : null;
-  }catch(e){ return null; }
-}
-
-function wirePhantomButtons(){
-  const btn=$('phantomBtn');
-  if(btn) btn.onclick=()=>connectPhantom();
-  const cp=$('phantomCopy');
-  if(cp) cp.onclick=()=>{ if(S.phantom.pubkey){ try{navigator.clipboard.writeText(S.phantom.pubkey);}catch(e){} toast('Адрес скопирован','📋'); } };
-  const disc=$('phantomDisc');
-  if(disc) disc.onclick=()=>disconnectPhantom();
-}
-
-
-/* ============ NEXUS TOKEN WALLET ============ */
-function loadNexusLocal(){
-  try{
-    const n=localStorage.getItem('nx_nexus');
-    if(n){ const o=JSON.parse(n); S.nexus=Object.assign({balance:0,history:[],mint:null,vault:null}, o); }
-  }catch(e){}
-  S.nexus=S.nexus||{balance:0,history:[],mint:null,vault:null};
-}
-function saveNexusLocal(){
-  try{ localStorage.setItem('nx_nexus', JSON.stringify(S.nexus)); }catch(e){}
-}
-async function fetchNexus(){
-  loadNexusLocal();
-  if(!S.user) return;
-  try{
-    const r=await fetch(API_BASE+'/api/nexus?user='+encodeURIComponent(S.user.id));
-    if(!r.ok) return;
-    const d=await r.json();
-    if(d.offline){
-      if(d.mint) S.nexus.mint=d.mint;
-      if(d.vault) S.nexus.vault=d.vault;
-      saveNexusLocal(); return;
-    }
-    if(typeof d.balance==='number') S.nexus.balance=d.balance;
-    if(Array.isArray(d.history)) S.nexus.history=d.history;
-    if(d.mint) S.nexus.mint=d.mint;
-    if(d.vault) S.nexus.vault=d.vault;
-    saveNexusLocal();
-  }catch(e){}
-}
-function renderNexusBlock(){
-  const b=$('nxBalance'); if(b) b.textContent=fmt(S.nexus&&S.nexus.balance||0, 2);
-  const nl=$('nxNetLabel'); if(nl) nl.textContent=(S.nexus&&S.nexus.mint)?'Solana · mint':'Solana · setup';
-  const h=$('nxHistory');
-  if(h){
-    const list=(S.nexus&&S.nexus.history)||[];
-    if(!list.length) h.innerHTML='<div class="mut small">Пока пусто</div>';
-    else h.innerHTML=list.slice(0,12).map(tx=>{
-      const sign = tx.kind==='withdraw'||tx.kind==='burn'?'−':'+';
-      const col = sign==='+'?'var(--green)':'var(--red)';
-      const st = tx.status||'done';
-      return '<div class="row between" style="padding:8px 0;border-bottom:1px solid var(--line);">'+
-        '<div><b style="font-size:13px;">'+(tx.kind||'tx')+'</b><div class="micro">'+st+'</div></div>'+
-        '<b class="mono" style="color:'+col+';">'+sign+fmt(Math.abs(+tx.amount||0),2)+'</b></div>';
-    }).join('');
-  }
-}
-function openNexusDeposit(){
-  const vault=(S.nexus&&S.nexus.vault)||'';
-  const mint=(S.nexus&&S.nexus.mint)||'—';
-  $('sheetContent').innerHTML=
-    '<div class="h2" style="text-align:center;">Пополнить NEXUS</div>'+
-    '<div class="small mt2" style="text-align:center;color:var(--txt2);line-height:1.5;">Отправьте SPL NEXUS на адрес vault сети Solana. После подтверждения баланс появится внутри приложения.</div>'+
-    '<div class="card mt3"><div class="micro">MINT</div><div class="mono small" style="word-break:break-all;">'+mint+'</div>'+
-    '<div class="micro mt3">VAULT</div><div class="mono small" id="nxVaultAddr" style="word-break:break-all;">'+(vault||'не задан (NEXUS_VAULT env)')+'</div></div>'+
-    (vault?'<button class="btn btn-ghost btn-block mt3" id="nxCopyVault">Скопировать адрес</button>':'')+
-    '<div class="wallet-field mt3"><label>Tx signature (после перевода)</label><input class="input mono" id="nxDepTx" placeholder="5Sx..."></div>'+
-    '<div class="wallet-field mt2"><label>Сумма NEXUS</label><input class="input mono" id="nxDepAmt" type="number" min="0" step="0.01" placeholder="100"></div>'+
-    '<button class="btn btn-gold btn-block mt4" id="nxDepSend">Отправить заявку</button>';
-  $('sheetVeil').classList.add('open');
-  const c=$('nxCopyVault'); if(c) c.onclick=()=>{ try{navigator.clipboard.writeText(vault);}catch(e){} toast('Адрес скопирован','📋'); };
-  $('nxDepSend').onclick=async ()=>{
-    const txSig=($('nxDepTx')||{}).value||'';
-    const amount=parseFloat(($('nxDepAmt')||{}).value)||0;
-    if(amount<=0){ toast('Укажите сумму','⚠️'); return; }
-    // offline credit local pending
-    S.nexus.history=S.nexus.history||[];
-    S.nexus.history.unshift({kind:'deposit', amount, status:'pending', tx_sig:txSig, created_at:new Date().toISOString()});
-    saveNexusLocal();
-    let proof=null;
-    try{ proof = await phantomSignMessage('NEXUS deposit '+amount+' tx:'+(txSig||'')+' @'+Date.now()); }catch(e){}
-    try{
-      if(S.user){
-        await fetch(API_BASE+'/api/nexus',{method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({action:'deposit_request', user:S.user.id, name:S.user.name, amount, txSig, meta:{phantom:proof}})});
-      }
-    }catch(e){}
-    closeSheet(); toast('Заявка на депозит отправлена','◎'); renderWallet();
-  };
-}
-function openNexusWithdraw(){
-  const bal=S.nexus&&S.nexus.balance||0;
-  const saved=(S.phantom&&S.phantom.pubkey)||(S.wallet&&S.wallet.sol)||'';
-  $('sheetContent').innerHTML=
-    '<div class="h2" style="text-align:center;">Вывести NEXUS</div>'+
-    '<div class="small mt2" style="text-align:center;color:var(--txt2);">Доступно: <b>'+fmt(bal,2)+' NEXUS</b></div>'+
-    '<div class="wallet-field mt3"><label>Solana-адрес</label><input class="input mono" id="nxWdTo" value="'+saved+'" placeholder="Base58..."></div>'+
-    '<div class="wallet-field mt2"><label>Сумма</label><input class="input mono" id="nxWdAmt" type="number" min="0" step="0.01" placeholder="10"></div>'+
-    '<button class="btn btn-gold btn-block mt4" id="nxWdSend">Создать заявку</button>';
-  $('sheetVeil').classList.add('open');
-  $('nxWdSend').onclick=async ()=>{
-    const to=(($('nxWdTo')||{}).value||'').trim();
-    const amount=parseFloat(($('nxWdAmt')||{}).value)||0;
-    if(amount<=0 || amount>bal){ toast('Некорректная сумма','⚠️'); return; }
-    if(to.length<32){ toast('Некорректный Solana-адрес','⚠️'); return; }
-    try{
-      if(S.user){
-        const r=await fetch(API_BASE+'/api/nexus',{method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({action:'withdraw_request', user:S.user.id, name:S.user.name, amount, to})});
-        const d=await r.json();
-        if(d.balance!=null) S.nexus.balance=d.balance;
-        else S.nexus.balance=Math.max(0, bal-amount);
-      } else {
-        S.nexus.balance=Math.max(0, bal-amount);
-      }
-    }catch(e){
-      S.nexus.balance=Math.max(0, bal-amount);
-    }
-    S.nexus.history=S.nexus.history||[];
-    S.nexus.history.unshift({kind:'withdraw', amount, status:'pending', to_address:to, created_at:new Date().toISOString()});
-    saveNexusLocal();
-    closeSheet(); toast('Заявка на вывод создана','◎'); renderWallet();
-  };
-}
-async function nexusDemoCredit(){
-  const add=100;
-  try{
-    if(S.user){
-      const r=await fetch(API_BASE+'/api/nexus',{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({action:'demo_credit', user:S.user.id, amount:add})});
-      const d=await r.json();
-      if(d.balance!=null){ S.nexus.balance=d.balance; }
-      else S.nexus.balance=(S.nexus.balance||0)+add;
-    } else S.nexus.balance=(S.nexus.balance||0)+add;
-  }catch(e){ S.nexus.balance=(S.nexus.balance||0)+add; }
-  S.nexus.history=S.nexus.history||[];
-  S.nexus.history.unshift({kind:'credit', amount:add, status:'done', created_at:new Date().toISOString()});
-  saveNexusLocal(); toast('+100 NEXUS (демо)','◎'); renderNexusBlock();
-}
-
-
 function renderWallet(){
-  fetchNexus().then(()=>renderNexusBlock());
-  loadPhantomLocal(); wirePhantomButtons(); renderPhantomUI();
-  const nxD=$("nxDepositBtn"); if(nxD) nxD.onclick=openNexusDeposit;
-  const nxW=$("nxWithdrawBtn"); if(nxW) nxW.onclick=openNexusWithdraw;
-  const nxC=$("nxDemoCredit"); if(nxC) nxC.onclick=nexusDemoCredit;
-  const as=$("addr_sol"); if(as) as.value=(S.wallet&&S.wallet.sol)||"";
-
   ['trc20','bep20','ton','eth'].forEach(k=>{ const el=$('addr_'+k); if(el) el.value=(S.wallet[k]||''); });
   const eq=equity(); const startCap=S.acc?S.acc.tier:10000;
   const payout=Math.max(0,(eq-startCap))*0.8;
@@ -5338,42 +4224,31 @@ function openAlerts(){
 /* ============ НАСТРОЙКИ ============ */
 function openSettings(){
   const st=tradeStats();
-  const langChips=Object.keys(LANGS).map(code=>{
-    const L=LANGS[code];
-    const on=code===LANG?' active':'';
-    return '<button class="chip'+on+'" data-lang="'+code+'" style="min-width:auto;">'+L.flag+' '+L.name+'</button>';
-  }).join('');
-  $('sheetContent').innerHTML='<div class="h2" style="text-align:center;">'+t('settings')+'</div>'+
-    '<div class="card mt4"><div class="st-row"><span>'+t('account')+'</span><b>'+(S.user?S.user.name:t('guest'))+'</b></div>'+
-    '<div class="st-row"><span>'+t('tariff')+'</span><b style="color:var(--gold);">'+(S.tier||'free').toUpperCase()+'</b></div>'+
-    '<div class="st-row"><span>'+t('academy')+'</span><b>'+acadCount()+' / '+ACADEMY_TOTAL+'</b></div>'+
-    '<div class="st-row"><span>'+t('deals_hist')+'</span><b>'+(st?st.total:0)+'</b></div></div>'+
+  $('sheetContent').innerHTML='<div class="h2" style="text-align:center;">Настройки</div>'+
+    '<div class="card mt4"><div class="st-row"><span>Аккаунт</span><b>'+(S.user?S.user.name:'Гость')+'</b></div>'+
+    '<div class="st-row"><span>Тариф</span><b style="color:var(--gold);">'+(S.tier||'free').toUpperCase()+'</b></div>'+
+    '<div class="st-row"><span>Академия</span><b>'+acadCount()+' / '+ACADEMY_TOTAL+'</b></div>'+
+    '<div class="st-row"><span>Сделок в истории</span><b>'+(st?st.total:0)+'</b></div></div>'+
 
-    '<div class="micro mt4" style="margin-bottom:6px;">'+t('lang').toUpperCase()+'</div>'+
-    '<div class="draw-menu" style="flex-wrap:wrap;gap:6px;">'+langChips+'</div>'+
+    '<div class="micro mt4" style="margin-bottom:6px;">ДАННЫЕ</div>'+
+    '<button class="btn btn-ghost btn-block" id="setExport">📤 Выгрузить историю сделок (CSV)</button>'+
+    '<button class="btn btn-ghost btn-block mt2" id="setClearDraws">🧹 Очистить все построения на графиках</button>'+
+    '<button class="btn btn-ghost btn-block mt2" id="setReset" style="border-color:rgba(255,59,87,.4);color:var(--red);">♻️ Сбросить демо-счёт</button>'+
 
-    '<div class="micro mt4" style="margin-bottom:6px;">'+t('data')+'</div>'+
-    '<button class="btn btn-ghost btn-block" id="setExport">'+t('export_csv')+'</button>'+
-    '<button class="btn btn-ghost btn-block mt2" id="setClearDraws">'+t('clear_draws')+'</button>'+
-    '<button class="btn btn-ghost btn-block mt2" id="setReset" style="border-color:rgba(255,59,87,.4);color:var(--red);">'+t('reset_demo')+'</button>'+
-
-    '<div class="micro mt5" style="text-align:center;color:var(--txt3);line-height:1.6;">'+t('risk_note')+'</div>';
+    '<div class="micro mt5" style="text-align:center;color:var(--txt3);line-height:1.6;">Nexus Prop · демо-режим<br>Торговля сопряжена с риском потери средств.<br>Материалы не являются инвестиционной рекомендацией.</div>';
   $('sheetVeil').classList.add('open');
-  $('sheetContent').querySelectorAll('[data-lang]').forEach(b=>b.addEventListener('click',()=>{
-    setLang(b.dataset.lang); haptic('ok'); openSettings();
-  }));
   $('setExport').addEventListener('click',exportHistory);
-  $('setClearDraws').addEventListener('click',()=>{ S.draws={}; saveDraws(); toast(t('toast_draws'),'🧹'); haptic(); });
+  $('setClearDraws').addEventListener('click',()=>{ S.draws={}; saveDraws(); toast('Построения очищены','🧹'); haptic(); });
   $('setReset').addEventListener('click',()=>{
     $('sheetContent').innerHTML='<div style="text-align:center;padding:10px;"><div style="font-size:40px;">♻️</div>'+
-      '<div class="h2 mt3">'+t('reset_q')+'</div>'+
-      '<div class="small mt2" style="color:var(--txt2);">'+t('reset_desc')+'</div>'+
-      '<button class="btn btn-gold btn-block mt4" id="rsYes" style="background:var(--red);color:#fff;">'+t('yes_reset')+'</button>'+
-      '<button class="btn btn-ghost btn-block mt2" id="rsNo">'+t('cancel')+'</button></div>';
+      '<div class="h2 mt3">Сбросить демо-счёт?</div>'+
+      '<div class="small mt2" style="color:var(--txt2);">Баланс вернётся к $10 000, позиции и история будут удалены. Академия и настройки сохранятся.</div>'+
+      '<button class="btn btn-gold btn-block mt4" id="rsYes" style="background:var(--red);color:#fff;">Да, сбросить</button>'+
+      '<button class="btn btn-ghost btn-block mt2" id="rsNo">Отмена</button></div>';
     $('rsYes').addEventListener('click',()=>{
       S.acc={ active:true, tier:10000, stage:1, balance:10000, startDay:10000, profitDays:0, dayPnlPeak:0, status:'RUN', dayKey:dayKey() };
       S.positions=[]; S.history=[]; S.equityHist=[]; S.payoutReq=[];
-      persistState(); closeSheet(); haptic('ok'); toast(t('toast_reset'),'♻️'); go('home');
+      persistState(); closeSheet(); haptic('ok'); toast('Демо-счёт сброшен','♻️'); go('home');
     });
     $('rsNo').addEventListener('click',openSettings);
   });
@@ -5545,37 +4420,19 @@ function readTPSL(side, entry){
   return {tp,sl};
 }
 function checkTPSL(){
-  if(!S.positions || !S.positions.length) return;
+  if(!S.positions.length) return;
   [...S.positions].forEach(p=>{
-    const px=priceOf(p.symbol);
-    if(!px || !isFinite(px) || !isSanePrice(px, p.entry)) return;
+    const px=priceOf(p.symbol); if(!px) return;
     let hit=null;
     if(p.side==='LONG'){
-      if(p.sl && px<=p.sl) hit='SL';
-      else if(p.tp && px>=p.tp) hit='TP';
+      if(p.tp && px>=p.tp) hit='TP';
+      else if(p.sl && px<=p.sl) hit='SL';
     } else {
-      if(p.sl && px>=p.sl) hit='SL';
-      else if(p.tp && px<=p.tp) hit='TP';
+      if(p.tp && px<=p.tp) hit='TP';
+      else if(p.sl && px>=p.sl) hit='SL';
     }
-    if(hit) closePosition(p.id, hit);
+    if(hit){ closePosition(p.id, hit); }
   });
-}
-function checkLiquidations(){
-  if(!S.positions || !S.positions.length) return;
-  [...S.positions].forEach(p=>{
-    const px=priceOf(p.symbol);
-    if(!px || !isFinite(px) || !isSanePrice(px, p.entry)) return;
-    const liq = liqPrice(p); if(liq==null || !isFinite(liq)) return;
-    if(p.side==='LONG' && px<=liq) closePosition(p.id, 'LIQ');
-    if(p.side==='SHORT' && px>=liq) closePosition(p.id, 'LIQ');
-  });
-}
-function riskOnTick(){
-  if(!S.acc || S.acc.status==='FAIL') return;
-  bindAcc();
-  checkTPSL();
-  checkLiquidations();
-  checkChallenge();
 }
 /* ============ ПОЗИЦИИ В ТЕРМИНАЛЕ ============ */
 function renderTermPositions(){
@@ -6582,7 +5439,7 @@ function renderChallenges(){
   // карточки размеров
   const sizes=CH_SIZES[t];
   $('chSizes').innerHTML=sizes.map((s,i)=>{
-    const flag = s.vipGift||s.size>=50000?'<div class="ch-flag pro">👑 VIP В ПОДАРОК</div>':(s.pro?'<div class="ch-flag pro">😎 ВЫБОР ПРО</div>':(s.hot?'<div class="ch-flag hot">🔥 ПОПУЛЯРНЫЙ</div>':''));
+    const flag = s.pro?'<div class="ch-flag pro">😎 ВЫБОР ПРО</div>':(s.hot?'<div class="ch-flag hot">🔥 ПОПУЛЯРНЫЙ</div>':'');
     const pr=applyPromo(s.price, S.activePromo);
     const per=(pr/(s.size/1000)).toFixed(2);
     const sel = S.chSel && S.chSel.i===i && S.chSel.t===t ? ' sel':'';
@@ -6696,6 +5553,59 @@ async function submitPayment(o){
 }
 
 /* ============ АДМИН-ПАНЕЛЬ ============ */
+/** Экранирование для подстановки в value="…" — имя контура в id безопасно, текст нет. */
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+/** Карточка управления одним контуром обслуживания. */
+function maintCard(scope, v, t){
+  const on=!!v.maintenance;
+  return '<div class="card mt3">'+
+    '<div class="row between" style="align-items:flex-start;">'+
+      '<div style="padding-right:10px;">'+
+        '<div style="font-weight:700;font-size:14px;">'+(on?'🔧 ':'✅ ')+esc(t.title)+'</div>'+
+        // .micro поднимает текст в верхний регистр — для ярлыка это нормально,
+        // а для предложения нет: строка статуса должна читаться, а не кричать.
+        '<div class="small mt1" style="color:var(--txt3);font-size:11.5px;line-height:1.35;">'+esc(t.sub)+'</div>'+
+        '<div class="small mt1" style="color:'+(on?'var(--red)':'var(--txt2)')+';font-size:12px;line-height:1.35;">'+esc(on?t.onText:t.offText)+'</div>'+
+      '</div>'+
+      '<button class="btn '+(on?'btn-gold':'btn-ghost')+' btn-sm" id="mt_'+scope+'_toggle" style="flex:none;">'+(on?'Выключить':'Включить')+'</button>'+
+    '</div>'+
+    '<div class="prm mt3"><label>Текст для пользователей</label></div>'+
+    '<input class="input" id="mt_'+scope+'_text" placeholder="'+esc(t.ph)+'" value="'+esc(v.message)+'">'+
+    '<div class="prm mt2"><label>Окончание</label></div>'+
+    '<input class="input" id="mt_'+scope+'_time" placeholder="сегодня в 21:00" value="'+esc(v.until)+'">'+
+  '</div>';
+}
+
+/** Вешает переключатель контура. Ошибку сервера показываем текстом, а не молчим. */
+function bindMaintToggle(scope){
+  const btn=$('mt_'+scope+'_toggle'); if(!btn) return;
+  btn.addEventListener('click', async ()=>{
+    const cur=cfgScope(S.appConfig,scope);
+    const on=!cur.maintenance;
+    const prev=btn.textContent;
+    btn.textContent='…'; btn.disabled=true;
+    try{
+      const r=await fetch(API_BASE+'/api/config',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({admin:myTgId(), scope:scope, maintenance:on,
+          message:($('mt_'+scope+'_text')||{}).value||'', until:($('mt_'+scope+'_time')||{}).value||''})});
+      const j=await r.json().catch(()=>({}));
+      // Сервер отвечает 500 с текстом причины, если сохранить не удалось —
+      // например, когда в Supabase не создана таблица app_settings. Показать
+      // это важнее, чем нарисовать успех: иначе работы «объявлены» только на экране.
+      if(!r.ok) throw new Error(j.detail||j.error||('HTTP '+r.status));
+      S.appConfig=j;
+      haptic('ok');
+      const what=scope==='bot'?'Бот':'Проп-фирма';
+      toast(on?(what+' на обслуживании'):(what+' снова работает'), on?'🔧':'✅');
+      renderAdmin();
+    }catch(e){
+      btn.textContent=prev; btn.disabled=false;
+      toast('Не сохранилось: '+String(e.message||e).slice(0,90),'⚠️');
+    }
+  });
+}
+
 async function renderAdmin(){
   const body=$('adminBody');
   const id=myTgId();
@@ -6705,6 +5615,7 @@ async function renderAdmin(){
   }
   body.innerHTML='<div class="mut small" style="text-align:center;padding:20px;">Загружаю…</div>';
   try{
+    try{ const rc=await fetch(API_BASE+'/api/config?t='+Date.now()); if(rc.ok) S.appConfig=await rc.json(); }catch(e){}
     const r1=await fetch(API_BASE+'/api/admin?admin='+id);
     if(r1.status===403){
       body.innerHTML='<div class="note-box"><b>Сервер не признаёт вас админом (403).</b><br><br>'+
@@ -6733,6 +5644,26 @@ async function renderAdmin(){
       '<div class="stat-card"><div class="sv" style="color:var(--green);">'+((st.payments&&st.payments.approved)||0)+'</div><div class="sl">Оплат подтверждено</div></div>'+
       '<div class="stat-card"><div class="sv" style="color:'+(((st.payments&&st.payments.pending)||0)>0?'var(--red)':'var(--txt2)')+';">'+((st.payments&&st.payments.pending)||0)+'</div><div class="sl">Ждут проверки</div></div>'+
       '</div>';
+    // ---- управление режимом обслуживания: два независимых контура ----
+    const mc=S.appConfig||{};
+    html+='<div class="h2 mt5" style="margin-bottom:10px;">Техническое обслуживание</div>'+
+      '<div class="micro" style="color:var(--txt3);margin-bottom:10px;">'+
+        'Проп-фирму и бота можно останавливать по отдельности.</div>'+
+      maintCard('prop', cfgScope(mc,'prop'), {
+        title:'Проп-фирма',
+        sub:'Мини-приложение: челленджи, терминал, оплаты',
+        onText:'Пользователи видят экран техработ, новые оплаты не принимаются',
+        offText:'Приложение доступно всем',
+        ph:'Обновляем платформу…',
+      })+
+      maintCard('bot', cfgScope(mc,'bot'), {
+        title:'Telegram-бот',
+        sub:'Уведомления о челленджах, выплатах и статусе счёта',
+        onText:'Уведомления пользователям приостановлены, копии владельцу приходят',
+        offText:'Уведомления отправляются как обычно',
+        ph:'Бот вернётся после обновления…',
+      });
+
     html+='<div class="h2 mt5" style="margin-bottom:10px;">Заявки на оплату</div>';
     const list=(pend&&pend.payments)||[];
     if(!list.length) html+='<div class="note-box">Новых заявок нет.</div>';
@@ -6744,6 +5675,7 @@ async function renderAdmin(){
         '<button class="btn btn-ghost grow btn-sm" data-no="'+p.id+'">Отклонить</button></div></div>';
     });
     body.innerHTML=html;
+    ['prop','bot'].forEach(sc=>bindMaintToggle(sc));
     body.querySelectorAll('[data-ok]').forEach(b=>b.addEventListener('click',()=>reviewPay(b.dataset.ok,'approved')));
     body.querySelectorAll('[data-no]').forEach(b=>b.addEventListener('click',()=>reviewPay(b.dataset.no,'rejected')));
   }catch(e){ body.innerHTML='<div class="note-box"><b>Нет связи с сервером.</b><br><span class="micro">'+String(e).slice(0,140)+'</span></div>'; }
@@ -6843,17 +5775,14 @@ async function tick(){
   const eq=equity(), dayPnl=eq-S.acc.startDay;
   if(dayPnl>S.acc.dayPnlPeak) S.acc.dayPnlPeak=dayPnl;
   if(S.acc.status==='RUN' && dayPnl>=50 && S.acc.profitDays<1) S.acc.profitDays=1;
-  riskOnTick();
-  try{ botTick(); }catch(e){}
+  checkTPSL();
   checkAlerts();
   checkAllAccounts();
   renderAll();
 }
 async function init(){
-  try{ document.documentElement.lang=LANG; document.documentElement.dir=(LANG==='ar'?'rtl':'ltr'); applyI18n(); }catch(e){}
-  loadDraws(); loadMeta(); loadUser(); loadState(); acadLoad(); loadAlerts(); botLoad(); try{ syncVipFromAccounts(true); }catch(e){} try{ sanitizeBrokenTrades(); sanitizeAccountsRisk(); }catch(e){}
+  loadDraws(); loadMeta(); loadUser(); loadState(); acadLoad(); loadAlerts();
   migrateAccounts();
-  sanitizeAccountsRisk();
   if(S.acc && S.acc.status==='PASS' && !S.acc.fundedAt){ S.acc.fundedAt=Date.now(); }
   if(S.acc && !S.acc.dayKey){ S.acc.dayKey=dayKey(); S.acc.startDay=S.acc.balance||S.acc.tier; }
   // миграция: демо теперь только $10k
@@ -6874,13 +5803,15 @@ async function init(){
     try{ localStorage.setItem('nx_user', JSON.stringify(S.user)); }catch(e){}
   } else { pullState(); }
   pingUser();
+  checkMaintenance();
+  setInterval(checkMaintenance, 120000);
   setTimeout(()=>checkMyPayments(true), 1500);
   setInterval(()=>checkMyPayments(true), 60000);
   startWS();
   await loadTickers();
   await Promise.all(ASSETS.slice(0,4).map(a=>loadKlines(a.s,'1h')));
   S.equityHist.push(equity());
-  renderHome(); renderMarket(); maybeOnboarding(); try{ applyI18n(); }catch(e){}
+  renderHome(); renderMarket(); maybeOnboarding();
   setInterval(tick, 2000);
   setInterval(()=>{ if(rtDirty){ rtDirty=false; renderAll(); } }, 700);
   setInterval(()=>{ if(S.screen==='signals'&&(S.stab==='signals'||S.stab==='analytics')) renderSignals(); }, 20000);

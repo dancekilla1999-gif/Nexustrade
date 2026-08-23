@@ -6,6 +6,8 @@
 //   POST {action:'applied', user, id}    -> отметить, что счёт активирован
 // env: SUPABASE_URL, SUPABASE_SERVICE_KEY, ADMIN_TG_ID, TELEGRAM_BOT_TOKEN
 
+import { isDown, readSettings } from './_settings.js';
+
 function sb() {
   const url = process.env.SUPABASE_URL, key = process.env.SUPABASE_SERVICE_KEY;
   return url && key ? { url, key } : null;
@@ -51,6 +53,22 @@ export default async function handler(req, res) {
 
       // --- создать заявку ---
       if (body.action === 'create') {
+        // Проп-фирма на обслуживании — новые оплаты не принимаем.
+        //
+        // Без этой проверки режим обслуживания был бы чисто косметическим: экран
+        // техработ рисуется на клиенте, а любой сохранённый запрос или устаревшая
+        // вкладка по-прежнему создали бы заявку на оплату во время работ — то есть
+        // человек заплатил бы за счёт, который никто не активирует.
+        // Владельцу платить не мешаем: ему нужно проверять оплату после выкатки.
+        if (!isAdmin(body.admin) && await isDown('prop')) {
+          const s = await readSettings();
+          return res.status(503).json({
+            error: 'maintenance',
+            message: s.prop.message || 'Идут технические работы, оплата временно недоступна.',
+            until: s.prop.until || '',
+          });
+        }
+
         const row = {
           user_id: body.user || null,
           user_name: body.name || null,

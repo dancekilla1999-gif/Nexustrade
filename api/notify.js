@@ -1,6 +1,10 @@
 // /api/notify — отправка уведомлений пользователю в Telegram.
 //   POST { user:'tg_123456', type:'stage1'|'funded'|'fail'|'warn'|'payout', data:{...} }
 // env: TELEGRAM_BOT_TOKEN, ADMIN_TG_ID (для копии владельцу)
+//
+// Уважает режим обслуживания бота: пока он включён, пользователям не пишем.
+
+import { isDown } from './_settings.js';
 
 const TEXTS = {
   stage1: (d) => `🏆 *Этап 1 пройден!*\n\n` +
@@ -70,6 +74,17 @@ export default async function handler(req, res) {
   const chatId = String(user || '').startsWith('tg_') ? String(user).slice(3) : null;
   if (!chatId) return res.status(200).json({ ok: false, note: 'не Telegram-пользователь' });
 
+  // Бот на обслуживании — пользователю не пишем.
+  //
+  // Это и есть смысл режима: во время работ человек не должен получать
+  // «Челлендж провален» или «Выплата одобрена», пока за ботом стоит незаконченная
+  // выкатка. Копию владельцу ниже отправляем всё равно — админ обязан видеть,
+  // что произошло, даже когда бот молчит для остальных.
+  if (await isDown('bot')) {
+    await notifyAdminCopy(token, type, data, chatId, ' (бот на обслуживании, пользователю не отправлено)');
+    return res.status(200).json({ ok: false, skipped: 'bot_maintenance' });
+  }
+
   try {
     const text = build(data || {});
     await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
@@ -78,23 +93,26 @@ export default async function handler(req, res) {
       body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' }),
     });
 
-    // копия владельцу о важных событиях
-    const admin = process.env.ADMIN_TG_ID;
-    if (admin && ['funded', 'fail', 'payout'].includes(type)) {
-      const label = type === 'funded' ? '👑 Трейдер получил фандед' :
-                    type === 'fail' ? '📉 Челлендж провален' : '💰 Выплата одобрена';
-      await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: admin,
-          text: `${label}\nПользователь: ${data && data.name ? data.name : chatId}\nСчёт: $${fmtNum(data && data.tier)}`,
-        }),
-      }).catch(() => {});
-    }
+    await notifyAdminCopy(token, type, data, chatId, '');
 
     return res.status(200).json({ ok: true });
   } catch (e) {
     return res.status(500).json({ error: 'server', detail: String(e).slice(0, 200) });
   }
+}
+
+/** Копия владельцу о важных событиях. */
+async function notifyAdminCopy(token, type, data, chatId, suffix) {
+  const admin = process.env.ADMIN_TG_ID;
+  if (!admin || !['funded', 'fail', 'payout'].includes(type)) return;
+  const label = type === 'funded' ? '👑 Трейдер получил фандед' :
+                type === 'fail' ? '📉 Челлендж провален' : '💰 Выплата одобрена';
+  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: admin,
+      text: `${label}${suffix}\nПользователь: ${data && data.name ? data.name : chatId}\nСчёт: $${fmtNum(data && data.tier)}`,
+    }),
+  }).catch(() => {});
 }
