@@ -5425,6 +5425,13 @@ function openLesson(mi,li){
 /* ============ ADMIN helpers ============ */
 function myTgId(){ return (S.user && /^tg_/.test(S.user.id)) ? S.user.id.slice(3) : null; }
 function isAdmin(){ return myTgId() === ADMIN_ID; }
+/* Подпись Telegram для админских запросов.
+   Сервер больше не верит присланному идентификатору — он проверяет HMAC,
+   который Telegram считает от токена бота. Токен есть только на сервере,
+   поэтому подделать подпись нельзя, а ID сам по себе ничего не доказывает:
+   он и так лежит открыто в этом файле. */
+function tgInitData(){ return (tg && tg.initData) ? tg.initData : ''; }
+function adminQuery(){ return 'initData=' + encodeURIComponent(tgInitData()); }
 
 /* ============ CHALLENGES ============ */
 function renderChallenges(){
@@ -5587,7 +5594,7 @@ function bindMaintToggle(scope){
     btn.textContent='…'; btn.disabled=true;
     try{
       const r=await fetch(API_BASE+'/api/config',{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({admin:myTgId(), scope:scope, maintenance:on,
+        body:JSON.stringify({initData:tgInitData(), scope:scope, maintenance:on,
           message:($('mt_'+scope+'_text')||{}).value||'', until:($('mt_'+scope+'_time')||{}).value||''})});
       const j=await r.json().catch(()=>({}));
       // Сервер отвечает 500 с текстом причины, если сохранить не удалось —
@@ -5616,7 +5623,7 @@ async function renderAdmin(){
   body.innerHTML='<div class="mut small" style="text-align:center;padding:20px;">Загружаю…</div>';
   try{
     try{ const rc=await fetch(API_BASE+'/api/config?t='+Date.now()); if(rc.ok) S.appConfig=await rc.json(); }catch(e){}
-    const r1=await fetch(API_BASE+'/api/admin?admin='+id);
+    const r1=await fetch(API_BASE+'/api/admin?'+adminQuery());
     if(r1.status===403){
       body.innerHTML='<div class="note-box"><b>Сервер не признаёт вас админом (403).</b><br><br>'+
         'В Vercel не задана переменная <b>ADMIN_TG_ID</b> или её значение отличается от вашего ID.<br><br>'+
@@ -5635,7 +5642,7 @@ async function renderAdmin(){
       return;
     }
     const st=await r1.json();
-    const pend=await fetch(API_BASE+'/api/payments?admin='+id+'&status=pending').then(r=>r.json()).catch(()=>({payments:[]}));
+    const pend=await fetch(API_BASE+'/api/payments?'+adminQuery()+'&status=pending').then(r=>r.json()).catch(()=>({payments:[]}));
     let html='<div class="stat-grid">'+
       '<div class="stat-card"><div class="sv">'+(st.users||0)+'</div><div class="sl">Всего пользователей'+(st.newToday?' · +'+st.newToday+' сегодня':'')+'</div></div>'+
       '<div class="stat-card"><div class="sv" style="color:var(--gold);">$'+fmt(st.revenue||0,0)+'</div><div class="sl">Выручка'+(st.rev30?' · $'+fmt(st.rev30,0)+' за 30д':'')+'</div></div>'+
@@ -5683,7 +5690,7 @@ async function renderAdmin(){
 async function reviewPay(id, decision){
   try{
     await fetch(API_BASE+'/api/payments',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:'review', admin:myTgId(), id:+id, decision})});
+      body:JSON.stringify({action:'review', initData:tgInitData(), id:+id, decision})});
     toast(decision==='approved'?'Подтверждено ✅':'Отклонено','');
     haptic('ok'); renderAdmin();
   }catch(e){ toast('Ошибка','⚠️'); }

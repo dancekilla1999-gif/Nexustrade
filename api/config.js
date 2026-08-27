@@ -1,10 +1,12 @@
 // /api/config — глобальные настройки приложения (режим обслуживания).
 //   GET                                                          -> { prop:{...}, bot:{...}, maintenance, message, until }
-//   POST { admin:<tgId>, scope:'prop'|'bot', maintenance, message, until }  -> изменить (только админ)
-//   POST { admin:<tgId>, maintenance, message, until }            -> то же для контура prop (старый формат)
+//   POST { initData, scope:'prop'|'bot', maintenance, message, until }  -> изменить (только владелец)
+//   POST { initData, maintenance, message, until }                      -> то же для контура prop
+// Права проверяются по подписи Telegram initData, а не по присланному ID.
 // env: SUPABASE_URL, SUPABASE_SERVICE_KEY, ADMIN_TG_ID, TELEGRAM_BOT_TOKEN
 
-import { SCOPES, isAdmin, readSettings, toPublic, writeSettings } from './_settings.js';
+import { SCOPES, readSettings, toPublic, writeSettings } from './_settings.js';
+import { requireAdmin } from './_telegram.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -22,7 +24,9 @@ export default async function handler(req, res) {
 
   if (req.method === 'POST') {
     const body = req.body || {};
-    if (!isAdmin(body.admin)) return res.status(403).json({ error: 'forbidden' });
+    // Подпись Telegram, а не присланный клиентом идентификатор. См. _telegram.js.
+    const auth = requireAdmin(req);
+    if (!auth.ok) return res.status(auth.status).json({ error: auth.error, detail: auth.detail });
 
     const scope = SCOPES.includes(body.scope) ? body.scope : 'prop';
     const current = await readSettings();

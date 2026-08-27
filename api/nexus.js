@@ -1,14 +1,15 @@
 // /api/nexus — внутренний ledger NEXUS + заявки deposit/withdraw
-// Env: SUPABASE_URL, SUPABASE_SERVICE_KEY
+// Env: SUPABASE_URL, SUPABASE_SERVICE_KEY, TELEGRAM_BOT_TOKEN
 // Optional: NEXUS_MINT, NEXUS_VAULT, NEXUS_DECIMALS, ADMIN_TG_ID
+//
+// Права владельца проверяются подписью Telegram initData (см. _telegram.js),
+// а не идентификатором, присланным клиентом.
+
+import { requireAdmin } from './_telegram.js';
 
 function sb() {
   const url = process.env.SUPABASE_URL, key = process.env.SUPABASE_SERVICE_KEY;
   return url && key ? { url, key } : null;
-}
-function isAdmin(id) {
-  const a = process.env.ADMIN_TG_ID || '';
-  return id && a && String(id) === String(a);
 }
 const MINT = process.env.NEXUS_MINT || '';
 const VAULT = process.env.NEXUS_VAULT || '';
@@ -130,7 +131,9 @@ export default async function handler(req, res) {
 
       // --- админ: подтвердить депозит / выплатить вывод / credit ---
       if (body.action === 'admin_credit') {
-        if (!isAdmin(body.admin)) return res.status(403).json({ error: 'forbidden' });
+        // Начисление баланса — это выпуск стоимости. Только по подписи Telegram.
+        const auth = requireAdmin(req);
+        if (!auth.ok) return res.status(auth.status).json({ error: auth.error, detail: auth.detail });
         const amount = Number(body.amount) || 0;
         const target = body.targetUser;
         if (!target || amount === 0) return res.status(400).json({ error: 'params' });

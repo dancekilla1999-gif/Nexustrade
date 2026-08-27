@@ -19,10 +19,8 @@ export function sb() {
   return url && key ? { url, key } : null;
 }
 
-export function isAdmin(id) {
-  const admin = String(process.env.ADMIN_TG_ID || '').trim();
-  return !!admin && String(id || '').trim() === admin;
-}
+// Проверка админа живёт в _telegram.js: идентификатор, присланный клиентом,
+// ничего не доказывает — доказывает подпись Telegram.
 
 function headers(cfg) {
   return { 'Content-Type': 'application/json', apikey: cfg.key, Authorization: `Bearer ${cfg.key}` };

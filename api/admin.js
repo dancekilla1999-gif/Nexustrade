@@ -1,11 +1,10 @@
+import { requireAdmin } from './_telegram.js';
+
 function sb() {
   const url = process.env.SUPABASE_URL, key = process.env.SUPABASE_SERVICE_KEY;
   return url && key ? { url, key } : null;
 }
-function isAdmin(id) {
-  const admin = String(process.env.ADMIN_TG_ID || '').trim();
-  return admin && String(id || '').trim() === admin;
-}
+
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -13,7 +12,8 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'method' });
-  if (!isAdmin(req.query.admin)) return res.status(403).json({ error: 'forbidden' });
+  const auth = requireAdmin(req);
+  if (!auth.ok) return res.status(auth.status).json({ error: auth.error, detail: auth.detail });
 
   const cfg = sb();
   if (!cfg) return res.status(500).json({ error: 'supabase не настроен' });

@@ -1,22 +1,18 @@
 // /api/payments — заявки на оплату челленджей, подписок и выплат.
 //   POST {action:'create', user, name, kind, plan, amount, network, address, proof, meta}
 //   GET  ?user=ID&status=approved        -> свои заявки (для активации счёта)
-//   GET  ?admin=<tgId>&status=pending    -> список заявок (только админ)
-//   POST {action:'review', admin, id, decision}   -> подтвердить/отклонить (админ)
+//   GET  ?initData=...&status=pending    -> список заявок (только владелец)
+//   POST {action:'review', initData, id, decision}   -> подтвердить/отклонить (владелец)
 //   POST {action:'applied', user, id}    -> отметить, что счёт активирован
 // env: SUPABASE_URL, SUPABASE_SERVICE_KEY, ADMIN_TG_ID, TELEGRAM_BOT_TOKEN
 
 import { isDown, readSettings } from './_settings.js';
+import { requireAdmin } from './_telegram.js';
 
 function sb() {
   const url = process.env.SUPABASE_URL, key = process.env.SUPABASE_SERVICE_KEY;
   return url && key ? { url, key } : null;
 }
-function isAdmin(id) {
-  const admin = String(process.env.ADMIN_TG_ID || '').trim();
-  return admin && String(id || '').trim() === admin;
-}
-
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -39,7 +35,10 @@ export default async function handler(req, res) {
         return res.status(200).json({ payments: Array.isArray(rows) ? rows : [] });
       }
       // --- админский список ---
-      if (!isAdmin(req.query.admin)) return res.status(403).json({ error: 'forbidden' });
+      {
+        const auth = requireAdmin(req);
+        if (!auth.ok) return res.status(auth.status).json({ error: auth.error, detail: auth.detail });
+      }
       const status = req.query.status || 'pending';
       const r = await fetch(
         `${cfg.url}/rest/v1/payments?status=eq.${encodeURIComponent(status)}&order=created_at.desc&limit=100`,
@@ -60,7 +59,7 @@ export default async function handler(req, res) {
         // вкладка по-прежнему создали бы заявку на оплату во время работ — то есть
         // человек заплатил бы за счёт, который никто не активирует.
         // Владельцу платить не мешаем: ему нужно проверять оплату после выкатки.
-        if (!isAdmin(body.admin) && await isDown('prop')) {
+        if (!requireAdmin(req).ok && await isDown('prop')) {
           const s = await readSettings();
           return res.status(503).json({
             error: 'maintenance',
@@ -92,7 +91,9 @@ export default async function handler(req, res) {
 
       // --- подтвердить / отклонить (админ) ---
       if (body.action === 'review') {
-        if (!isAdmin(body.admin)) return res.status(403).json({ error: 'forbidden' });
+        // Подтверждение оплаты — это деньги. Доверять присланному ID здесь нельзя.
+        const auth = requireAdmin(req);
+        if (!auth.ok) return res.status(auth.status).json({ error: auth.error, detail: auth.detail });
         const decision = body.decision === 'approved' ? 'approved' : 'rejected';
         const r = await fetch(`${cfg.url}/rest/v1/payments?id=eq.${encodeURIComponent(body.id)}`, {
           method: 'PATCH', headers: { ...H, Prefer: 'return=representation' },

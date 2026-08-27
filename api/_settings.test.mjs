@@ -6,10 +6,27 @@
 // совместимость со старым плоским форматом и то, что ошибка записи
 // действительно доходит до администратора, а не превращается в «ок».
 
+import crypto from 'crypto';
+
+process.env.TELEGRAM_BOT_TOKEN = 'test-bot-token:AAH-fake';
 process.env.SUPABASE_URL = 'https://stub.local';
 process.env.SUPABASE_SERVICE_KEY = 'stub-key';
 process.env.ADMIN_TG_ID = '777';
-delete process.env.TELEGRAM_BOT_TOKEN; // не шлём настоящих сообщений
+
+/** Подлинный initData — так его собирает Telegram. Права теперь только по подписи. */
+function sign(id, token = process.env.TELEGRAM_BOT_TOKEN) {
+  const params = new URLSearchParams({
+    auth_date: String(Math.floor(Date.now() / 1000)),
+    user: JSON.stringify({ id, first_name: 'T' }),
+  });
+  const dataCheck = [...params.entries()].sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([k, v]) => `${k}=${v}`).join('\n');
+  const secret = crypto.createHmac('sha256', 'WebAppData').update(token).digest();
+  params.set('hash', crypto.createHmac('sha256', secret).update(dataCheck).digest('hex'));
+  return params.toString();
+}
+const OWNER = sign(777);
+const STRANGER = sign(999);
 
 let store = null;          // содержимое строки app_settings.value
 let tableMissing = false;  // имитация «таблица не создана»
@@ -41,8 +58,8 @@ function mockRes() {
   };
 }
 const call = async (req) => { const res = mockRes(); await config(req, res); return res; };
-const get = () => call({ method: 'GET', query: {} });
-const post = (body) => call({ method: 'POST', body });
+const get = () => call({ method: 'GET', query: {}, body: {}, headers: {} });
+const post = (body) => call({ method: 'POST', body, query: {}, headers: {} });
 
 let failed = 0;
 function check(name, cond, extra) {
@@ -59,24 +76,30 @@ check('по умолчанию оба контура работают',
   r.statusCode === 200 && r.body.prop.maintenance === false && r.body.bot.maintenance === false, r.body);
 
 // --- доступ ---
-r = await post({ admin: '000', scope: 'bot', maintenance: true });
-check('чужой Telegram ID получает 403', r.statusCode === 403, r.body);
+r = await post({ initData: STRANGER, scope: 'bot', maintenance: true });
+check('чужой Telegram-аккаунт получает 403', r.statusCode === 403, r.body);
+r = await get();
+check('и ничего не меняет', r.body.bot.maintenance === false, r.body);
+
+// --- присланный ID больше не является пропуском ---
+r = await post({ admin: '777', scope: 'bot', maintenance: true });
+check('присланный ID без подписи не даёт доступа', r.statusCode === 401, r.body);
 r = await get();
 check('и ничего не меняет', r.body.bot.maintenance === false, r.body);
 
 // --- независимость контуров: главное требование ---
-r = await post({ admin: '777', scope: 'bot', maintenance: true, message: 'бот обновляется', until: '21:00' });
+r = await post({ initData: OWNER, scope: 'bot', maintenance: true, message: 'бот обновляется', until: '21:00' });
 check('бота можно включить на обслуживание', r.statusCode === 200 && r.body.bot.maintenance === true, r.body);
 check('проп-фирма при этом продолжает работать', r.body.prop.maintenance === false, r.body);
 
-r = await post({ admin: '777', scope: 'prop', maintenance: true, message: 'обновляем терминал' });
+r = await post({ initData: OWNER, scope: 'prop', maintenance: true, message: 'обновляем терминал' });
 r = await get();
 check('оба контура держатся одновременно',
   r.body.bot.maintenance === true && r.body.prop.maintenance === true, r.body);
 check('у каждого свой текст',
   r.body.bot.message === 'бот обновляется' && r.body.prop.message === 'обновляем терминал', r.body);
 
-r = await post({ admin: '777', scope: 'bot', maintenance: false });
+r = await post({ initData: OWNER, scope: 'bot', maintenance: false });
 r = await get();
 check('бота выключили — проп-фирма осталась на обслуживании',
   r.body.bot.maintenance === false && r.body.prop.maintenance === true, r.body);
@@ -94,13 +117,13 @@ check('и не включает бота заодно', r.body.bot.maintenance =
 
 // --- старый клиент шлёт POST без scope ---
 store = null;
-r = await post({ admin: '777', maintenance: true, message: 'без scope' });
+r = await post({ initData: OWNER, maintenance: true, message: 'без scope' });
 check('POST без scope трактуется как prop',
   r.body.prop.maintenance === true && r.body.bot.maintenance === false, r.body);
 
 // --- ошибка записи обязана быть видимой ---
 store = null; tableMissing = true;
-r = await post({ admin: '777', scope: 'prop', maintenance: true });
+r = await post({ initData: OWNER, scope: 'prop', maintenance: true });
 check('нет таблицы — отвечаем 500, а не «ок»', r.statusCode === 500, r.body);
 check('и объясняем причину', /app_settings/.test(String(r.body && r.body.detail)), r.body);
 
