@@ -1248,6 +1248,7 @@ function closePosition(id, reason){
   const p=S.positions[i]; const pnl=posPnl(p); const exit=priceOf(p.symbol);
   S.acc.balance+=pnl;
   S.history.unshift({ ...p, exit, pnl, closed:Date.now(), auto:reason||null });
+  try{ botOnClosed(p, pnl); }catch(e){}
   persistState();
   S.positions.splice(i,1);
   haptic('ok'); toast((reason==='TP'?'Тейк-профит: ':reason==='SL'?'Стоп-лосс: ':'Закрыто: ')+(pnl>=0?'+':'')+fUsd(pnl), pnl>=0?'💰':'📉');
@@ -3898,6 +3899,227 @@ const TIERS_SUB=[
 ];
 function tierRank(t){ return {free:0,prem:1,vip:2}[t]||0; }
 
+
+/* ============ АВТО-ТРЕЙДЕР ============
+   Дисциплина, а не предсказание.
+   
+   Что этот бот делает и чего не делает — важно понимать до включения.
+   Он НЕ предсказывает рынок лучше человека и НЕ обещает прибыли. Он берёт
+   те же сигналы, что вы видите на экране, и исполняет их без нарушений
+   дисциплины: с фиксированным риском на сделку, обязательным стопом,
+   лимитом числа позиций и остановкой после дневного убытка.
+   
+   Именно этим профессиональное исполнение отличается от любительского.
+   Больше всего денег теряют не на плохом прогнозе, а на увеличении риска
+   после серии убытков, на сделке без стопа и на десяти коррелированных
+   позициях, открытых как «разные идеи». Здесь это запрещено кодом.
+   
+   Работает только на демо- и челлендж-счетах внутри приложения. */
+
+const BOT_DEFAULTS = {
+  riskPct: 0.5,        // риск на сделку, % от баланса
+  maxPositions: 3,     // одновременно открытых позиций
+  minStrength: 70,     // минимальная сила сигнала (0..100)
+  minRR: 2.0,          // минимальное соотношение риск/прибыль
+  maxLev: 10,          // потолок плеча
+  dailyStopPct: 3.0,   // стоп на день, % от стартового баланса дня
+  cooldownMin: 45,     // пауза после убытка, минут
+  maxSameSide: 2,      // сколько позиций в одну сторону (защита от корреляции)
+};
+function botCfg(){ S.bot = Object.assign({ on:false, log:[], pausedUntil:0, dayKey:dayKey(), dayStart:null }, BOT_DEFAULTS, S.bot||{}); return S.bot; }
+
+function botLog(text, kind){
+  const b=botCfg();
+  b.log = [{ t:Date.now(), text, kind:kind||'info' }, ...(b.log||[])].slice(0, 40);
+}
+
+/** Причина, по которой бот сейчас не торгует, либо null. */
+function botBlockReason(){
+  const b=botCfg();
+  if(!b.on) return 'выключен';
+  if(!S.acc) return 'нет активного счёта';
+  const blk=tradingBlocked(); if(blk) return blk;
+  if(S.acc.status!=='RUN' && S.acc.status!=='PASS') return 'счёт неактивен';
+  if(Date.now() < (b.pausedUntil||0)){
+    const m=Math.ceil((b.pausedUntil-Date.now())/60000);
+    return 'пауза после убытка — ещё '+m+' мин';
+  }
+  // Дневной стоп бота — строже, чем у челленджа, и это намеренно:
+  // правило площадки нарушать нельзя вообще, поэтому бот останавливается раньше.
+  if(b.dayStart!=null){
+    const dd=(equity()-b.dayStart)/b.dayStart*100;
+    if(dd <= -b.dailyStopPct) return 'дневной стоп бота ('+b.dailyStopPct+'%) — до завтра';
+  }
+  if((S.positions||[]).length >= b.maxPositions) return 'достигнут лимит позиций ('+b.maxPositions+')';
+  if(freeMargin() < 10) return 'недостаточно свободной маржи';
+  return null;
+}
+
+/** Сколько маржи ставить, чтобы риск до стопа был ровно riskPct от баланса. */
+function botSize(sg){
+  const b=botCfg();
+  const riskMoney = S.acc.balance * (b.riskPct/100);
+  const stopDist = Math.abs(sg.entry - sg.sl) / sg.entry;   // доля цены
+  if(!(stopDist > 0)) return null;
+  // qty * entry * stopDist = riskMoney  →  notional = riskMoney / stopDist
+  const notional = riskMoney / stopDist;
+  let lev = Math.ceil(notional / Math.max(1, S.acc.balance * 0.2));
+  lev = Math.max(1, Math.min(b.maxLev, lev));
+  const margin = notional / lev;
+  if(margin < 10) return null;                       // слишком мелко — пропускаем
+  if(margin > freeMargin()) return null;             // не влезает — не ужимаем риск вверх
+  return { margin, lev, notional, riskMoney };
+}
+
+/** Один проход: берём лучший допустимый сигнал и открываем его. */
+function botTick(){
+  const b=botCfg();
+  if(!b.on) return;
+  bindAcc();
+
+  // новый день — сбрасываем дневную точку отсчёта
+  if(b.dayKey !== dayKey()){ b.dayKey=dayKey(); b.dayStart=equity(); b.pausedUntil=0; }
+  if(b.dayStart==null) b.dayStart=equity();
+
+  const reason = botBlockReason();
+  if(reason){ b.lastReason=reason; return; }
+  b.lastReason=null;
+
+  const open = S.positions||[];
+  const held = new Set(open.map(p=>p.symbol));
+  const longs = open.filter(p=>p.side==='LONG').length;
+  const shorts = open.filter(p=>p.side==='SHORT').length;
+
+  const candidates = (allSignals()||[])
+    .filter(sg => sg && sg.strength>=b.minStrength && sg.rr>=b.minRR)
+    .filter(sg => !held.has(sg.symbol))          // одна позиция на инструмент
+    .filter(sg => {
+      // Ограничение на одну сторону: в крипте почти всё ходит вместе,
+      // поэтому три лонга — это не три идеи, а одна ставка тройным размером.
+      const side = sg.dir==='LONG' ? 'LONG' : 'SHORT';
+      return side==='LONG' ? longs < b.maxSameSide : shorts < b.maxSameSide;
+    })
+    .sort((a,c)=> (c.strength-a.strength) || (c.rr-a.rr));
+
+  if(!candidates.length){ b.lastReason='подходящих сетапов нет'; return; }
+
+  const sg = candidates[0];
+  const size = botSize(sg);
+  if(!size){ b.lastReason='размер позиции вне допустимого'; return; }
+
+  const side = sg.dir==='LONG' ? 'LONG' : 'SHORT';
+  const entry = priceOf(sg.symbol);
+  if(!entry){ b.lastReason='нет живой цены'; return; }
+
+  // Цена ушла от уровня сигнала — вход уже не тот, что рассчитывали.
+  if(Math.abs(entry - sg.entry)/sg.entry > 0.004){ b.lastReason='цена ушла от точки входа'; return; }
+
+  const qty = size.margin*size.lev/entry;
+  S.positions.push({
+    id:S.nextId++, symbol:sg.symbol, side, margin:size.margin, lev:size.lev,
+    entry, qty, opened:Date.now(),
+    tp:sg.tp, sl:sg.sl,          // стоп и цель ставятся сразу, позиции без стопа не бывает
+    bot:true
+  });
+  botLog(side+' '+sg.symbol.replace('USDT','')+' · риск $'+fmt(size.riskMoney,2)+
+         ' · x'+size.lev+' · R:R 1:'+sg.rr.toFixed(1), 'open');
+  persistState();
+  if(S.screen==='signals') renderSignals();
+  renderAll();
+}
+
+/** Вызывается при закрытии позиции бота — включает паузу после убытка. */
+function botOnClosed(pos, pnl){
+  if(!pos || !pos.bot) return;
+  const b=botCfg();
+  botLog((pnl>=0?'Прибыль ':'Убыток ')+'$'+fmt(Math.abs(pnl),2)+' · '+pos.symbol.replace('USDT',''),
+         pnl>=0?'win':'loss');
+  if(pnl<0){
+    // Пауза после убытка. Самая дорогая ошибка — немедленно отыгрываться.
+    b.pausedUntil = Date.now() + b.cooldownMin*60000;
+  }
+  persistState();
+}
+
+let _botTimer=null;
+function botStart(){ clearInterval(_botTimer); _botTimer=setInterval(()=>{ try{ botTick(); }catch(e){} }, 20000); }
+function setBot(on){
+  const b=botCfg();
+  b.on=!!on;
+  if(b.on){
+    b.dayKey=dayKey(); if(b.dayStart==null) b.dayStart=equity();
+    botLog('Бот включён · риск '+b.riskPct+'% на сделку, максимум '+b.maxPositions+' позиций','info');
+    toast('Авто-трейдер включён','🤖');
+  } else {
+    botLog('Бот выключен. Открытые позиции остаются на вас.','info');
+    toast('Авто-трейдер выключен. Открытые позиции не закрыты.','⏸');
+  }
+  persistState(); haptic('ok');
+  if(S.screen==='signals') renderSignals(); else renderAll();
+}
+
+function renderBotPanel(){
+  const b=botCfg();
+  const reason=botBlockReason();
+  const open=(S.positions||[]).filter(p=>p.bot).length;
+  const statusText = !b.on ? 'Выключен'
+    : reason ? ('Пауза: '+reason)
+    : 'Работает · ищет сетапы';
+  const statusColor = !b.on ? 'var(--txt2)' : reason ? 'var(--gold)' : 'var(--green)';
+
+  return '<div class="card mt3">'+
+    '<div class="row between" style="align-items:flex-start;">'+
+      '<div style="padding-right:10px;">'+
+        '<div style="font-weight:700;font-size:15px;">🤖 Авто-трейдер</div>'+
+        '<div class="small mt1" style="color:'+statusColor+';font-size:12.5px;">'+statusText+'</div>'+
+        '<div class="small mt1" style="color:var(--txt3);font-size:11.5px;line-height:1.4;">'+
+          'Берёт сигналы с этого экрана и исполняет их с фиксированным риском. '+
+          'Не предсказывает рынок и не обещает прибыли.</div>'+
+      '</div>'+
+      '<button class="btn '+(b.on?'btn-gold':'btn-ghost')+' btn-sm" id="botToggle" style="flex:none;">'+
+        (b.on?'Выключить':'Включить')+'</button>'+
+    '</div>'+
+    '<div class="stat-grid mt3" style="grid-template-columns:repeat(3,1fr);">'+
+      '<div class="stat-card"><div class="sv" style="font-size:17px;">'+b.riskPct+'%</div><div class="sl">риск на сделку</div></div>'+
+      '<div class="stat-card"><div class="sv" style="font-size:17px;">'+open+'/'+b.maxPositions+'</div><div class="sl">позиций бота</div></div>'+
+      '<div class="stat-card"><div class="sv" style="font-size:17px;">'+b.dailyStopPct+'%</div><div class="sl">стоп на день</div></div>'+
+    '</div>'+
+    '<div class="prm mt3"><label>Риск на сделку, % от баланса</label></div>'+
+    '<input class="input" id="botRisk" type="number" step="0.1" min="0.1" max="2" value="'+b.riskPct+'">'+
+    '<div class="prm mt2"><label>Максимум одновременных позиций</label></div>'+
+    '<input class="input" id="botMax" type="number" step="1" min="1" max="5" value="'+b.maxPositions+'">'+
+    '<div class="prm mt2"><label>Минимальная сила сигнала</label></div>'+
+    '<input class="input" id="botStr" type="number" step="5" min="50" max="95" value="'+b.minStrength+'">'+
+    '<div class="small mt2" style="color:var(--txt3);font-size:11.5px;line-height:1.5;">'+
+      'Риск выше 1% на сделку — самая частая причина провала челленджа: '+
+      'шесть убытков подряд бывают у любой стратегии, и при 2% это уже минус 12%.'+
+    '</div>'+
+    (b.log&&b.log.length ? '<div class="prm mt3"><label>Журнал</label></div>'+
+      '<div style="max-height:150px;overflow:auto;">'+
+      b.log.slice(0,10).map(l=>'<div class="small" style="padding:4px 0;border-bottom:1px solid var(--line);color:'+
+        (l.kind==='win'?'var(--green)':l.kind==='loss'?'var(--red)':'var(--txt2)')+';">'+
+        '<span class="mono" style="color:var(--txt3);font-size:11px;">'+new Date(l.t).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})+'</span> '+
+        esc(l.text)+'</div>').join('')+'</div>' : '')+
+  '</div>';
+}
+
+function bindBotPanel(){
+  const t=$('botToggle');
+  if(t) t.addEventListener('click', ()=>setBot(!botCfg().on));
+  const save=(id, key, min, max)=>{
+    const el=$(id); if(!el) return;
+    el.addEventListener('change', ()=>{
+      const v=parseFloat(el.value);
+      if(!isFinite(v)||v<min||v>max){ el.value=botCfg()[key]; toast('Значение вне допустимого','⚠️'); return; }
+      botCfg()[key]=v; persistState(); toast('Сохранено','✅');
+      if(S.screen==='signals') renderSignals();
+    });
+  };
+  save('botRisk','riskPct',0.1,2);
+  save('botMax','maxPositions',1,5);
+  save('botStr','minStrength',50,95);
+}
+
 function renderSignals(){
   $('tierBadge').textContent=(S.tier||'free').toUpperCase();
   $('tierBadge').className='badge '+(S.tier==='vip'?'b-green':S.tier==='prem'?'b-gold':'b-mut');
@@ -3908,12 +4130,18 @@ function renderSignals(){
   else renderAI(body);
 }
 function renderSigList(body){
-  if(!_klinesReady) body.innerHTML='<div class="mut small" style="text-align:center;padding:16px;">Считаю сигналы…</div>';
+  /* Панель бота рисуется сразу и не ждёт котировок: управление автоторговлей
+     не должно зависеть от того, успела ли загрузиться история свечей. */
+  const botHtml = renderBotPanel();
+  if(!_klinesReady){
+    body.innerHTML = botHtml + '<div class="mut small" style="text-align:center;padding:16px;">Считаю сигналы…</div>';
+    bindBotPanel();
+  }
   ensureKlines(()=>{
     if(S.screen!=='signals'||S.stab!=='signals') return;
     const sigs=allSignals();
     const freeLimit=2, unlocked=tierRank(S.tier)>=1;
-    if(!sigs.length){ body.innerHTML='<div class="note-box"><b>Качественных сетапов сейчас нет.</b><br><span class="micro">Движок ищет сделки с потенциалом от '+SIG_MIN_MOVE+'%, соотношением R:R от 1:'+SIG_MIN_RR+' и минимум '+SIG_MIN_PASS+' подтверждениями из 20. Такие точки появляются не каждый день — это нормально и правильно.</span></div>'; return; }
+    if(!sigs.length){ body.innerHTML=botHtml+'<div class="note-box mt3"><b>Качественных сетапов сейчас нет.</b><br><span class="micro">Движок ищет сделки с потенциалом от '+SIG_MIN_MOVE+'%, соотношением R:R от 1:'+SIG_MIN_RR+' и минимум '+SIG_MIN_PASS+' подтверждениями из 20. Такие точки появляются не каждый день — это нормально и правильно.</span></div>'; bindBotPanel(); return; }
     let html='';
     sigs.forEach((sg,i)=>{
       const a=ASSETS.find(x=>x.s===sg.symbol);
@@ -3949,7 +4177,8 @@ function renderSigList(body){
         (cur?'':'<button class="btn '+(t.id==='free'?'btn-ghost':'btn-gold')+' btn-block mt4" data-sub="'+t.id+'">'+(t.price?'Оформить за $'+t.price:'Выбрать')+'</button>')+
         '</div>';
     });
-    body.innerHTML=html;
+    body.innerHTML=botHtml+html;
+    bindBotPanel();
     body.querySelectorAll('[data-trade]').forEach(b=>b.addEventListener('click',()=>openTerminal(b.dataset.trade)));
   body.querySelectorAll('[data-sigdet]').forEach(b=>b.addEventListener('click',()=>openSignalDetail(b.dataset.sigdet)));
     body.querySelectorAll('[data-sub]').forEach(b=>b.addEventListener('click',()=>subscribe(b.dataset.sub)));
@@ -4162,13 +4391,13 @@ function authHeaders(extra){ const h=Object.assign({'Content-Type':'application/
   if(S.token) h['Authorization']='Bearer '+S.token; return h; }
 
 /* ============ STATE SYNC (cloud + local) ============ */
-function snapshot(){ return { accounts:S.accounts, activeAccId:S.activeAccId, acc:S.acc, positions:S.positions, history:S.history, tier:S.tier, wallet:S.wallet, chat:S.chat, equityHist:S.equityHist, payoutReq:S.payoutReq, appliedPays:S.appliedPays }; }
+function snapshot(){ return { accounts:S.accounts, activeAccId:S.activeAccId, acc:S.acc, positions:S.positions, history:S.history, tier:S.tier, wallet:S.wallet, chat:S.chat, equityHist:S.equityHist, payoutReq:S.payoutReq, appliedPays:S.appliedPays, bot:S.bot }; }
 function persistState(){ try{ localStorage.setItem('nx_state', JSON.stringify(snapshot())); }catch(e){} pushState(); }
 function loadState(){ try{ const s=localStorage.getItem('nx_state'); if(s){ const o=JSON.parse(s);
   if(o.acc)S.acc=o.acc; if(o.positions)S.positions=o.positions; if(o.history)S.history=o.history;
   if(o.tier)S.tier=o.tier; if(o.wallet)S.wallet=o.wallet; if(o.chat)S.chat=o.chat; if(o.equityHist)S.equityHist=o.equityHist; if(o.payoutReq)S.payoutReq=o.payoutReq;
   if(o.accounts&&o.accounts.length){ S.accounts=o.accounts; S.activeAccId=o.activeAccId||o.accounts[0].id; }
-  if(o.appliedPays)S.appliedPays=o.appliedPays; } }catch(e){} }
+  if(o.appliedPays)S.appliedPays=o.appliedPays; if(o.bot)S.bot=o.bot; } }catch(e){} }
 function pingUser(){
   if(!S.user||!S.token) return;
   fetch(API_BASE+'/api/state',{method:'POST',headers:authHeaders(),
@@ -5847,6 +6076,7 @@ async function init(){
   pingUser();
   checkMaintenance();
   setInterval(checkMaintenance, 120000);
+  try{ botCfg(); botStart(); }catch(e){}
   setTimeout(()=>checkMyPayments(true), 1500);
   setInterval(()=>checkMyPayments(true), 60000);
   startWS();
