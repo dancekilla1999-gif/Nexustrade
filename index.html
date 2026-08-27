@@ -4368,16 +4368,21 @@ function authTelegram(){
   /* Токен сеанса. Без него сервер не отдаёт и не принимает состояние: раньше
      идентификатор брался прямо из запроса, и любой мог читать и перезаписывать
      чужие счета. initDataUnsafe нельзя доверять на сервере — доверяют подписи. */
-  authProvider('telegram').catch(()=>{});
+  authProvider('telegram', null, true).catch(()=>{});
   toast('Добро пожаловать, '+(S.user.name)+'!','👋'); go('home');
 }
-async function authProvider(kind, email){
+async function authProvider(kind, email, silent){
   try{
     const res=await fetch(API_BASE+'/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({provider:kind, email:email||null, initData: tg?tg.initData:null})});
     if(!res.ok) throw new Error('no backend');
-    const data=await res.json(); setUser(data.user); if(data.token) setToken(data.token); toast('Вход выполнен','✅'); go('home');
+    const data=await res.json(); setUser(data.user); if(data.token) setToken(data.token);
+    /* Тихий режим для автовхода из Telegram: там приветствие и переход
+       уже сделаны вызывающей стороной, второй тост выглядел бы сбоем. */
+    if(silent){ pullState(); return; }
+    toast('Вход выполнен','✅'); go('home');
   }catch(e){
+    if(silent) return;
     // офлайн: локальный аккаунт до подключения бэкенда
     setUser({id:kind+'_'+Date.now(), name:email?email.split('@')[0]:(kind==='google'?'Google User':'Гость'), via:kind, email:email||null});
     toast('Вход (локально, до настройки сервера)','✅'); go('home');

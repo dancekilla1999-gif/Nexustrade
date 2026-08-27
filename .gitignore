@@ -1,0 +1,17 @@
+# Секреты. Ни один из этих файлов не должен попасть в репозиторий:
+# он публичный, и утёкший ключ Supabase или токен бота — это доступ
+# к данным пользователей и к их деньгам.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets.json
+
+node_modules/
+.vercel/
+.DS_Store
+npm-debug.log*
+dist/
+build/
+.cache/
