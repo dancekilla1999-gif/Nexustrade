@@ -4136,6 +4136,10 @@ function authTelegram(){
   const tu=(tg&&tg.initDataUnsafe&&tg.initDataUnsafe.user)||null;
   if(tu){ setUser({id:'tg_'+tu.id, name:tu.first_name||tu.username||'Трейдер', via:'telegram', username:tu.username}); }
   else { setUser({id:'guest_'+Date.now(), name:'Гость', via:'telegram'}); }
+  /* Токен сеанса. Без него сервер не отдаёт и не принимает состояние: раньше
+     идентификатор брался прямо из запроса, и любой мог читать и перезаписывать
+     чужие счета. initDataUnsafe нельзя доверять на сервере — доверяют подписи. */
+  authProvider('telegram').catch(()=>{});
   toast('Добро пожаловать, '+(S.user.name)+'!','👋'); go('home');
 }
 async function authProvider(kind, email){
@@ -4143,14 +4147,19 @@ async function authProvider(kind, email){
     const res=await fetch(API_BASE+'/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({provider:kind, email:email||null, initData: tg?tg.initData:null})});
     if(!res.ok) throw new Error('no backend');
-    const data=await res.json(); setUser(data.user); toast('Вход выполнен','✅'); go('home');
+    const data=await res.json(); setUser(data.user); if(data.token) setToken(data.token); toast('Вход выполнен','✅'); go('home');
   }catch(e){
     // офлайн: локальный аккаунт до подключения бэкенда
     setUser({id:kind+'_'+Date.now(), name:email?email.split('@')[0]:(kind==='google'?'Google User':'Гость'), via:kind, email:email||null});
     toast('Вход (локально, до настройки сервера)','✅'); go('home');
   }
 }
-function loadUser(){ try{ const u=localStorage.getItem('nx_user'); if(u) S.user=JSON.parse(u); }catch(e){} }
+function loadUser(){ try{ const u=localStorage.getItem('nx_user'); if(u) S.user=JSON.parse(u); }catch(e){}
+  try{ S.token=localStorage.getItem('nx_token')||null; }catch(e){} }
+function setToken(t){ S.token=t||null; try{ t?localStorage.setItem('nx_token',t):localStorage.removeItem('nx_token'); }catch(e){} }
+/* Заголовок для личных запросов. Сервер берёт пользователя из токена. */
+function authHeaders(extra){ const h=Object.assign({'Content-Type':'application/json'}, extra||{});
+  if(S.token) h['Authorization']='Bearer '+S.token; return h; }
 
 /* ============ STATE SYNC (cloud + local) ============ */
 function snapshot(){ return { accounts:S.accounts, activeAccId:S.activeAccId, acc:S.acc, positions:S.positions, history:S.history, tier:S.tier, wallet:S.wallet, chat:S.chat, equityHist:S.equityHist, payoutReq:S.payoutReq, appliedPays:S.appliedPays }; }
@@ -4161,21 +4170,47 @@ function loadState(){ try{ const s=localStorage.getItem('nx_state'); if(s){ cons
   if(o.accounts&&o.accounts.length){ S.accounts=o.accounts; S.activeAccId=o.activeAccId||o.accounts[0].id; }
   if(o.appliedPays)S.appliedPays=o.appliedPays; } }catch(e){} }
 function pingUser(){
-  if(!S.user) return;
-  fetch(API_BASE+'/api/state',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({user:S.user.id, name:S.user.name||null, via:S.user.via||'demo', state:snapshot()})
+  if(!S.user||!S.token) return;
+  fetch(API_BASE+'/api/state',{method:'POST',headers:authHeaders(),
+    body:JSON.stringify({name:S.user.name||null, via:S.user.via||'demo', state:snapshot()})
   }).catch(()=>{});
 }
 let pushT=null;
-function pushState(){ if(!S.user) return; clearTimeout(pushT); pushT=setTimeout(()=>{
-  fetch(API_BASE+'/api/state',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({user:S.user.id, name:S.user.name||null, via:S.user.via||'demo', state:snapshot()})}).catch(()=>{}); }, 1200); }
-async function pullState(){ if(!S.user) return;
-  try{ const res=await fetch(API_BASE+'/api/state?user='+encodeURIComponent(S.user.id));
-    if(!res.ok) return; const data=await res.json(); if(data && data.state){ const o=data.state;
+function pushState(){ if(!S.user||!S.token) return; clearTimeout(pushT); pushT=setTimeout(()=>{
+  fetch(API_BASE+'/api/state',{method:'POST',headers:authHeaders(),
+    body:JSON.stringify({name:S.user.name||null, via:S.user.via||'demo', state:snapshot()})}).catch(()=>{}); }, 1200); }
+async function pullState(){ if(!S.user||!S.token) return;
+  try{ const res=await fetch(API_BASE+'/api/state',{headers:authHeaders()});
+    if(!res.ok) return; const data=await res.json(); if(!data||!data.state) return;
+    const o=data.state;
+    /* Счета сливаются по id, а не перезаписываются.
+       Раньше pullState синхронизировал только acc и молча терял o.accounts —
+       поэтому счёт, выданный на сервере, до пользователя не доезжал, а
+       следующий pushState затирал его локальным состоянием. Слияние берёт
+       новые счета с сервера и не трогает те, что уже есть на устройстве:
+       локальные сделки при этом не теряются. */
+    if(Array.isArray(o.accounts) && o.accounts.length){
+      S.accounts=S.accounts||[];
+      const have=new Set(S.accounts.map(a=>a.id));
+      let added=0;
+      o.accounts.forEach(a=>{ if(a&&a.id&&!have.has(a.id)){ S.accounts.push(a); added++; } });
+      if(added){
+        if(!S.activeAccId) S.activeAccId=o.activeAccId||S.accounts[0].id;
+        toast(added===1?'Вам выдан новый счёт':'Вам выдано счетов: '+added,'🎁');
+        try{ bindAcc(); }catch(e){}
+        persistState();
+      }
+    }
+    if(Array.isArray(o.appliedPays)){
+      S.appliedPays=Array.from(new Set([...(S.appliedPays||[]), ...o.appliedPays]));
+    }
+    if(o.tier && o.tier!=='free' && S.tier==='free') S.tier=o.tier;
+    if(!S.accounts||!S.accounts.length){
       if(o.acc)S.acc=o.acc; if(o.positions)S.positions=o.positions; if(o.history)S.history=o.history;
-      if(o.tier)S.tier=o.tier; if(o.wallet)S.wallet=o.wallet; if(o.equityHist)S.equityHist=o.equityHist;
-      renderAll(); } }catch(e){} }
+      if(o.wallet)S.wallet=o.wallet; if(o.equityHist)S.equityHist=o.equityHist;
+    }
+    renderAll();
+  }catch(e){} }
 
 
 

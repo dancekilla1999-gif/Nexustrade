@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { issueSession } from './_session.js';
 
 function verifyTelegram(initData, botToken) {
   try {
@@ -55,5 +56,10 @@ export default async function handler(req, res) {
   }
 
   user = await upsertUser(user);
-  return res.status(200).json({ user });
+
+  // Токен привязывает клиента к этому идентификатору. Все пользовательские
+  // эндпоинты берут id из токена, а не из запроса, поэтому подставить чужой
+  // больше нельзя.
+  const token = issueSession(user.id);
+  return res.status(200).json({ user, token });
 }

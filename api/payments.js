@@ -8,6 +8,7 @@
 
 import { isDown, readSettings } from './_settings.js';
 import { requireAdmin } from './_telegram.js';
+import { requireUser } from './_session.js';
 
 function sb() {
   const url = process.env.SUPABASE_URL, key = process.env.SUPABASE_SERVICE_KEY;
@@ -26,10 +27,13 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       // --- свои заявки (для пользователя) ---
-      if (req.query.user) {
+      if (req.query.user || req.query.token || (req.headers && req.headers.authorization)) {
+        // Свои заявки — только свои. Раньше можно было запросить чужие по id.
+        const auth = requireUser(req);
+        if (!auth.ok) return res.status(auth.status).json({ error: auth.error, detail: auth.detail });
         const st = req.query.status ? `&status=eq.${encodeURIComponent(req.query.status)}` : '';
         const r = await fetch(
-          `${cfg.url}/rest/v1/payments?user_id=eq.${encodeURIComponent(req.query.user)}${st}&order=created_at.desc&limit=30`,
+          `${cfg.url}/rest/v1/payments?user_id=eq.${encodeURIComponent(auth.userId)}${st}&order=created_at.desc&limit=30`,
           { headers: H });
         const rows = await r.json();
         return res.status(200).json({ payments: Array.isArray(rows) ? rows : [] });
@@ -68,12 +72,23 @@ export default async function handler(req, res) {
           });
         }
 
+        // Заявку можно создать только от своего имени.
+        const who = requireUser(req);
+        if (!who.ok) return res.status(who.status).json({ error: who.error, detail: who.detail });
+
+        // Сумма приходит от клиента, поэтому проверяется здесь: без этого
+        // заявку можно было создать на любое число, включая отрицательное.
+        const amount = Number(body.amount);
+        if (!Number.isFinite(amount) || amount <= 0 || amount > 100000) {
+          return res.status(400).json({ error: 'amount', detail: 'Некорректная сумма заявки.' });
+        }
+
         const row = {
-          user_id: body.user || null,
+          user_id: who.userId,
           user_name: body.name || null,
           kind: body.kind || 'challenge',
           plan: body.plan || '',
-          amount: body.amount || 0,
+          amount,
           network: body.network || '',
           address: body.address || '',
           proof_url: body.proof || null,

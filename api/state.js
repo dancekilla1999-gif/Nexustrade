@@ -1,7 +1,14 @@
 // /api/state — синхронизация состояния + автоматический учёт пользователей.
-//   GET  /api/state?user=ID           -> { state }
-//   POST /api/state { user, name, via, state }  -> сохранить состояние И зарегистрировать пользователя
-// Требует env: SUPABASE_URL, SUPABASE_SERVICE_KEY.
+//   GET  /api/state            -> { state }                (по токену сеанса)
+//   POST /api/state { state }  -> сохранить состояние       (по токену сеанса)
+//
+// Идентификатор пользователя берётся ИЗ ТОКЕНА и никогда из запроса.
+// Раньше он приходил из ?user=/body.user без всякой проверки, и посторонний мог
+// прочитать чужие счета и заявки на вывод или перезаписать чужое состояние.
+//
+// Требует env: SUPABASE_URL, SUPABASE_SERVICE_KEY, TELEGRAM_BOT_TOKEN.
+
+import { requireUser } from './_session.js';
 
 function sb() {
   const url = process.env.SUPABASE_URL, key = process.env.SUPABASE_SERVICE_KEY;
@@ -19,8 +26,9 @@ export default async function handler(req, res) {
   const H = { 'Content-Type': 'application/json', apikey: cfg.key, Authorization: `Bearer ${cfg.key}` };
 
   if (req.method === 'GET') {
-    const user = req.query.user;
-    if (!user) return res.status(400).json({ error: 'user' });
+    const auth = requireUser(req);
+    if (!auth.ok) return res.status(auth.status).json({ error: auth.error, detail: auth.detail });
+    const user = auth.userId;
     try {
       const r = await fetch(`${cfg.url}/rest/v1/user_state?user_id=eq.${encodeURIComponent(user)}&select=state`, { headers: H });
       const rows = await r.json();
@@ -29,8 +37,10 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
-    const { user, state, name, via } = req.body || {};
-    if (!user) return res.status(400).json({ error: 'user' });
+    const auth = requireUser(req);
+    if (!auth.ok) return res.status(auth.status).json({ error: auth.error, detail: auth.detail });
+    const user = auth.userId;
+    const { state, name, via } = req.body || {};
     try {
       // 1) Регистрируем/обновляем пользователя — учитываются все, включая демо
       await fetch(`${cfg.url}/rest/v1/users`, {

@@ -6,6 +6,7 @@
 // а не идентификатором, присланным клиентом.
 
 import { requireAdmin } from './_telegram.js';
+import { requireUser } from './_session.js';
 
 function sb() {
   const url = process.env.SUPABASE_URL, key = process.env.SUPABASE_SERVICE_KEY;
@@ -46,8 +47,10 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      const user = req.query.user;
-      if (!user) return res.status(400).json({ error: 'user required' });
+      // Баланс — личные данные. Идентификатор берём из токена, не из запроса.
+      const auth = requireUser(req);
+      if (!auth.ok) return res.status(auth.status).json({ error: auth.error, detail: auth.detail });
+      const user = auth.userId;
 
       // баланс
       const br = await fetch(
@@ -76,8 +79,11 @@ export default async function handler(req, res) {
 
     if (req.method === 'POST') {
       const body = req.body || {};
-      const user = body.user;
-      if (!user) return res.status(400).json({ error: 'user' });
+      // Заявки на депозит и вывод двигают стоимость: действующее лицо
+      // определяется подписанным токеном, а не полем в теле запроса.
+      const auth = requireUser(req);
+      if (!auth.ok) return res.status(auth.status).json({ error: auth.error, detail: auth.detail });
+      const user = auth.userId;
 
       // --- заявка на депозит (пользователь прислал tx signature) ---
       if (body.action === 'deposit_request') {
@@ -132,8 +138,8 @@ export default async function handler(req, res) {
       // --- админ: подтвердить депозит / выплатить вывод / credit ---
       if (body.action === 'admin_credit') {
         // Начисление баланса — это выпуск стоимости. Только по подписи Telegram.
-        const auth = requireAdmin(req);
-        if (!auth.ok) return res.status(auth.status).json({ error: auth.error, detail: auth.detail });
+        const owner = requireAdmin(req);
+        if (!owner.ok) return res.status(owner.status).json({ error: owner.error, detail: owner.detail });
         const amount = Number(body.amount) || 0;
         const target = body.targetUser;
         if (!target || amount === 0) return res.status(400).json({ error: 'params' });
