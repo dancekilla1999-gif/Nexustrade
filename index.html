@@ -794,11 +794,17 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
     <button class="tf-btn" id="tfBtn"><b id="tfCur">1ч</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></button>
   </div>
 
-  <div class="row gap2 mt2" style="align-items:center;"><span id="toolCur" class="micro" style="color:var(--gold);"></span></div>
+  <div class="row gap2 mt2" style="align-items:center;">
+    <button class="btn btn-ghost btn-sm" id="chartSrcBtn">📊 TradingView</button>
+    <span id="toolCur" class="micro" style="color:var(--gold);"></span>
+  </div>
 
   <div class="card mt2" style="padding:12px 6px 4px;">
     <div class="term-stage">
       <div class="tool-rail" id="toolRail"></div>
+      <div class="term-chart-wrap" id="tvWrap" style="display:none;">
+        <div id="tvChart" style="width:100%;height:100%;"></div>
+      </div>
       <div class="term-chart-wrap" id="termChartWrap">
         <canvas id="termChart"></canvas>
         <div class="term-tt" id="termTT"></div>
@@ -1212,17 +1218,27 @@ async function loadKlines(sym, interval){
     S.klines[key]=raw.map(r=>({t:r[0],o:+r[1],h:+r[2],l:+r[3],c:+r[4],v:+r[5]}));
     return S.klines[key];
   }catch(e){}
-  // fallback: строим свечи из 7д-спарклайна CoinGecko, если есть
+  /* Ниже идут ЗАМЕНИТЕЛИ данных, а не данные.
+     Свечи из спарклайна CoinGecko и demoKlines() — выдуманный OHLC: у него
+     нет настоящих максимумов, минимумов и объёма. Рисовать по ним график
+     допустимо (это демо), но считать по ним индикаторы, сигналы и тем более
+     открывать сделки — нельзя: получится сигнал по цене, которой не было.
+     Поэтому такие серии помечаются, и торговая логика их не принимает. */
   const meta=S.coinMeta[sym];
   if(meta && meta.spark && meta.spark.length>10){
     const sp=meta.spark, out=[]; const now=Date.now();
     const step= interval==='1w'?6.048e8: interval==='1d'?8.64e7: 3.6e6;
     for(let i=1;i<sp.length;i++){ const o=sp[i-1], c=sp[i]; const hi=Math.max(o,c)*1.001, lo=Math.min(o,c)*0.999;
       out.push({t:now-(sp.length-i)*step, o, h:hi, l:lo, c, v:0}); }
-    if(out.length>10){ S.klines[key]=out; return out; }
+    if(out.length>10){ out.synthetic=true; S.klines[key]=out; return out; }
   }
-  if(!S.klines[key]) S.klines[key]=demoKlines(sym, interval);
+  if(!S.klines[key]){ const d=demoKlines(sym, interval); d.synthetic=true; S.klines[key]=d; }
   return S.klines[key];
+}
+/** Настоящие ли это свечи с биржи. Сигналы и бот работают только с ними. */
+function realKlines(sym, interval){
+  const k=S.klines[sym+'_'+(interval||'4h')];
+  return (k && !k.synthetic) ? k : null;
 }
 
 /* ---- Crypto.com WebSocket real-time ---- */
@@ -1283,7 +1299,9 @@ function openPosition(side){
 function closePosition(id, reason){
   const i=S.positions.findIndex(p=>p.id===id); if(i<0) return;
   const p=S.positions[i]; const pnl=posPnl(p); const exit=priceOf(p.symbol);
-  S.acc.balance+=pnl;
+  /* Бумажная сделка бота считается, но баланс счёта не двигает — иначе
+     «проверить бота, ничем не рискуя» превращается в риск деньгами. */
+  if(!p.paper) S.acc.balance+=pnl;
   S.history.unshift({ ...p, exit, pnl, closed:Date.now(), auto:reason||null });
   try{ botOnClosed(p, pnl); }catch(e){}
   persistState();
@@ -2007,6 +2025,7 @@ function updateMarketPrices(){
 /* ============ RENDER: TERMINAL ============ */
 async function openTerminal(sym){
   S.term.symbol=sym; S.term.view=null; S.term.hover=null; S.term.pend=null; go('terminal');
+  _tvKey='';                      // символ сменился — виджет пересоздаём
   await loadKlines(sym, S.term.interval);
   renderTerminal();
 }
@@ -2016,6 +2035,8 @@ function renderTerminal(){
   $('termLive').textContent=S.live?('LIVE \u00b7 '+S.src):'DEMO';
   $('termLive').className='badge '+(S.live?'b-green':'b-mut');
   $('termChartWrap').style.height=chartWrapH()+'px';
+  const tvw=$('tvWrap'); if(tvw) tvw.style.height=chartWrapH()+'px';
+  applyChartSrc();
   const tfc=$('tfCur'); if(tfc) tfc.textContent=TF_LABEL[S.term.interval]||S.term.interval;
   updateHint();
   const p=S.prices[sym]||{price:BASE[sym],change:0};
@@ -2276,6 +2297,111 @@ function loadDraws(){ try{ const d=localStorage.getItem('nx_draws'); if(d) S.dra
 function saveInd(){ try{ localStorage.setItem('nx_indA', JSON.stringify(S.indA)); }catch(e){} }
 
 /* ================= CHART ================= */
+
+/* ============ ГРАФИК TRADINGVIEW ============
+   Официальный виджет Advanced Chart — это буквально сам TradingView внутри
+   приложения: те же свечи, те же индикаторы, та же панель инструментов
+   рисования, тот же поток котировок. Собственный график остаётся рядом,
+   потому что виджет живёт в iframe и на нём нельзя рисовать линии входа,
+   тейка, стопа и ликвидации — а именно они нужны, когда позиция открыта.
+
+   Поэтому два режима: TradingView для анализа, родной график для сделки.
+   Выбор запоминается. */
+
+/* Соответствие символов приложения символам TradingView.
+   Указываем биржу явно: без префикса виджет иногда выбирает неликвидную
+   площадку, и график расходится с ценой, по которой считается позиция. */
+const TV_EXCHANGE_OVERRIDE = {
+  XMRUSDT:'KUCOIN', HYPEUSDT:'BYBIT', PUMPUSDT:'BYBIT', CCUSDT:'BYBIT',
+  TONUSDT:'BYBIT', NOTUSDT:'BYBIT', DOGSUSDT:'BYBIT', TRUMPUSDT:'BYBIT',
+};
+function tvSymbol(sym){
+  const ex = TV_EXCHANGE_OVERRIDE[sym] || 'BINANCE';
+  return ex + ':' + sym;
+}
+const TV_INTERVAL = { '1m':'1','5m':'5','15m':'15','30m':'30','1h':'60','4h':'240','1d':'D','1w':'W' };
+
+let _tvLoaded=false, _tvWidget=null, _tvKey='';
+function loadTvScript(){
+  return new Promise((res,rej)=>{
+    if(_tvLoaded && window.TradingView) return res();
+    const ex=document.getElementById('tv-script');
+    if(ex){ ex.addEventListener('load',()=>{_tvLoaded=true;res();}); ex.addEventListener('error',rej); return; }
+    const sc=document.createElement('script');
+    sc.id='tv-script'; sc.src='https://s3.tradingview.com/tv.js'; sc.async=true;
+    sc.onload=()=>{ _tvLoaded=true; res(); };
+    sc.onerror=()=>rej(new Error('tv'));
+    document.head.appendChild(sc);
+  });
+}
+
+async function mountTv(){
+  const wrap=$('tvWrap'); if(!wrap) return;
+  const key = tvSymbol(S.term.symbol)+'|'+(TV_INTERVAL[S.term.interval]||'60');
+  if(_tvWidget && _tvKey===key) return;          // ничего не изменилось — не пересоздаём
+  try{ await loadTvScript(); }catch(e){
+    wrap.innerHTML='<div class="note-box" style="margin:12px;">Не удалось загрузить график TradingView. '+
+      'Проверьте соединение — или переключитесь на встроенный график кнопкой выше.</div>';
+    return;
+  }
+  const host=$('tvChart'); if(!host) return;
+  host.innerHTML='';
+  _tvKey=key;
+  try{
+    _tvWidget = new TradingView.widget({
+      container_id:'tvChart',
+      autosize:true,
+      symbol: tvSymbol(S.term.symbol),
+      interval: TV_INTERVAL[S.term.interval]||'60',
+      timezone:'Etc/UTC',
+      theme:'dark',
+      style:'1',
+      locale:'ru',
+      /* Цвета под интерфейс приложения, чтобы график не выглядел вставкой. */
+      toolbar_bg:'#0B1220',
+      backgroundColor:'#0B1220',
+      gridColor:'rgba(34,228,255,0.06)',
+      hide_side_toolbar:false,     // левая панель рисования — она и нужна
+      allow_symbol_change:true,    // можно выбрать другую биржу, если инструмент делистнут
+      withdateranges:true,
+      details:false,
+      hotlist:false,
+      calendar:false,
+      studies:['RSI@tv-basicstudies','MASimple@tv-basicstudies'],
+      enable_publishing:false,
+      save_image:false,
+      support_host:'https://www.tradingview.com',
+    });
+  }catch(e){
+    wrap.innerHTML='<div class="note-box" style="margin:12px;">График TradingView недоступен. Переключитесь на встроенный.</div>';
+  }
+}
+
+function chartSrc(){ return S.chartSrc==='tv' ? 'tv' : 'native'; }
+function applyChartSrc(){
+  const tv = chartSrc()==='tv';
+  const tw=$('tvWrap'), nw=$('termChartWrap'), rail=$('toolRail'), btn=$('chartSrcBtn');
+  if(tw) tw.style.display = tv?'block':'none';
+  if(nw) nw.style.display = tv?'none':'block';
+  /* Панель рисования приложения при TradingView не нужна: у виджета своя,
+     и две панели инструментов рядом — это способ промахнуться мимо обеих. */
+  if(rail) rail.style.display = tv?'none':'';
+  if(btn) btn.textContent = tv ? '📈 Встроенный график' : '📊 TradingView';
+  if(tv) mountTv(); else drawTermChart();
+}
+function toggleChartSrc(){
+  S.chartSrc = chartSrc()==='tv' ? 'native' : 'tv';
+  try{ localStorage.setItem('nx_chartsrc', S.chartSrc); }catch(e){}
+  haptic();
+  if(S.chartSrc==='native'){
+    toast('Встроенный график: видны вход, тейк, стоп и ликвидация','📈');
+  } else {
+    toast('TradingView: полный набор индикаторов и инструментов','📊');
+  }
+  applyChartSrc();
+}
+try{ S.chartSrc = localStorage.getItem('nx_chartsrc') || 'native'; }catch(e){ S.chartSrc='native'; }
+
 function drawTermChart(){
   const cv=$('termChart'), wrap=$('termChartWrap');
   const k=S.klines[S.term.symbol+'_'+S.term.interval]; if(!cv||!k||!k.length) return;
@@ -2850,6 +2976,7 @@ document.querySelectorAll('[data-mf]').forEach(c=>c.addEventListener('click', ()
   c.classList.add('active'); S.marketFilter=c.dataset.mf; renderMarket();
 }));
 $('tfBtn').addEventListener('click', openTfSheet);
+{ const csb=$('chartSrcBtn'); if(csb) csb.addEventListener('click', toggleChartSrc); }
 function openTfSheet(){
   const TFS=Object.keys(IMS);
   $('sheetContent').innerHTML='<div class="h2" style="text-align:center;">Таймфрейм</div>'+
@@ -2859,7 +2986,8 @@ function openTfSheet(){
     S.term.interval=btn.dataset.tf; S.term.view=null; _klinesReady=false;
     $('tfCur').textContent=TF_LABEL[S.term.interval];
     closeSheet(); haptic();
-    await loadKlines(S.term.symbol, S.term.interval); drawTermChart();
+    await loadKlines(S.term.symbol, S.term.interval);
+    if(chartSrc()==='tv') mountTv(); else drawTermChart();
   }));
 }
 tpslInit();
@@ -3857,7 +3985,9 @@ function nearestBelow(levels, price, minGapPct){
 }
 
 function computeSignal(sym){
-  const k=S.klines[sym+'_4h']; if(!k||k.length<70) return null;
+  /* Только настоящие свечи: сигнал по выдуманному OHLC — это выдуманный
+     сигнал, и отличить его на экране пользователь не сможет. */
+  const k=realKlines(sym,'4h'); if(!k||k.length<70) return null;
   const cl=k.map(o=>o.c), n=cl.length, last=cl[n-1];
   const e21=emaArr(cl,21), e50=emaArr(cl,50), e200=emaArr(cl,200);
   const r=rsiArr(cl,14), mac=macdArr(cl), st=stochArr(k,14,3), bb=bbArr(cl,20,2);
@@ -4014,7 +4144,29 @@ function tierRank(t){ return {free:0,prem:1,vip:2}[t]||0; }
    
    Работает только на демо- и челлендж-счетах внутри приложения. */
 
+/* Результаты настоящего прогона правил бота по истории.
+   Не оценка и не ожидание — измеренный факт: 6 пар × 10 200 часовых баров
+   с OKX (425 дней, разрывов нет), вход по открытию следующего бара после
+   закрытого сигнального, комиссия 0.06% и проскальзывание 0.04% с каждой
+   стороны, при касании и стопа, и цели в одном баре считается стоп.
+
+   Прогон делался тем же кодом сигналов, что работает в приложении: функции
+   извлекались из этого файла, а не переписывались заново.
+
+   Итог: у правил НЕТ измеримого преимущества после издержек. Проверено 72
+   комбинации порогов — ни одна не была прибыльной одновременно на обучающей
+   и на проверочной половине истории. Поэтому бот по умолчанию работает в
+   бумажном режиме и не трогает деньги счёта. */
+const BOT_BACKTEST = {
+  hours: 61200, days: 425, pairs: 6, trades: 491,
+  winRate: 25.5, avgR: -0.146, pf: 0.82, ret: -31.3, maxDD: 32.7,
+  oosTrades: 171, oosWinRate: 28.1, oosRet: -10.1,
+  robustSets: 0, testedSets: 72,
+  source: 'OKX 1H, июнь 2025 — август 2026',
+};
+
 const BOT_DEFAULTS = {
+  paper: true,         // бумажный режим: сделки считаются, но счёт не трогают
   riskPct: 0.5,        // риск на сделку, % от баланса
   maxPositions: 3,     // одновременно открытых позиций
   minStrength: 70,     // минимальная сила сигнала (0..100)
@@ -4024,7 +4176,8 @@ const BOT_DEFAULTS = {
   cooldownMin: 45,     // пауза после убытка, минут
   maxSameSide: 2,      // сколько позиций в одну сторону (защита от корреляции)
 };
-function botCfg(){ S.bot = Object.assign({ on:false, log:[], pausedUntil:0, dayKey:dayKey(), dayStart:null }, BOT_DEFAULTS, S.bot||{}); return S.bot; }
+function botCfg(){ S.bot = Object.assign({ on:false, log:[], pausedUntil:0, dayKey:dayKey(), dayStart:null,
+  paperPnlR:0, paperTrades:0, paperWins:0 }, BOT_DEFAULTS, S.bot||{}); return S.bot; }
 
 function botLog(text, kind){
   const b=botCfg();
@@ -4117,9 +4270,9 @@ function botTick(){
     id:S.nextId++, symbol:sg.symbol, side, margin:size.margin, lev:size.lev,
     entry, qty, opened:Date.now(),
     tp:sg.tp, sl:sg.sl,          // стоп и цель ставятся сразу, позиции без стопа не бывает
-    bot:true
+    bot:true, paper:!!b.paper    // бумажная сделка не двигает баланс счёта
   });
-  botLog(side+' '+sg.symbol.replace('USDT','')+' · риск $'+fmt(size.riskMoney,2)+
+  botLog((b.paper?'[бумага] ':'')+side+' '+sg.symbol.replace('USDT','')+' · риск $'+fmt(size.riskMoney,2)+
          ' · x'+size.lev+' · R:R 1:'+sg.rr.toFixed(1), 'open');
   persistState();
   if(S.screen==='signals') renderSignals();
@@ -4130,7 +4283,14 @@ function botTick(){
 function botOnClosed(pos, pnl){
   if(!pos || !pos.bot) return;
   const b=botCfg();
-  botLog((pnl>=0?'Прибыль ':'Убыток ')+'$'+fmt(Math.abs(pnl),2)+' · '+pos.symbol.replace('USDT',''),
+  // Результат в R: он сопоставим между сделками разного размера.
+  const riskMoney = Math.abs(pos.entry-pos.sl)/pos.entry*pos.margin*pos.lev;
+  const r = riskMoney>0 ? pnl/riskMoney : 0;
+  b.paperTrades=(b.paperTrades||0)+1;
+  if(pnl>=0) b.paperWins=(b.paperWins||0)+1;
+  b.paperPnlR=(b.paperPnlR||0)+r;
+  botLog((pos.paper?'[бумага] ':'')+(pnl>=0?'Прибыль ':'Убыток ')+'$'+fmt(Math.abs(pnl),2)+
+         ' ('+(r>=0?'+':'')+r.toFixed(2)+'R) · '+pos.symbol.replace('USDT',''),
          pnl>=0?'win':'loss');
   if(pnl<0){
     // Пауза после убытка. Самая дорогая ошибка — немедленно отыгрываться.
@@ -4192,6 +4352,38 @@ function renderBotPanel(){
       'Риск выше 1% на сделку — самая частая причина провала челленджа: '+
       'шесть убытков подряд бывают у любой стратегии, и при 2% это уже минус 12%.'+
     '</div>'+
+
+    /* Результаты настоящего прогона. Показываем их прямо в панели, а не
+       прячем в документации: пользователь должен видеть, что именно он
+       включает, до того как включит. */
+    '<div class="prm mt3"><label>Проверка на истории</label></div>'+
+    '<div class="note-box" style="border-left:3px solid var(--red);">'+
+      '<b>Правила проверены на '+fmt(BOT_BACKTEST.hours,0)+' часах реальных данных</b> '+
+      '('+BOT_BACKTEST.pairs+' пары, '+BOT_BACKTEST.days+' дней, '+BOT_BACKTEST.source+') '+
+      'с комиссией и проскальзыванием, входом по следующему бару.<br><br>'+
+      '<span class="mono" style="font-size:12px;">'+
+        'сделок '+BOT_BACKTEST.trades+' · винрейт '+BOT_BACKTEST.winRate+'% · '+
+        'профит-фактор '+BOT_BACKTEST.pf+'<br>'+
+        'итог '+BOT_BACKTEST.ret+'% · просадка '+BOT_BACKTEST.maxDD+'%'+
+      '</span><br><br>'+
+      '<b>Преимущества над рынком у этих правил не найдено.</b> Проверено '+
+      BOT_BACKTEST.testedSets+' наборов порогов — прибыльных одновременно на обучающей '+
+      'и на проверочной половине истории: '+BOT_BACKTEST.robustSets+'.<br><br>'+
+      'Поэтому по умолчанию бот работает на бумаге: считает сделки, но не трогает '+
+      'баланс счёта. Это инструмент дисциплины исполнения, а не способ заработать.'+
+    '</div>'+
+
+    '<div class="row between mt3" style="align-items:center;">'+
+      '<div><div style="font-weight:700;font-size:13.5px;">'+(b.paper?'📝 Бумажный режим':'⚠️ Торгует счётом')+'</div>'+
+      '<div class="small mt1" style="color:'+(b.paper?'var(--txt3)':'var(--red)')+';font-size:11.5px;">'+
+        (b.paper?'Сделки считаются, баланс не меняется':'Сделки влияют на баланс челленджа')+'</div></div>'+
+      '<button class="btn btn-ghost btn-sm" id="botPaper" style="flex:none;">'+
+        (b.paper?'Торговать счётом':'Вернуть на бумагу')+'</button>'+
+    '</div>'+
+    ((b.paperTrades||0) ? '<div class="small mt2" style="color:var(--txt2);font-size:11.5px;">'+
+      'Ваша статистика: сделок '+b.paperTrades+' · в плюс '+
+      Math.round((b.paperWins||0)/b.paperTrades*100)+'% · итог '+
+      ((b.paperPnlR||0)>=0?'+':'')+(b.paperPnlR||0).toFixed(2)+'R</div>' : '')+
     (b.log&&b.log.length ? '<div class="prm mt3"><label>Журнал</label></div>'+
       '<div style="max-height:150px;overflow:auto;">'+
       b.log.slice(0,10).map(l=>'<div class="small" style="padding:4px 0;border-bottom:1px solid var(--line);color:'+
@@ -4204,6 +4396,22 @@ function renderBotPanel(){
 function bindBotPanel(){
   const t=$('botToggle');
   if(t) t.addEventListener('click', ()=>setBot(!botCfg().on));
+  const pb=$('botPaper');
+  if(pb) pb.addEventListener('click', ()=>{
+    const b=botCfg();
+    if(b.paper){
+      /* Переход на реальный счёт требует подтверждения: проверка на истории
+         показала убыток, и пользователь должен согласиться осознанно. */
+      if(!confirm('Бот будет открывать сделки на выбранном счёте и влиять на баланс.\n\n'+
+                  'Проверка на '+fmt(BOT_BACKTEST.hours,0)+' часах истории дала '+BOT_BACKTEST.ret+'% '+
+                  'и просадку '+BOT_BACKTEST.maxDD+'%. Преимущества над рынком не найдено.\n\n'+
+                  'Включить торговлю счётом?')) return;
+      b.paper=false; toast('Бот торгует счётом','⚠️');
+    } else {
+      b.paper=true; toast('Бот вернулся на бумагу','📝');
+    }
+    persistState(); haptic('ok'); renderSignals();
+  });
   const save=(id, key, min, max)=>{
     const el=$(id); if(!el) return;
     el.addEventListener('change', ()=>{
