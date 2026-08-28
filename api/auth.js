@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import { issueSession } from './_session.js';
+import { clientIp, rateLimit } from './_ratelimit.js';
 
 function verifyTelegram(initData, botToken) {
   try {
@@ -39,6 +40,15 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'method' });
+
+  // По IP, а не по присланному идентификатору: до входа проверять ещё нечего,
+  // а вот скрипт, штампующий email-аккаунты или дёргающий эндпоинт впустую,
+  // ограничить нужно уже здесь.
+  const limited = await rateLimit('auth:' + clientIp(req), { limit: 20, windowSeconds: 300 });
+  if (!limited.ok) {
+    res.setHeader('Retry-After', String(limited.retryAfter));
+    return res.status(429).json({ error: 'rate_limited', detail: limited.detail });
+  }
 
   const { provider, email, initData } = req.body || {};
   let user = null;

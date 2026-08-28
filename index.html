@@ -1587,7 +1587,8 @@ function checkMilestone(a, eq){
 async function checkMyPayments(silent){
   if(!S.user) return;
   try{
-    const r=await fetch(API_BASE+'/api/payments?user='+encodeURIComponent(S.user.id)+'&status=approved');
+    if(!S.token) return;
+    const r=await fetch(API_BASE+'/api/payments?status=approved',{headers:authHeaders()});
     if(!r.ok) return;
     const d=await r.json();
     const list=(d.payments||[]).filter(p=>!p.applied);
@@ -1609,8 +1610,8 @@ async function checkMyPayments(silent){
         if(a){ haptic('ok'); showAccActivated(a); }
       }
       S.appliedPays.push(p.id);
-      fetch(API_BASE+'/api/payments',{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({action:'applied', user:S.user.id, id:p.id})}).catch(()=>{});
+      fetch(API_BASE+'/api/payments',{method:'POST',headers:authHeaders(),
+        body:JSON.stringify({action:'applied', id:p.id})}).catch(()=>{});
     }
     if(list.length){ persistState(); renderAll(); }
   }catch(e){}
@@ -4648,8 +4649,8 @@ function requestPayout(amount){
   $('poSend').addEventListener('click', async ()=>{
     $('poSend').textContent='Отправляю…';
     try{
-      await fetch(API_BASE+'/api/payments',{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({action:'create', user:S.user?S.user.id:null, name:S.user?S.user.name:'',
+      await fetch(API_BASE+'/api/payments',{method:'POST',headers:authHeaders(),
+        body:JSON.stringify({action:'create', name:S.user?S.user.name:'',
           kind:'payout', plan:'Выплата профита ('+(S.acc.tier/1000)+'K)', amount:Math.round(amount*100)/100,
           network:net.toUpperCase(), address:S.wallet[net]})});
     }catch(e){}
@@ -6121,8 +6122,8 @@ function downscale(file, cb){
 }
 async function submitPayment(o){
   try{
-    const res=await fetch(API_BASE+'/api/payments',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:'create', user:S.user?S.user.id:null, name:S.user?S.user.name:'', kind:o.kind, plan:o.plan, amount:o.amount, network:o.network, address:o.address, proof:o.proof, meta:o.extra||null})});
+    const res=await fetch(API_BASE+'/api/payments',{method:'POST',headers:authHeaders(),
+      body:JSON.stringify({action:'create', name:S.user?S.user.name:'', kind:o.kind, plan:o.plan, amount:o.amount, network:o.network, address:o.address, proof:o.proof, meta:o.extra||null})});
     if(!res.ok) throw 0;
     // сохраняем «ожидает» локально
     S.pendingPay=S.pendingPay||[]; S.pendingPay.push({plan:o.plan, kind:o.kind, ts:Date.now()});

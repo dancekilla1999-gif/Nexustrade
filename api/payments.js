@@ -9,6 +9,7 @@
 import { isDown, readSettings } from './_settings.js';
 import { requireAdmin } from './_telegram.js';
 import { requireUser } from './_session.js';
+import { rateLimit } from './_ratelimit.js';
 
 function sb() {
   const url = process.env.SUPABASE_URL, key = process.env.SUPABASE_SERVICE_KEY;
@@ -76,6 +77,15 @@ export default async function handler(req, res) {
         const who = requireUser(req);
         if (!who.ok) return res.status(who.status).json({ error: who.error, detail: who.detail });
 
+        // Не более 10 заявок в час на пользователя — обычный трейдер столько
+        // не создаёт, а спам заявками означает лишние уведомления владельцу
+        // на каждую и нагрузку на Supabase без всякой пользы.
+        const limited = await rateLimit('payments:create:' + who.userId, { limit: 10, windowSeconds: 3600 });
+        if (!limited.ok) {
+          res.setHeader('Retry-After', String(limited.retryAfter));
+          return res.status(429).json({ error: 'rate_limited', detail: limited.detail });
+        }
+
         // Сумма приходит от клиента, поэтому проверяется здесь: без этого
         // заявку можно было создать на любое число, включая отрицательное.
         const amount = Number(body.amount);
@@ -123,9 +133,15 @@ export default async function handler(req, res) {
       // --- отметить как активированную (счёт выдан на устройстве) ---
       if (body.action === 'applied') {
         if (!body.id) return res.status(400).json({ error: 'id' });
-        await fetch(`${cfg.url}/rest/v1/payments?id=eq.${encodeURIComponent(body.id)}`, {
-          method: 'PATCH', headers: H, body: JSON.stringify({ applied: true }),
-        });
+        // Пометить можно только свою заявку — без этого с любым токеном
+        // можно было отметить как применённую чужую, и клиент владельца
+        // перестал бы пытаться выдать ему счёт или подписку повторно.
+        const who = requireUser(req);
+        if (!who.ok) return res.status(who.status).json({ error: who.error, detail: who.detail });
+        await fetch(
+          `${cfg.url}/rest/v1/payments?id=eq.${encodeURIComponent(body.id)}&user_id=eq.${encodeURIComponent(who.userId)}`,
+          { method: 'PATCH', headers: H, body: JSON.stringify({ applied: true }) },
+        );
         return res.status(200).json({ ok: true });
       }
 
