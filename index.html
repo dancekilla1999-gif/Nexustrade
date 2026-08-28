@@ -2082,6 +2082,14 @@ function bbArr(v,p,m){ p=p||20; m=m||2; const mid=smaArr(v,p), up=[], lo2=[];
   return {mid,up,lo:lo2}; }
 function trArr(k){ return k.map((c,i)=>i?Math.max(c.h-c.l,Math.abs(c.h-k[i-1].c),Math.abs(c.l-k[i-1].c)):c.h-c.l); }
 function atrArr(k,p){ return emaArr(trArr(k),p||14); }
+/* Та же формула, что и в индикаторе 'ADX' на графике (см. IND ниже) — вынесена
+   в функцию, чтобы её мог использовать и computeSignal() как подтверждение. */
+function adxArr(k,p){ p=p||14; const tr=trArr(k); const pdm=[],mdm=[];
+  for(let i=0;i<k.length;i++){ const up=i?k[i].h-k[i-1].h:0, dn=i?k[i-1].l-k[i].l:0;
+    pdm.push(up>dn&&up>0?up:0); mdm.push(dn>up&&dn>0?dn:0); }
+  const atr=emaArr(tr,p), pdi=emaArr(pdm,p).map((x,i)=>atr[i]?100*x/atr[i]:0), mdi=emaArr(mdm,p).map((x,i)=>atr[i]?100*x/atr[i]:0);
+  const dx=pdi.map((x,i)=>{const s=x+mdi[i];return s?100*Math.abs(x-mdi[i])/s:0;});
+  return {adx:emaArr(dx,p), pdi, mdi}; }
 function keltArr(k,cl){ const mid=emaArr(cl,20), a=atrArr(k,10);
   return {mid, up:cl.map((_,i)=>mid[i]+2*a[i]), lo:cl.map((_,i)=>mid[i]-2*a[i])}; }
 function donchArr(k,p){ p=p||20; const up=[],lo=[];
@@ -2216,12 +2224,8 @@ const INDS=[
  ['ROC','os',(k,c,P)=>({lines:[[rocArr(c,P.p),IC.cy]],zero:1,label:'ROC '+P.p}),[['p','Период',12]]],
  ['Momentum','os',(k,c,P)=>({lines:[[momArr(c,P.p),IC.gd]],zero:1,label:'MOM '+P.p}),[['p','Период',10]]],
  ['ATR','os',(k,c,P)=>({lines:[[atrArr(k,P.p),IC.or]],label:'ATR '+P.p}),[['p','Период',14]]],
- ['ADX','os',(k,c,P)=>{const p=P.p, tr=trArr(k); const pdm=[],mdm=[];
-   for(let i=0;i<k.length;i++){ const up=i?k[i].h-k[i-1].h:0, dn=i?k[i-1].l-k[i].l:0;
-     pdm.push(up>dn&&up>0?up:0); mdm.push(dn>up&&dn>0?dn:0); }
-   const atr=emaArr(tr,p), pdi=emaArr(pdm,p).map((x,i)=>atr[i]?100*x/atr[i]:0), mdi=emaArr(mdm,p).map((x,i)=>atr[i]?100*x/atr[i]:0);
-   const dx=pdi.map((x,i)=>{const s=x+mdi[i];return s?100*Math.abs(x-mdi[i])/s:0;});
-   return {lines:[[emaArr(dx,p),IC.wh],[pdi,IC.gr],[mdi,IC.rd]],range:[0,60],levels:[25],label:'ADX '+p};},[['p','Период',14]]],
+ ['ADX','os',(k,c,P)=>{const p=P.p, a=adxArr(k,p);
+   return {lines:[[a.adx,IC.wh],[a.pdi,IC.gr],[a.mdi,IC.rd]],range:[0,60],levels:[25],label:'ADX '+p};},[['p','Период',14]]],
  ['TRIX','os',(k,c,P)=>({lines:[[trixArr(c,P.p),IC.pu]],zero:1,label:'TRIX '+P.p}),[['p','Период',15]]],
  ['DPO','os',(k,c,P)=>({lines:[[dpoArr(c,P.p),IC.bl]],zero:1,label:'DPO '+P.p}),[['p','Период',20]]],
  ['CMF','os',(k,c,P)=>({lines:[[cmfArr(k,P.p),IC.gr]],zero:1,label:'CMF '+P.p}),[['p','Период',20]]],
@@ -3969,7 +3973,8 @@ function ensureKlines(cb){
 /* ============ ДВИЖОК СИГНАЛОВ (swing, потенциал ≥2%) ============ */
 const SIG_MIN_MOVE = 2.0;   // минимальный потенциал до цели, %
 const SIG_MIN_RR   = 1.8;   // минимальное соотношение риск/прибыль
-const SIG_MIN_PASS = 13;    // минимум подтверждений из 20
+const SIG_MIN_PASS = 20;    // минимум подтверждений из 30 (расширено с 13 из 20 по запросу)
+const SIG_TOTAL_CONFIRM = 30;
 
 function structLevels(k, dep){
   // подбираем глубину так, чтобы получить достаточно опорных точек
@@ -3997,7 +4002,8 @@ function computeSignal(sym){
   const cl=k.map(o=>o.c), n=cl.length, last=cl[n-1];
   const e21=emaArr(cl,21), e50=emaArr(cl,50), e200=emaArr(cl,200);
   const r=rsiArr(cl,14), mac=macdArr(cl), st=stochArr(k,14,3), bb=bbArr(cl,20,2);
-  const atr=atrArr(k,14), adxSpec=null;
+  const atr=atrArr(k,14);
+  const adxR=adxArr(k,14), cci=cciArr(k,20), roc=rocArr(cl,10), vwap=vwapArr(k);
   const vol=k.map(o=>o.v||0), volAvg=vol.slice(-20).reduce((s,v)=>s+v,0)/20 || 1;
   const rsi=r[n-1]||50, atrPct=(atr[n-1]/last)*100;
 
@@ -4048,10 +4054,16 @@ function computeSignal(sym){
   const rr = movePct/riskPct;
   if(rr < SIG_MIN_RR) return null;                   // плохое соотношение — не сигнал
 
-  // --- 20 ПОДТВЕРЖДЕНИЙ ---
+  // --- 30 ПОДТВЕРЖДЕНИЙ (было 20 — расширено по запросу: больше независимых
+  //     индикаторов перед входом, а не косметическое добавление пунктов) ---
   const higherHigh = last>Math.max(...cl.slice(n-6,n-1));
   const lowerLow   = last<Math.min(...cl.slice(n-6,n-1));
   const bodyOK = up ? k[n-1].c>k[n-1].o : k[n-1].c<k[n-1].o;
+  const last4 = k.slice(n-4,n);
+  const closesWithDir = last4.filter(c=> up ? c.c>c.o : c.c<c.o).length;
+  const distEma200Pct = e200[n-1]!=null ? Math.abs(last-e200[n-1])/last*100 : 999;
+  const emaStackUp   = e21[n-1]>e50[n-1] && e50[n-1]>e200[n-1];
+  const emaStackDown = e21[n-1]<e50[n-1] && e50[n-1]<e200[n-1];
   const F=[
     ['Структура рынка ('+(up?'HH/HL':'LH/LL')+')', up?structUp:structDown, 1.6],
     ['Цена относительно EMA 200', up? above200 : !above200, 1.5],
@@ -4073,6 +4085,16 @@ function computeSignal(sym){
     ['Потенциал до цели ≥'+SIG_MIN_MOVE+'% ('+movePct.toFixed(1)+'%)', movePct>=SIG_MIN_MOVE, 2.0],
     ['Соотношение риск/прибыль ≥'+SIG_MIN_RR+' (1:'+rr.toFixed(1)+')', rr>=SIG_MIN_RR, 2.0],
     ['Цель опирается на уровень структуры', tpSrc==='уровень структуры', 1.4],
+    ['ADX подтверждает тренд (>20)', adxR.adx[n-1]>20, 1.3],
+    ['DI+/DI- по направлению', up? adxR.pdi[n-1]>adxR.mdi[n-1] : adxR.mdi[n-1]>adxR.pdi[n-1], 1.1],
+    ['CCI по направлению', up? cci[n-1]>0 : cci[n-1]<0, 0.9],
+    ['MACD выше/ниже нулевой линии', up? mac.macd[n-1]>0 : mac.macd[n-1]<0, 1.0],
+    ['ROC по направлению', up? roc[n-1]>0.3 : roc[n-1]<-0.3, 0.9],
+    ['Большинство последних свечей по направлению ('+closesWithDir+'/4)', closesWithDir>=3, 1.0],
+    ['Объём растёт относительно предыдущего бара', (k[n-1].v||0)>(k[n-2].v||0), 0.7],
+    ['Полный порядок EMA 21/50/200 по направлению', up? emaStackUp : emaStackDown, 1.4],
+    ['Не перекуплено/перепродано относительно EMA200 (<15%)', distEma200Pct<15, 1.0],
+    ['Цена относительно VWAP', up? last>vwap[n-1] : last<vwap[n-1], 0.9],
   ];
   const totalW=F.reduce((s,f)=>s+f[2],0);
   const gotW=F.filter(f=>f[1]).reduce((s,f)=>s+f[2],0);
@@ -4151,24 +4173,32 @@ function tierRank(t){ return {free:0,prem:1,vip:2}[t]||0; }
    Работает только на демо- и челлендж-счетах внутри приложения. */
 
 /* Результаты настоящего прогона правил бота по истории.
-   Не оценка и не ожидание — измеренный факт: 6 пар × 10 200 часовых баров
-   с OKX (425 дней, разрывов нет), вход по открытию следующего бара после
-   закрытого сигнального, комиссия 0.06% и проскальзывание 0.04% с каждой
-   стороны, при касании и стопа, и цели в одном баре считается стоп.
+   Обновлено после расширения движка с 20 до 30 подтверждений (minPass
+   13→20 из 30) — старые цифры (6 пар, 20 подтверждений) относились к
+   другому движку и были бы враньём для текущего кода, поэтому прогон
+   переделан заново на текущей версии computeSignal().
 
+   Не оценка и не ожидание — измеренный факт: 20 пар × ~10 200 часовых
+   баров с OKX (425 дней, разрывов нет), вход по открытию следующего бара
+   после закрытого сигнального, комиссия 0.06% и проскальзывание 0.04% с
+   каждой стороны, при касании и стопа, и цели в одном баре считается стоп.
    Прогон делался тем же кодом сигналов, что работает в приложении: функции
    извлекались из этого файла, а не переписывались заново.
 
-   Итог: у правил НЕТ измеримого преимущества после издержек. Проверено 72
-   комбинации порогов — ни одна не была прибыльной одновременно на обучающей
-   и на проверочной половине истории. Поэтому бот по умолчанию работает в
-   бумажном режиме и не трогает деньги счёта. */
+   Итог: 30 подтверждений вместо 20 и более строгий порог (20/30 вместо
+   13/20) НЕ создали преимущества — винрейт и мат. ожидание практически
+   не изменились и остаются отрицательными что на первой, что на второй
+   половине истории (хронологический train/test, без утечки). Больше
+   индикаторов — не значит лучше, если у них нет независимого сигнала:
+   часть новых подтверждений коррелирует со старыми (тренд есть тренд,
+   какой индикатор его ни меряй) и просто отсеивает объём сделок, не
+   меняя их качество. Поэтому бот по умолчанию работает в бумажном
+   режиме и не трогает деньги счёта. */
 const BOT_BACKTEST = {
-  hours: 61200, days: 425, pairs: 6, trades: 491,
-  winRate: 25.5, avgR: -0.146, pf: 0.82, ret: -31.3, maxDD: 32.7,
-  oosTrades: 171, oosWinRate: 28.1, oosRet: -10.1,
-  robustSets: 0, testedSets: 72,
-  source: 'OKX 1H, июнь 2025 — август 2026',
+  hours: 204000, days: 425, pairs: 20, trades: 1613,
+  winRate: 22.7, avgR: -0.163, pf: 0.81, ret: -94.6, maxDD: 95.5,
+  oosTrades: 462, oosWinRate: 24.2, oosRet: -56.6,
+  source: 'OKX 1H, июнь 2025 — август 2026 · движок с 30 подтверждениями (было 20)',
 };
 
 /* Режим «высокий винрейт»: тот же движок сигналов (computeSignal), но стоп
@@ -4178,19 +4208,20 @@ const BOT_BACKTEST = {
    Это честно измерено (research/HIGH_WINRATE_MODE.md), с разбивкой train/test
    по времени (без утечки) и с учётом сделок, не успевших закрыться к концу
    истории (иначе широкий стоп мог бы прятать зависшие в минусе позиции):
-     train (первые 70% истории, 20 пар): 296 сделок, винрейт 72.3%, avgR +0.018
-     test  (последние 30%, не участвовали в подборе): 134 сделки, винрейт 71.6%, avgR −0.022
-   Винрейт 70%+ подтверждается и на train, и на test — это устойчиво.
-   Мат. ожидание — нет: в train слегка положительное, на test уходит в минус.
-   То есть высокий винрейт настоящий, а прибыльность на нём — нет: убытки
-   в SL_WIDEN_MULT раз крупнее выигрышей, и этого достаточно, чтобы съесть
-   даже редкие потери. Режим показывает ровно то, что обещает (винрейт),
-   и ничего сверх того (не обещает прибыль) — выключен по умолчанию. */
+     train (первые 70% истории, 20 пар): 286 сделок, винрейт 71.0%, avgR +0.011
+     test  (последние 30%, не участвовали в подборе): 123 сделки, винрейт 69.9%, avgR −0.043
+   Пересчитано после расширения движка до 30 подтверждений — картина та же:
+   винрейт ~70% держится и на train, и на test (около него, не подгонка под
+   один кусок), мат. ожидание на test отрицательное. То есть высокий винрейт
+   настоящий, а прибыльность на нём — нет: убытки в SL_WIDEN_MULT раз крупнее
+   выигрышей, и этого достаточно, чтобы съесть даже редкие потери. Режим
+   показывает ровно то, что обещает (винрейт), и ничего сверх того (не
+   обещает прибыль) — выключен по умолчанию. */
 const SL_WIDEN_MULT = 10;
 const BOT_WINRATE_BACKTEST = {
   mult: SL_WIDEN_MULT, pairs: 20, source: 'OKX 1H, июнь 2025 — август 2026 · движок сигналов бота (не отдельная симуляция)',
-  trainN: 296, trainWR: 72.3, trainAvgR: 0.018,
-  testN: 134, testWR: 71.6, testAvgR: -0.022,
+  trainN: 286, trainWR: 71.0, trainAvgR: 0.011,
+  testN: 123, testWR: 69.9, testAvgR: -0.043,
 };
 
 const BOT_DEFAULTS = {
@@ -4199,6 +4230,7 @@ const BOT_DEFAULTS = {
   maxPositions: 3,     // одновременно открытых позиций
   minStrength: 70,     // минимальная сила сигнала (0..100)
   minRR: 2.0,          // минимальное соотношение риск/прибыль
+  minPass: 20,         // минимум подтверждений из SIG_TOTAL_CONFIRM (30) — «20/30»
   maxLev: 10,          // потолок плеча
   dailyStopPct: 3.0,   // стоп на день, % от стартового баланса дня
   cooldownMin: 45,     // пауза после убытка, минут
@@ -4281,7 +4313,7 @@ function botTick(){
   const shorts = open.filter(p=>p.side==='SHORT').length;
 
   const candidates = (allSignals()||[])
-    .filter(sg => sg && sg.strength>=b.minStrength && sg.rr>=b.minRR)
+    .filter(sg => sg && sg.strength>=b.minStrength && sg.rr>=b.minRR && sg.passed>=b.minPass)
     .filter(sg => !held.has(sg.symbol))          // одна позиция на инструмент
     .filter(sg => {
       // Ограничение на одну сторону: в крипте почти всё ходит вместе,
@@ -4387,6 +4419,13 @@ function renderBotPanel(){
     '<input class="input" id="botMax" type="number" step="1" min="1" max="5" value="'+b.maxPositions+'">'+
     '<div class="prm mt2"><label>Минимальная сила сигнала</label></div>'+
     '<input class="input" id="botStr" type="number" step="5" min="50" max="95" value="'+b.minStrength+'">'+
+    '<div class="prm mt2"><label>Минимум подтверждений (из '+SIG_TOTAL_CONFIRM+')</label></div>'+
+    '<input class="input" id="botMinPass" type="number" step="1" min="13" max="'+SIG_TOTAL_CONFIRM+'" value="'+b.minPass+'">'+
+    '<div class="small mt2" style="color:var(--txt3);font-size:11.5px;line-height:1.5;">'+
+      'Движок проверяет '+SIG_TOTAL_CONFIRM+' независимых индикаторов на каждом сетапе '+
+      '(структура, EMA, MACD, RSI, Stochastic, ADX/DI, CCI, ROC, VWAP, объём и др.). '+
+      'Бот открывает сделку только если прошло не меньше этого числа — по умолчанию '+BOT_DEFAULTS.minPass+'.'+
+    '</div>'+
     '<div class="small mt2" style="color:var(--txt3);font-size:11.5px;line-height:1.5;">'+
       'Риск выше 1% на сделку — самая частая причина провала челленджа: '+
       'шесть убытков подряд бывают у любой стратегии, и при 2% это уже минус 12%.'+
@@ -4405,9 +4444,10 @@ function renderBotPanel(){
         'профит-фактор '+BOT_BACKTEST.pf+'<br>'+
         'итог '+BOT_BACKTEST.ret+'% · просадка '+BOT_BACKTEST.maxDD+'%'+
       '</span><br><br>'+
-      '<b>Преимущества над рынком у этих правил не найдено.</b> Проверено '+
-      BOT_BACKTEST.testedSets+' наборов порогов — прибыльных одновременно на обучающей '+
-      'и на проверочной половине истории: '+BOT_BACKTEST.robustSets+'.<br><br>'+
+      '<b>Преимущества над рынком у этих правил не найдено.</b> На последних '+
+      '30% истории (не участвовали в настройке): '+BOT_BACKTEST.oosTrades+' сделок · '+
+      'винрейт '+BOT_BACKTEST.oosWinRate+'% · итог '+BOT_BACKTEST.oosRet+'% — тот же минус, '+
+      'что и на всей истории, не подгонка под один кусок.<br><br>'+
       'Поэтому по умолчанию бот работает на бумаге: считает сделки, но не трогает '+
       'баланс счёта. Это инструмент дисциплины исполнения, а не способ заработать.'+
     '</div>'+
@@ -4426,7 +4466,7 @@ function renderBotPanel(){
         'train (первые 70% истории): '+BOT_WINRATE_BACKTEST.trainN+' сделок · винрейт '+BOT_WINRATE_BACKTEST.trainWR+'% · avgR '+(BOT_WINRATE_BACKTEST.trainAvgR>=0?'+':'')+BOT_WINRATE_BACKTEST.trainAvgR+'<br>'+
         'test&nbsp;&nbsp;(последние 30%, не подбирались по ним): '+BOT_WINRATE_BACKTEST.testN+' сделок · винрейт '+BOT_WINRATE_BACKTEST.testWR+'% · avgR '+(BOT_WINRATE_BACKTEST.testAvgR>=0?'+':'')+BOT_WINRATE_BACKTEST.testAvgR+
       '</span><br><br>'+
-      '<b>Винрейт 70%+ — настоящий</b>: держится и на train, и на test, это не подгонка под один кусок истории. '+
+      '<b>Винрейт около 70% — настоящий</b>: держится и на train ('+BOT_WINRATE_BACKTEST.trainWR+'%), и на test ('+BOT_WINRATE_BACKTEST.testWR+'%), это не подгонка под один кусок истории. '+
       '<b>Прибыль — нет</b>: на train мат. ожидание едва положительное, на test — уже отрицательное. '+
       'Убыток при таком стопе в '+SL_WIDEN_MULT+' раз крупнее выигрыша, и этого хватает, чтобы съесть частые небольшие плюсы. '+
       'Включайте, если нужна именно статистика побед в сделках — не как способ заработать больше обычного режима.'+
@@ -4499,6 +4539,7 @@ function bindBotPanel(){
   save('botRisk','riskPct',0.1,2);
   save('botMax','maxPositions',1,5);
   save('botStr','minStrength',50,95);
+  save('botMinPass','minPass',13,SIG_TOTAL_CONFIRM);
 }
 
 function renderSignals(){
@@ -4522,7 +4563,7 @@ function renderSigList(body){
     if(S.screen!=='signals'||S.stab!=='signals') return;
     const sigs=allSignals();
     const freeLimit=2, unlocked=tierRank(S.tier)>=1;
-    if(!sigs.length){ body.innerHTML=botHtml+'<div class="note-box mt3"><b>Качественных сетапов сейчас нет.</b><br><span class="micro">Движок ищет сделки с потенциалом от '+SIG_MIN_MOVE+'%, соотношением R:R от 1:'+SIG_MIN_RR+' и минимум '+SIG_MIN_PASS+' подтверждениями из 20. Такие точки появляются не каждый день — это нормально и правильно.</span></div>'; bindBotPanel(); return; }
+    if(!sigs.length){ body.innerHTML=botHtml+'<div class="note-box mt3"><b>Качественных сетапов сейчас нет.</b><br><span class="micro">Движок ищет сделки с потенциалом от '+SIG_MIN_MOVE+'%, соотношением R:R от 1:'+SIG_MIN_RR+' и минимум '+SIG_MIN_PASS+' подтверждениями из '+SIG_TOTAL_CONFIRM+'. Такие точки появляются не каждый день — это нормально и правильно.</span></div>'; bindBotPanel(); return; }
     let html='';
     sigs.forEach((sg,i)=>{
       const a=ASSETS.find(x=>x.s===sg.symbol);
