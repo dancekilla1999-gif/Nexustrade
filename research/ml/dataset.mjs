@@ -9,8 +9,10 @@ const FEE=0.0006, SLIP=0.0004; // тейкер обе стороны + прос�
 /** Направление тренда на баре i — по EMA21 vs EMA50 из уже посчитанных признаков. */
 function biasOf(raw){ return raw.ema21vs50 >= 0 ? 'LONG' : 'SHORT'; }
 
-/** Разворачивает признаки в систему координат "за сделку в этом направлении". */
-function canon(raw, dir){
+/** Разворачивает признаки в систему координат "за сделку в этом направлении".
+ *  btc — сырые признаки BTC на этом же баре (общий рыночный режим) или null,
+ *  если для этой метки времени BTC посчитать не удалось (тогда 0 — нейтрально). */
+function canon(raw, dir, btc){
   const s = dir==='LONG' ? 1 : -1;
   return {
     distEma21: raw.distEma21*s, distEma50: raw.distEma50*s, distEma200: raw.distEma200*s,
@@ -26,12 +28,39 @@ function canon(raw, dir){
     breakoutFav: dir==='LONG' ? raw.hh6 : raw.ll6,
     breakAgainst: dir==='LONG' ? raw.ll6 : raw.hh6,
     bodyFav: dir==='LONG' ? raw.bodyUp : (1-raw.bodyUp),
+    // Сила тренда — не зависит от направления сделки, знак направленности (DI+/DI-) зависит.
+    adx: raw.adx, diFav: raw.diDiff*s, ret24: raw.ret24*s,
+    // Рыночный режим: согласен ли общий тренд/движение BTC с направлением этой сделки.
+    // Не своя монета — контекст, общий для всех пар (на BTC он тождественно равен своим же полям).
+    btcTrendFav: btc ? btc.ema21vs50*s : 0,
+    btcRet24Fav: btc ? btc.ret24*s : 0,
   };
 }
 
 export const FEATURE_NAMES = ['distEma21','distEma50','distEma200','ema21vs50','ema21slope','ema50slope',
   'rsiFav','rsiSlope','macdHist','macdHistSlope','stochFav','stochDFav','bbPosFav','bbWidth','atrPct',
-  'volRatio','ret1','ret3','ret6','breakoutFav','breakAgainst','bodyFav'];
+  'volRatio','ret1','ret3','ret6','breakoutFav','breakAgainst','bodyFav',
+  'adx','diFav','ret24','btcTrendFav','btcRet24Fav'];
+
+/** Карта "метка времени 4h-бара -> сырые признаки BTC на этом баре" — общий рыночный
+ *  режим, который потом канонизируется под направление КАЖДОЙ отдельной сделки.
+ *  Строится один раз и кешируется: не является будущим относительно любой другой
+ *  пары, т.к. featuresAt сама по себе причинна (использует только k[0..i]). */
+let _btcMapCache = null;
+function btcRegimeMap(){
+  if(_btcMapCache) return _btcMapCache;
+  const map = new Map();
+  try{
+    const h1 = JSON.parse(fs.readFileSync('/tmp/bt/BTC-USDT.json','utf8'));
+    const h4 = to4h(h1);
+    for(let i=210;i<h4.length;i++){
+      const raw = featuresAt(h4,i);
+      if(raw) map.set(h4[i].t, raw);
+    }
+  }catch(e){ /* нет файла BTC — все btc*-признаки останутся нейтральным 0 */ }
+  _btcMapCache = map;
+  return map;
+}
 
 /**
  * Метка тройного барьера. entry = открытие следующего бара. Симметричный барьер
@@ -71,6 +100,7 @@ function tripleBarrier(h4, h1, i, dir, riskMult, rewardMult, maxHoldBars){
 /** Собирает датасет по всем символам для заданного барьера R:R. */
 export function buildDataset(symbols, riskMult, rewardMult, maxHoldBars){
   const X=[], y=[], meta=[];
+  const btcMap = btcRegimeMap();
   for(const sym of symbols){
     const h1=JSON.parse(fs.readFileSync(`/tmp/bt/${sym}.json`,'utf8'));
     const h4=to4h(h1);
@@ -79,7 +109,8 @@ export function buildDataset(symbols, riskMult, rewardMult, maxHoldBars){
       const raw=featuresAt(h4,i); if(!raw) continue;
       if(!(h4._atr[i]>0.05)) continue;         // почти нулевая волатильность — барьер бессмысленен
       const dir=biasOf(raw);
-      const feat=canon(raw,dir);
+      const btc=btcMap.get(h4[i].t) || null;   // отсутствует -> 0 внутри canon(), не пропуск строки
+      const feat=canon(raw,dir,btc);
       const lbl=tripleBarrier(h4,h1,i,dir,riskMult,rewardMult,maxHoldBars);
       if(!lbl) continue;
       X.push(FEATURE_NAMES.map(k=>feat[k]));

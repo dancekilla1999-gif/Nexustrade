@@ -34,6 +34,17 @@ function trArr(k){ const out=new Array(k.length).fill(null);
   for(let i=1;i<k.length;i++){ out[i]=Math.max(k[i].h-k[i].l, Math.abs(k[i].h-k[i-1].c), Math.abs(k[i].l-k[i-1].c)); }
   return out; }
 function atrArr(k,p){ const tr=trArr(k); return emaArr(tr.map(x=>x==null?0:x),p).map((x,i)=>i<p?null:x); }
+function dmArr(k){ const plus=new Array(k.length).fill(0), minus=new Array(k.length).fill(0);
+  for(let i=1;i<k.length;i++){ const up=k[i].h-k[i-1].h, down=k[i-1].l-k[i].l;
+    plus[i]=(up>down&&up>0)?up:0; minus[i]=(down>up&&down>0)?down:0; } return {plus,minus}; }
+/** ADX/DI — сила и направленность тренда (сглаживание тем же EMA-приближением, что и ATR выше). */
+function adxArr(k,p){ const tr=trArr(k), dm=dmArr(k);
+  const trS=emaArr(tr.map(x=>x==null?0:x),p), pS=emaArr(dm.plus,p), mS=emaArr(dm.minus,p);
+  const diP=new Array(k.length).fill(0), diM=new Array(k.length).fill(0), dx=new Array(k.length).fill(0);
+  for(let i=0;i<k.length;i++){ if(!trS[i]) continue;
+    diP[i]=100*(pS[i]||0)/trS[i]; diM[i]=100*(mS[i]||0)/trS[i];
+    const sum=diP[i]+diM[i]; dx[i]=sum?100*Math.abs(diP[i]-diM[i])/sum:0; }
+  return {adx:emaArr(dx,p), diP, diM}; }
 
 /** Строит 4h-бары из часовых. */
 export function to4h(h1){
@@ -57,7 +68,7 @@ export function featuresAt(k, i){
   const last=cl[cl.length-1];
   const e21=emaArr(cl,21), e50=emaArr(cl,50), e200=emaArr(cl,200);
   const r=rsiArr(cl,14), mac=macdArr(cl), st=stochArr(win,14,3), bb=bbArr(cl,20,2);
-  const atr=atrArr(win,14);
+  const atr=atrArr(win,14), adxR=adxArr(win,14);
   const n=cl.length-1;
   if(e200[n]==null||atr[n]==null||mac.hist[n]==null) return null;
 
@@ -88,8 +99,11 @@ export function featuresAt(k, i){
     ret1: (last/cl[n-1]-1)*100,
     ret3: (last/cl[n-3]-1)*100,
     ret6: (last/cl[n-6]-1)*100,
+    ret24: (last/cl[n-24]-1)*100,
     hh6: last>Math.max(...cl.slice(n-6,n)) ? 1:0,
     ll6: last<Math.min(...cl.slice(n-6,n)) ? 1:0,
     bodyUp: win[n].c>win[n].o ? 1:0,
+    adx: adxR.adx[n]||0,
+    diDiff: (adxR.diP[n]-adxR.diM[n])||0,
   };
 }
