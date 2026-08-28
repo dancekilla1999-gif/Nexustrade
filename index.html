@@ -3995,6 +3995,75 @@ function nearestBelow(levels, price, minGapPct){
   return c.length?c[0]:null;
 }
 
+/* ============ МУЛЬТИТАЙМФРЕЙМНЫЙ КОНТЕКСТ (D1 / 4H / H1) ============
+   Важно: это ИНФОРМАЦИОННАЯ панель, не фильтр входа и не источник сигнала.
+   Проверено честно (research/CONFIRMATIONS_30.md, research/ml/mtf_test*.mjs):
+   два разных варианта «1D тренд + 4H сетап + 1H триггер входа» — EMA vs
+   структура на D1, RSI-разворот vs пробой экстремума на H1 — прогнаны на
+   20 парах с train/test и негативным контролем, и ни один не показал
+   измеримого преимущества над обычным сигналом (одна конфигурация даже
+   ощутимо хуже базовой линии). Поэтому здесь эта картина только ПОКАЗЫВАЕТСЯ
+   трейдеру для контекста — использовать её как повод отменить свою же
+   систему риска нельзя, потому что доказанной статистической ценности
+   у совпадения таймфреймов не подтверждено. */
+function structDirection(k, dep){
+  if(!k || k.length<20) return null;
+  const {highs, lows} = structLevels(k, dep||4);
+  if(highs.length<2 || lows.length<2) return null;
+  const lastH=highs[highs.length-1], prevH=highs[highs.length-2];
+  const lastL=lows[lows.length-1], prevL=lows[lows.length-2];
+  if(lastH.p>prevH.p && lastL.p>prevL.p) return 'LONG';
+  if(lastH.p<prevH.p && lastL.p<prevL.p) return 'SHORT';
+  return null;
+}
+function h1Momentum(k){
+  if(!k || k.length<30) return null;
+  const cl=k.map(x=>x.c);
+  const e21=emaArr(cl,21), e50=emaArr(cl,50);
+  const n=cl.length-1;
+  const trend = e21[n]>e50[n] ? 'LONG' : 'SHORT';
+  const win=k.slice(Math.max(0,n-6),n);
+  const hh=win.length?Math.max(...win.map(x=>x.h)):null, ll=win.length?Math.min(...win.map(x=>x.l)):null;
+  const breakout = (hh!=null && k[n].h>hh) ? 'LONG' : ((ll!=null && k[n].l<ll) ? 'SHORT' : null);
+  return { trend, breakout };
+}
+/** Собирает картину D1/4H/H1 из уже загруженных (настоящих) свечей.
+ *  Ничего не запрашивает сама — вызывающая сторона должна убедиться,
+ *  что realKlines(sym,'1d') и realKlines(sym,'1h') готовы. */
+function mtfContext(sym, dir4h){
+  const d1=realKlines(sym,'1d'), h1=realKlines(sym,'1h');
+  const dDir = d1 ? structDirection(d1, d1.length>=60?4:2) : null;
+  const hMom = h1 ? h1Momentum(h1) : null;
+  return { d1: dDir, h4: dir4h||null, h1: hMom, ready: !!(d1&&h1) };
+}
+function mtfRow(label, val, ref){
+  const txt = val==null ? 'нет данных' : (val==='LONG'?'бычий':'медвежий');
+  const agree = val!=null && ref!=null && val===ref;
+  const conflict = val!=null && ref!=null && val!==ref;
+  const color = val==null ? 'var(--txt3)' : agree ? 'var(--green)' : conflict ? 'var(--red)' : 'var(--txt2)';
+  return '<div class="row between" style="padding:5px 0;"><span class="small" style="color:var(--txt3);">'+label+'</span>'+
+    '<b class="small" style="color:'+color+';">'+txt+(agree?' ✓':conflict?' ✕':'')+'</b></div>';
+}
+function mtfBlockHtml(sym, sg){
+  const mtf = mtfContext(sym, sg.dir);
+  if(!mtf.ready){
+    return '<div class="key-box mt3" id="mtfBox"><div class="micro" style="color:var(--gold);margin-bottom:5px;">МУЛЬТИТАЙМФРЕЙМНАЯ КАРТИНА</div>'+
+      '<div class="small" style="color:var(--txt3);">Загружаю D1/H1…</div></div>';
+  }
+  const h1txt = mtf.h1 ? ('тренд: '+(mtf.h1.trend==='LONG'?'бычий':'медвежий')+
+    (mtf.h1.breakout ? (', пробой '+(mtf.h1.breakout==='LONG'?'вверх':'вниз')+' за 6ч') : '')) : 'нет данных';
+  return '<div class="key-box mt3" id="mtfBox"><div class="micro" style="color:var(--gold);margin-bottom:5px;">МУЛЬТИТАЙМФРЕЙМНАЯ КАРТИНА</div>'+
+    mtfRow('D1 — структура (общий тренд)', mtf.d1, sg.dir)+
+    '<div class="row between" style="padding:5px 0;"><span class="small" style="color:var(--txt3);">4H — этот сетап</span>'+
+    '<b class="small" style="color:var(--gold);">'+(sg.dir==='LONG'?'бычий':'медвежий')+'</b></div>'+
+    '<div class="row between" style="padding:5px 0;"><span class="small" style="color:var(--txt3);">H1 — текущий импульс</span>'+
+    '<b class="small" style="color:var(--txt2);">'+h1txt+'</b></div>'+
+    '<div class="small mt2" style="color:var(--txt3);font-size:11px;line-height:1.5;">'+
+    'Только контекст: совпадение D1/4H/H1 честно проверялось на истории и не показало '+
+    'прироста винрейта или мат. ожидания по сравнению с обычным сигналом — не отменяйте '+
+    'из-за него собственное управление риском.</div></div>';
+}
+
 function computeSignal(sym){
   /* Только настоящие свечи: сигнал по выдуманному OHLC — это выдуманный
      сигнал, и отличить его на экране пользователь не сможет. */
@@ -4136,6 +4205,8 @@ function openSignalDetail(sym){
     (sg.targetLevel?' и подтверждено EMA. Цель — ближайший структурный уровень '+fmt(sg.targetLevel,sg.d)+', до него '+sg.movePct.toFixed(1)+'% движения.':'. Цель рассчитана от волатильности: '+sg.movePct.toFixed(1)+'%.')+
     ' Стоп поставлен за последний значимый экстремум — риск '+sg.riskPct.toFixed(1)+'%.</div></div>'+
 
+    mtfBlockHtml(sym, sg)+
+
     '<div class="micro mt4" style="margin-bottom:6px;">ПОДТВЕРЖДЕНИЯ ('+ok.length+')</div>'+
     ok.map(f=>'<div class="chk ok">✓ '+f[0]+'</div>').join('')+
     (no.length?'<div class="micro mt3" style="margin-bottom:6px;">НЕ ВЫПОЛНЕНО ('+no.length+')</div>'+
@@ -4145,6 +4216,15 @@ function openSignalDetail(sym){
     '<div class="micro mt3" style="text-align:center;color:var(--txt3);line-height:1.5;">Сигнал — не рекомендация к сделке. Проверяйте контекст и соблюдайте риск-менеджмент.</div>';
   $('sheetVeil').classList.add('open');
   $('sdTrade').addEventListener('click',()=>{ closeSheet(); openTerminal(sym); });
+
+  // D1/H1 обычно ещё не загружены (сигналы работают только с 4H) — подгружаем
+  // и перерисовываем только блок контекста, не весь лист.
+  if(!realKlines(sym,'1d') || !realKlines(sym,'1h')){
+    Promise.all([loadKlines(sym,'1d'), loadKlines(sym,'1h')]).then(()=>{
+      const box=$('mtfBox'); if(!box || !$('sheetVeil').classList.contains('open')) return;
+      box.outerHTML = mtfBlockHtml(sym, sg);
+    }).catch(()=>{});
+  }
 }
 function allSignals(){ return sigUniverse().map(a=>computeSignal(a.s)).filter(Boolean).sort((a,b)=>b.strength-a.strength); }
 
