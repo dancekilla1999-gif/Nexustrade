@@ -1606,8 +1606,9 @@ async function checkMyPayments(silent){
         }
         const size=(p.meta&&p.meta.size) || parseChallengeSize(p.plan);
         const stages=(p.meta&&p.meta.stages) || (/ускорен/i.test(p.plan)?1:2);
-        const a=addChallengeAcc(size, p.plan.split('·')[0].trim(), stages);
-        if(a){ haptic('ok'); showAccActivated(a); }
+        const prefunded=!!(p.meta&&p.meta.prefunded);
+        const a=addChallengeAcc(size, p.plan.split('·')[0].trim(), stages, {prefunded});
+        if(a){ haptic('ok'); prefunded ? modalFunded(a, a.balance) : showAccActivated(a); }
       }
       S.appliedPays.push(p.id);
       fetch(API_BASE+'/api/payments',{method:'POST',headers:authHeaders(),
@@ -1672,13 +1673,17 @@ function switchAcc(id){
   toast('Счёт: '+a.label, a.kind==='demo'?'🎮':'💼');
   renderAll();
 }
-function addChallengeAcc(size, planName, stages){
+function addChallengeAcc(size, planName, stages, opts){
   if(paidAccounts().length>=MAX_PAID_ACC) return null;
+  const prefunded=!!(opts&&opts.prefunded);
   const a=newAcc({
     kind:'challenge',
-    label: planName || ('Челлендж $'+fmt(size,0)),
-    tier:size, balance:size, startDay:size, stage:1, status:'RUN',
-    stages: stages||2
+    label: planName || (prefunded ? ('Фандед $'+fmt(size,0)) : ('Челлендж $'+fmt(size,0))),
+    tier:size, balance:size, startDay:size,
+    stage: prefunded ? (stages||2) : 1,
+    status: prefunded ? 'PASS' : 'RUN',
+    stages: stages||2,
+    fundedAt: prefunded ? Date.now() : null
   });
   accList().push(a); S.activeAccId=a.id; bindAcc(); persistState();
   return a;
@@ -4720,8 +4725,25 @@ let pushT=null;
 function pushState(){ if(!S.user||!S.token) return; clearTimeout(pushT); pushT=setTimeout(()=>{
   fetch(API_BASE+'/api/state',{method:'POST',headers:authHeaders(),
     body:JSON.stringify({name:S.user.name||null, via:S.user.via||'demo', state:snapshot()})}).catch(()=>{}); }, 1200); }
-async function pullState(){ if(!S.user||!S.token) return;
+async function pullState(){
+  if(!S.user) return;
+  if(!S.token || S._reauthing) {
+    /* Токена нет: либо это возврат пользователя, вошедшего ещё до появления
+       сессий (nx_user в localStorage есть, nx_token — нет), либо токен уже
+       истёк. Без него сервер молчит на каждый запрос, а без этой попытки
+       переавторизации счета, выданные вручную на сервере, никогда не доедут
+       до устройства — ровно так застрял фандед-счёт, выданный Кириллу. */
+    if(!S._reauthing && tg && tg.initData){ authProvider('telegram', null, true).catch(()=>{}); }
+    return;
+  }
   try{ const res=await fetch(API_BASE+'/api/state',{headers:authHeaders()});
+    if(res.status===401){
+      // Токен есть, но сервер его не принял (истёк/невалиден) — та же
+      // самолечащаяся переавторизация, что и при отсутствующем токене.
+      setToken(null);
+      if(tg && tg.initData){ S._reauthing=true; authProvider('telegram', null, true).finally(()=>{ S._reauthing=false; }).catch(()=>{}); }
+      return;
+    }
     if(!res.ok) return; const data=await res.json(); if(!data||!data.state) return;
     const o=data.state;
     /* Счета сливаются по id, а не перезаписываются.
