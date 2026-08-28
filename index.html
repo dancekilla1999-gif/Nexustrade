@@ -4171,6 +4171,28 @@ const BOT_BACKTEST = {
   source: 'OKX 1H, июнь 2025 — август 2026',
 };
 
+/* Режим «высокий винрейт»: тот же движок сигналов (computeSignal), но стоп
+   отодвигается в SL_WIDEN_MULT раз дальше от входа (тейк не меняется), а
+   размер позиции по-прежнему считается на фиксированный % риска — сделка
+   остаётся risk-нормализованной, просто переживает больше шума до стопа.
+   Это честно измерено (research/HIGH_WINRATE_MODE.md), с разбивкой train/test
+   по времени (без утечки) и с учётом сделок, не успевших закрыться к концу
+   истории (иначе широкий стоп мог бы прятать зависшие в минусе позиции):
+     train (первые 70% истории, 20 пар): 296 сделок, винрейт 72.3%, avgR +0.018
+     test  (последние 30%, не участвовали в подборе): 134 сделки, винрейт 71.6%, avgR −0.022
+   Винрейт 70%+ подтверждается и на train, и на test — это устойчиво.
+   Мат. ожидание — нет: в train слегка положительное, на test уходит в минус.
+   То есть высокий винрейт настоящий, а прибыльность на нём — нет: убытки
+   в SL_WIDEN_MULT раз крупнее выигрышей, и этого достаточно, чтобы съесть
+   даже редкие потери. Режим показывает ровно то, что обещает (винрейт),
+   и ничего сверх того (не обещает прибыль) — выключен по умолчанию. */
+const SL_WIDEN_MULT = 10;
+const BOT_WINRATE_BACKTEST = {
+  mult: SL_WIDEN_MULT, pairs: 20, source: 'OKX 1H, июнь 2025 — август 2026 · движок сигналов бота (не отдельная симуляция)',
+  trainN: 296, trainWR: 72.3, trainAvgR: 0.018,
+  testN: 134, testWR: 71.6, testAvgR: -0.022,
+};
+
 const BOT_DEFAULTS = {
   paper: true,         // бумажный режим: сделки считаются, но счёт не трогают
   riskPct: 0.5,        // риск на сделку, % от баланса
@@ -4181,7 +4203,18 @@ const BOT_DEFAULTS = {
   dailyStopPct: 3.0,   // стоп на день, % от стартового баланса дня
   cooldownMin: 45,     // пауза после убытка, минут
   maxSameSide: 2,      // сколько позиций в одну сторону (защита от корреляции)
+  winrateMode: false,  // режим «высокий винрейт» — см. SL_WIDEN_MULT выше
 };
+
+/** Сигнал с учётом режима «высокий винрейт»: стоп раздвинут, тейк и вход — те же. */
+function effectiveSignal(sg, b){
+  if(!b.winrateMode) return sg;
+  const dir = sg.dir==='LONG' ? 1 : -1;
+  const riskDist = Math.abs(sg.entry-sg.sl) * SL_WIDEN_MULT;
+  const sl = sg.entry - dir*riskDist;
+  const riskPct = riskDist/sg.entry*100;
+  return Object.assign({}, sg, { sl, riskPct, rr: sg.movePct/riskPct });
+}
 function botCfg(){ S.bot = Object.assign({ on:false, log:[], pausedUntil:0, dayKey:dayKey(), dayStart:null,
   paperPnlR:0, paperTrades:0, paperWins:0 }, BOT_DEFAULTS, S.bot||{}); return S.bot; }
 
@@ -4260,7 +4293,7 @@ function botTick(){
 
   if(!candidates.length){ b.lastReason='подходящих сетапов нет'; return; }
 
-  const sg = candidates[0];
+  const sg = effectiveSignal(candidates[0], b);
   const size = botSize(sg);
   if(!size){ b.lastReason='размер позиции вне допустимого'; return; }
 
@@ -4279,7 +4312,7 @@ function botTick(){
     bot:true, paper:!!b.paper    // бумажная сделка не двигает баланс счёта
   });
   botLog((b.paper?'[бумага] ':'')+side+' '+sg.symbol.replace('USDT','')+' · риск $'+fmt(size.riskMoney,2)+
-         ' · x'+size.lev+' · R:R 1:'+sg.rr.toFixed(1), 'open');
+         ' · x'+size.lev+' · R:R 1:'+sg.rr.toFixed(1)+(b.winrateMode?' · стоп ×'+SL_WIDEN_MULT+' (винрейт-режим)':''), 'open');
   persistState();
   if(S.screen==='signals') renderSignals();
   renderAll();
@@ -4379,6 +4412,26 @@ function renderBotPanel(){
       'баланс счёта. Это инструмент дисциплины исполнения, а не способ заработать.'+
     '</div>'+
 
+    /* Режим «высокий винрейт» — честный ответ на «сделай бота на 70% винрейт»:
+       такой режим есть, винрейт настоящий и проверен на train И на test, но
+       рядом — те же train/test цифры по мат. ожиданию, без купюр. */
+    '<div class="row between mt3" style="align-items:center;">'+
+      '<div style="padding-right:10px;"><div style="font-weight:700;font-size:13.5px;">🎯 Режим «высокий винрейт»</div>'+
+      '<div class="small mt1" style="color:var(--txt3);font-size:11.5px;">Стоп в '+SL_WIDEN_MULT+' раз дальше — сделки чаще закрываются в плюс</div></div>'+
+      '<button class="btn '+(b.winrateMode?'btn-gold':'btn-ghost')+' btn-sm" id="botWinrateToggle" style="flex:none;">'+
+        (b.winrateMode?'Выключить':'Включить')+'</button>'+
+    '</div>'+
+    '<div class="note-box mt2" style="border-left:3px solid '+(b.winrateMode?'var(--gold)':'var(--line)')+';">'+
+      '<span class="mono" style="font-size:12px;">'+
+        'train (первые 70% истории): '+BOT_WINRATE_BACKTEST.trainN+' сделок · винрейт '+BOT_WINRATE_BACKTEST.trainWR+'% · avgR '+(BOT_WINRATE_BACKTEST.trainAvgR>=0?'+':'')+BOT_WINRATE_BACKTEST.trainAvgR+'<br>'+
+        'test&nbsp;&nbsp;(последние 30%, не подбирались по ним): '+BOT_WINRATE_BACKTEST.testN+' сделок · винрейт '+BOT_WINRATE_BACKTEST.testWR+'% · avgR '+(BOT_WINRATE_BACKTEST.testAvgR>=0?'+':'')+BOT_WINRATE_BACKTEST.testAvgR+
+      '</span><br><br>'+
+      '<b>Винрейт 70%+ — настоящий</b>: держится и на train, и на test, это не подгонка под один кусок истории. '+
+      '<b>Прибыль — нет</b>: на train мат. ожидание едва положительное, на test — уже отрицательное. '+
+      'Убыток при таком стопе в '+SL_WIDEN_MULT+' раз крупнее выигрыша, и этого хватает, чтобы съесть частые небольшие плюсы. '+
+      'Включайте, если нужна именно статистика побед в сделках — не как способ заработать больше обычного режима.'+
+    '</div>'+
+
     '<div class="row between mt3" style="align-items:center;">'+
       '<div><div style="font-weight:700;font-size:13.5px;">'+(b.paper?'📝 Бумажный режим':'⚠️ Торгует счётом')+'</div>'+
       '<div class="small mt1" style="color:'+(b.paper?'var(--txt3)':'var(--red)')+';font-size:11.5px;">'+
@@ -4402,6 +4455,22 @@ function renderBotPanel(){
 function bindBotPanel(){
   const t=$('botToggle');
   if(t) t.addEventListener('click', ()=>setBot(!botCfg().on));
+  const wr=$('botWinrateToggle');
+  if(wr) wr.addEventListener('click', ()=>{
+    const b=botCfg();
+    if(!b.winrateMode){
+      if(!confirm('Стоп станет в '+SL_WIDEN_MULT+' раз дальше от входа — сделки будут чаще '+
+                  'закрываться в плюс (винрейт ~70%, проверено на train и на test).\n\n'+
+                  'Но не путайте это с прибылью: на test-данных мат. ожидание уже отрицательное '+
+                  '('+BOT_WINRATE_BACKTEST.testAvgR+'R на сделку) — убытки в '+SL_WIDEN_MULT+' раз '+
+                  'крупнее выигрышей. Это демонстрация винрейта, а не способ заработать больше.\n\n'+
+                  'Включить режим «высокий винрейт»?')) return;
+      b.winrateMode=true; toast('Режим «высокий винрейт» включён','🎯');
+    } else {
+      b.winrateMode=false; toast('Обычный режим стопов','↩️');
+    }
+    persistState(); haptic('ok'); renderSignals();
+  });
   const pb=$('botPaper');
   if(pb) pb.addEventListener('click', ()=>{
     const b=botCfg();
