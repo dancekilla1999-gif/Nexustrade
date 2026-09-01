@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <title>Nexus Prop — Trade like a boss</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<!-- Market Intelligence Engine. Отдельный файл, а не кусок этого IIFE, чтобы
+     бэктест и юнит-тесты в Node гоняли РОВНО тот же код, что здесь. -->
+<script src="mie.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -4419,6 +4422,133 @@ function computeSignal(sym){
     targetLevel: target? target.p : null
   };
 }
+/* ============================================================================
+   MIE — панель глубокого разбора рынка.
+
+   ВАЖНО, почему это ТОЛЬКО панель, а не источник сделок.
+   Движок mie.js честно прогнан на 20 парах за 12,5 месяцев (research/MIE_BACKTEST.md):
+   448 сделок, винрейт 45,5%, средний R −0,169 (t = −3,44), −54,3% к депозиту.
+   Более того, на ТЕХ ЖЕ точках входа случайная сторона даёт ≈ −0,03R, то есть
+   движок значимо ХУЖЕ монетки: направление он выбирает систематически неверно.
+   Поэтому MIE подключён как аналитика (режим, структура, уровни, причины отказа)
+   и НЕ подключён к боту и не открывает сделок. Цифры бэктеста показаны рядом,
+   прямо в панели, а не спрятаны в репозитории.
+   ========================================================================== */
+const MIE_BACKTEST = {
+  n: 448, winRate: 45.5, avgR: -0.169, t: -3.44, pf: 0.70, ret: -54.3, maxDD: 56.8,
+  randR: -0.03, invR: 0.063,
+  source: '20 пар · 4H · авг 2025 — авг 2026 · с комиссией 0,05%/сторона и проскальзыванием',
+};
+
+/** Свечи для MIE: только настоящие биржевые. Синтетику движок обязан отвергнуть. */
+function mieCandles(sym){
+  const out = {};
+  ['4h','1d','1h'].forEach(tf=>{ const k = realKlines(sym, tf); if(k && k.length) out[tf]=k; });
+  return out;
+}
+
+function mieRun(sym){
+  if(typeof MIE==='undefined' || !MIE || !MIE.analyze) return null;
+  const candles = mieCandles(sym);
+  if(!candles['4h']) return null;
+  try{
+    return MIE.analyze({
+      symbol: sym, primaryTf: '4h', candles,
+      dataQuality: { synthetic: !realKlines(sym,'4h') },
+    });
+  }catch(e){ return null; }
+}
+
+function mieBlockHtml(sym){
+  const r = mieRun(sym);
+  if(!r) return '<div class="key-box mt3" id="mieBox"><div class="micro" style="color:var(--gold);margin-bottom:5px;">ГЛУБОКИЙ РАЗБОР (MIE)</div>'+
+    '<div class="small" style="color:var(--txt3);">Загружаю данные для разбора…</div></div>';
+
+  const esc = (s)=>String(s).replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  const REG = {
+    STRONG_BULL:'сильный бычий тренд', STRONG_BEAR:'сильный медвежий тренд',
+    WEAK_BULL:'слабый бычий тренд', WEAK_BEAR:'слабый медвежий тренд',
+    RANGE:'диапазон', CHOP:'пила без структуры', BREAKOUT:'пробой вверх',
+    BREAKDOWN:'пробой вниз', REVERSAL:'разворот', ACCUMULATION:'накопление',
+    DISTRIBUTION:'распределение', CONTRACTION:'сжатие волатильности',
+    PANIC:'паническое движение', UNKNOWN:'не определён',
+  };
+  const BAND = {
+    EXTREME_CONFLUENCE:'исключительное совпадение', STRONG_SETUP:'сильный сетап',
+    VALID_SETUP:'рабочий сетап', WATCH:'наблюдать', WEAK:'слабо', NO_TRADE:'не сделка',
+  };
+  const col = r.decision==='TRADE' ? 'var(--green)' : 'var(--txt3)';
+  const row = (l,v,c)=>'<div class="row between" style="padding:4px 0;"><span class="small" style="color:var(--txt3);">'+l+
+    '</span><b class="small" style="color:'+(c||'var(--txt2)')+';">'+v+'</b></div>';
+
+  let h = '<div class="key-box mt3" id="mieBox">'+
+    '<div class="row between" style="margin-bottom:6px;"><span class="micro" style="color:var(--gold);">ГЛУБОКИЙ РАЗБОР (MIE '+esc(r.version)+')</span>'+
+    '<span class="badge" style="background:'+col+'22;color:'+col+';">'+(r.decision==='TRADE'?'сетап найден':'сделки нет')+'</span></div>';
+
+  h += row('Режим рынка', esc(REG[r.regime]||r.regime));
+  h += row('Качество сетапа', r.confidence+'% · '+esc(BAND[r.band]||r.band)+' ('+esc(r.entry_quality)+')');
+  if(r.direction) h += row('Направление', r.direction, r.direction==='LONG'?'var(--green)':'var(--red)');
+  if(r.setup) h += row('Тип сетапа', esc(r.setup));
+  if(r.rr) h += row('Плановый R:R', '1:'+r.rr.toFixed(2), 'var(--gold)');
+
+  const a = r.analysis;
+  if(a && a.structure && a.structure.ok){
+    const s = a.structure;
+    if(s.sequence) h += row('Структура 4H', esc(s.sequence));
+    if(s.bos) h += row('Слом структуры (BOS)', s.bos.dir==='LONG'?'вверх':'вниз', 'var(--gold)');
+    if(s.choch) h += row('Смена характера (CHoCH)', s.choch.dir==='LONG'?'на бычий':'на медвежий', 'var(--gold)');
+    if(s.sweep) h += row('Снятие ликвидности', s.sweep.dir==='LONG'?'снизу':'сверху', 'var(--gold)');
+  }
+  if(a && a.timeframes){
+    const tfTxt = ['htf','mid','ltf'].map(x=>{ const v=a.timeframes[x]; if(!v) return null;
+      return ({htf:'D1',mid:'4H',ltf:'H1'})[x]+': '+(v.dir==='LONG'?'↑':v.dir==='SHORT'?'↓':'—'); }).filter(Boolean).join('  ');
+    if(tfTxt) h += row('Таймфреймы', esc(tfTxt));
+  }
+  if(a && a.confluence){
+    const z = r.direction==='SHORT' ? a.confluence.nearestBelow : a.confluence.nearestAbove;
+    if(z) h += row('Ближайшая зона', esc(z.labels.slice(0,2).join(', '))+' · '+Math.abs(z.distPct).toFixed(2)+'%');
+  }
+
+  // Веса групп — видно, ЧТО именно двигало решение, а не просто итоговый балл.
+  if(a && a.groups){
+    const NAME = {trend:'Тренд',structure:'Структура',volume:'Объём',liquidity:'Ликвидность',
+      momentum:'Моментум',htf:'Старшие ТФ',pattern:'Паттерны',volatility:'Волатильность'};
+    h += '<div class="micro mt3" style="margin-bottom:4px;">ГОЛОСА ГРУПП (не отдельных индикаторов)</div>';
+    Object.keys(NAME).forEach(k=>{
+      const g = a.groups[k]; if(!g) return;
+      const pctv = Math.round(g.score*100);
+      const c = pctv>15?'var(--green)':pctv<-15?'var(--red)':'var(--txt3)';
+      h += '<div class="row between" style="padding:3px 0;"><span class="small" style="color:var(--txt3);">'+NAME[k]+
+        ' <span style="color:var(--txt3);opacity:.6;">('+a.weights[k]+')</span></span>'+
+        '<b class="small" style="color:'+c+';">'+(pctv>0?'+':'')+pctv+'</b></div>';
+    });
+  }
+
+  if(r.reasons && r.reasons.length){
+    h += '<div class="micro mt3" style="margin-bottom:4px;">ЗА ('+r.reasons.length+')</div>'+
+      r.reasons.slice(0,6).map(x=>'<div class="chk ok">✓ '+esc(x)+'</div>').join('');
+  }
+  if(r.risks && r.risks.length){
+    h += '<div class="micro mt3" style="margin-bottom:4px;">РИСКИ ('+r.risks.length+')</div>'+
+      r.risks.slice(0,6).map(x=>'<div class="chk no">! '+esc(x)+'</div>').join('');
+  }
+  if(r.blockers && r.blockers.length){
+    h += '<div class="micro mt3" style="margin-bottom:4px;">ПОЧЕМУ MIE НЕ ВХОДИТ ('+r.blockers.length+')</div>'+
+      r.blockers.map(x=>'<div class="chk no">✕ '+esc(x)+'</div>').join('');
+  }
+
+  h += '<div class="mt3" style="padding:8px;border-radius:8px;background:var(--red)11;border:1px solid var(--red)33;">'+
+    '<div class="micro" style="color:var(--red);margin-bottom:4px;">РЕЗУЛЬТАТ ЭТОГО ДВИЖКА НА ИСТОРИИ</div>'+
+    '<div class="small" style="color:var(--txt2);line-height:1.55;">'+
+    MIE_BACKTEST.n+' сделок · винрейт '+MIE_BACKTEST.winRate+'% · средний R '+MIE_BACKTEST.avgR+
+    ' · profit factor '+MIE_BACKTEST.pf.toFixed(2)+' · итог <b style="color:var(--red);">'+MIE_BACKTEST.ret+'%</b>.<br>'+
+    'На тех же точках входа случайная сторона даёт '+MIE_BACKTEST.randR+'R — то есть движок выбирает '+
+    'направление значимо хуже монетки. Поэтому он <b>не торгует</b> и не подключён к боту: '+
+    'это разбор рынка, а не рекомендация. '+esc(MIE_BACKTEST.source)+'.</div></div>';
+
+  return h + '</div>';
+}
+
 function openSignalDetail(sym){
   const sg=computeSignal(sym); if(!sg){ toast('Сигнал устарел','⚠️'); return; }
   const a=ASSETS.find(x=>x.s===sym);
@@ -4443,6 +4573,7 @@ function openSignalDetail(sym){
     ' Стоп поставлен за последний значимый экстремум — риск '+sg.riskPct.toFixed(1)+'%.</div></div>'+
 
     mtfBlockHtml(sym, sg)+
+    mieBlockHtml(sym)+
 
     '<div class="micro mt4" style="margin-bottom:6px;">ПОДТВЕРЖДЕНИЯ ('+ok.length+')</div>'+
     ok.map(f=>'<div class="chk ok">✓ '+f[0]+'</div>').join('')+
@@ -4458,8 +4589,9 @@ function openSignalDetail(sym){
   // и перерисовываем только блок контекста, не весь лист.
   if(!realKlines(sym,'1d') || !realKlines(sym,'1h')){
     Promise.all([loadKlines(sym,'1d'), loadKlines(sym,'1h')]).then(()=>{
-      const box=$('mtfBox'); if(!box || !$('sheetVeil').classList.contains('open')) return;
-      box.outerHTML = mtfBlockHtml(sym, sg);
+      if(!$('sheetVeil').classList.contains('open')) return;
+      const box=$('mtfBox'); if(box) box.outerHTML = mtfBlockHtml(sym, sg);
+      const mbox=$('mieBox'); if(mbox) mbox.outerHTML = mieBlockHtml(sym);
     }).catch(()=>{});
   }
 }
@@ -4553,6 +4685,11 @@ const BOT_DEFAULTS = {
   cooldownMin: 45,     // пауза после убытка, минут
   maxSameSide: 2,      // сколько позиций в одну сторону (защита от корреляции)
   winrateMode: false,  // режим «высокий винрейт» — см. SL_WIDEN_MULT выше
+  emergencyStop: false,// аварийная остановка; снимается только вручную
+  // Просадка от стартового размера счёта, при которой аварийный стоп срабатывает сам.
+  // Обязательно СТРОЖЕ лимита площадки (RULES.maxDD = 10%): смысл рубежа в том,
+  // чтобы бот остановился ДО того, как счёт будет провален, а не после.
+  emergencyDDPct: 7,
 };
 
 /** Сигнал с учётом режима «высокий винрейт»: стоп раздвинут, тейк и вход — те же. */
@@ -4572,9 +4709,50 @@ function botLog(text, kind){
   b.log = [{ t:Date.now(), text, kind:kind||'info' }, ...(b.log||[])].slice(0, 40);
 }
 
+/* ---- Режимы безопасности ----------------------------------------------
+   PAPER      — сделки считаются, счёт не трогается (по умолчанию).
+   LIVE       — сделки идут на виртуальный счёт проп-симулятора.
+   EMERGENCY  — жёсткая остановка: бот не открывает НИЧЕГО, пока человек
+                не снимет флаг руками. Снимается только явным действием —
+                ни новый день, ни перезапуск приложения его не сбрасывают.
+   Отдельный флаг от b.on нужен именно поэтому: обычный выключатель легко
+   передёрнуть случайно, а аварийный стоп должен требовать осознанного шага. */
+function botMode(){
+  const b=botCfg();
+  if(b.emergencyStop) return 'EMERGENCY';
+  return b.paper ? 'PAPER' : 'LIVE';
+}
+
+/** Аварийная остановка. Вызывается человеком или автоматикой при аномалии. */
+function botEmergencyStop(reason){
+  const b=botCfg();
+  if(b.emergencyStop) return;
+  b.emergencyStop = true;
+  b.emergencyAt = Date.now();
+  b.emergencyReason = reason || 'остановлено вручную';
+  b.on = false;
+  botLog('АВАРИЙНАЯ ОСТАНОВКА: '+b.emergencyReason, 'err');
+  try{ toast('Аварийная остановка бота','🛑'); }catch(e){}
+  // Именно persistState: snapshot() только собирает объект и ничего не сохраняет.
+  // Автоматическое срабатывание идёт из botTick(), где сохранять больше некому.
+  try{ persistState(); }catch(e){}
+}
+
+/** Снятие аварийной остановки — только явным действием пользователя. */
+function botEmergencyClear(){
+  const b=botCfg();
+  b.emergencyStop=false; b.emergencyReason=null; b.emergencyAt=null;
+  botLog('аварийная остановка снята вручную; бот остаётся выключенным', 'info');
+  // Именно persistState: snapshot() только собирает объект и ничего не сохраняет.
+  // Автоматическое срабатывание идёт из botTick(), где сохранять больше некому.
+  try{ persistState(); }catch(e){}
+}
+
 /** Причина, по которой бот сейчас не торгует, либо null. */
 function botBlockReason(){
   const b=botCfg();
+  // Аварийный стоп проверяется ПЕРВЫМ — раньше всех остальных условий.
+  if(b.emergencyStop) return 'АВАРИЙНАЯ ОСТАНОВКА: '+(b.emergencyReason||'снимается только вручную');
   if(!b.on) return 'выключен';
   if(!S.acc) return 'нет активного счёта';
   const blk=tradingBlocked(); if(blk) return blk;
@@ -4616,9 +4794,20 @@ function botTick(){
   if(!b.on) return;
   bindAcc();
 
-  // новый день — сбрасываем дневную точку отсчёта
+  // новый день — сбрасываем дневную точку отсчёта.
+  // Аварийный стоп НЕ сбрасывается: он переживает смену дня намеренно.
   if(b.dayKey !== dayKey()){ b.dayKey=dayKey(); b.dayStart=equity(); b.pausedUntil=0; }
   if(b.dayStart==null) b.dayStart=equity();
+
+  // Автоматический аварийный стоп: просадка от стартового размера счёта (tier).
+  // Последний рубеж на случай, если дневной стоп почему-то не сработал.
+  if(S.acc && S.acc.tier > 0){
+    const ddPct = (equity() - S.acc.tier) / S.acc.tier * 100;
+    if(ddPct <= -Math.abs(b.emergencyDDPct)){
+      botEmergencyStop('просадка счёта '+ddPct.toFixed(1)+'% при пороге '+b.emergencyDDPct+'% (лимит площадки −'+RULES.maxDD+'%)');
+      return;
+    }
+  }
 
   const reason = botBlockReason();
   if(reason){ b.lastReason=reason; return; }
@@ -4789,6 +4978,23 @@ function renderBotPanel(){
       'Включайте, если нужна именно статистика побед в сделках — не как способ заработать больше обычного режима.'+
     '</div>'+
 
+    /* Аварийная остановка. Отдельно от обычного выключателя: обычный тумблер
+       легко передёрнуть, а этот рубеж должен сниматься осознанно. */
+    '<div class="row between mt3" style="align-items:center;">'+
+      '<div style="padding-right:10px;"><div style="font-weight:700;font-size:13.5px;">'+
+        (b.emergencyStop?'🛑 АВАРИЙНАЯ ОСТАНОВКА':'🛑 Аварийная остановка')+'</div>'+
+      '<div class="small mt1" style="color:'+(b.emergencyStop?'var(--red)':'var(--txt3)')+';font-size:11.5px;">'+
+        (b.emergencyStop
+          ? 'Бот остановлен: '+(b.emergencyReason||'вручную')
+          : 'Срабатывает сама при просадке −'+b.emergencyDDPct+'% от размера счёта')+'</div></div>'+
+      '<button class="btn '+(b.emergencyStop?'btn-gold':'btn-ghost')+' btn-sm" id="botEmergency" style="flex:none;">'+
+        (b.emergencyStop?'Снять':'Остановить')+'</button>'+
+    '</div>'+
+    '<div class="small mt2" style="color:var(--txt3);font-size:11.5px;line-height:1.5;">'+
+      'Текущий режим: <b>'+botMode()+'</b>. Аварийная остановка не снимается ни сменой дня, '+
+      'ни перезапуском приложения — только этой кнопкой.'+
+    '</div>'+
+
     '<div class="row between mt3" style="align-items:center;">'+
       '<div><div style="font-weight:700;font-size:13.5px;">'+(b.paper?'📝 Бумажный режим':'⚠️ Торгует счётом')+'</div>'+
       '<div class="small mt1" style="color:'+(b.paper?'var(--txt3)':'var(--red)')+';font-size:11.5px;">'+
@@ -4825,6 +5031,18 @@ function bindBotPanel(){
       b.winrateMode=true; toast('Режим «высокий винрейт» включён','🎯');
     } else {
       b.winrateMode=false; toast('Обычный режим стопов','↩️');
+    }
+    persistState(); haptic('ok'); renderSignals();
+  });
+  const em=$('botEmergency');
+  if(em) em.addEventListener('click', ()=>{
+    const b=botCfg();
+    if(b.emergencyStop){
+      if(!confirm('Снять аварийную остановку?\n\nПричина остановки: '+(b.emergencyReason||'вручную')+'\n\n'+
+                  'Бот останется выключенным — включать его нужно будет отдельно.')) return;
+      botEmergencyClear(); toast('Аварийная остановка снята','✅');
+    } else {
+      botEmergencyStop('остановлено вручную');
     }
     persistState(); haptic('ok'); renderSignals();
   });
