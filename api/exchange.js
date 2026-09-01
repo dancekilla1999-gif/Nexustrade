@@ -67,16 +67,43 @@ export default async function handler(req, res) {
   if (!encryptionReady()) {
     return res.status(503).json({
       error: 'encryption_not_configured',
-      detail: 'Не задан EXCHANGE_ENC_KEY. Без него ключи бирж хранить нельзя, и подключение отключено.',
+      detail: 'Шифрование не настроено: нет ни EXCHANGE_ENC_KEY, ни TELEGRAM_BOT_TOKEN. Без ключа шифрования ключи бирж не хранятся.',
     });
   }
   const H = { 'Content-Type': 'application/json', apikey: cfg.key, Authorization: `Bearer ${cfg.key}` };
 
+  /* ХРАНИЛИЩЕ. Зашифрованные ключи лежат в уже существующей таблице
+     app_settings (key text, value jsonb) строками вида
+       key = "exkeys:<userId>:<exchange>", value = { ...поля строки }
+     Отдельная таблица exchange_keys (api/exchange_keys.sql) была бы чище,
+     но требует ручного шага в Supabase SQL Editor. app_settings уже есть в
+     проде, у неё включён RLS без политик, и /api/config читает из неё строго
+     key=main — чужие строки оттуда не утекают. Защита данных здесь обеспечена
+     шифрованием, а не именем таблицы, поэтому это честная замена, а не костыль.
+     Переехать на отдельную таблицу можно, поменяв только эти пять функций. */
+  const rowKey = (ex) => `exkeys:${userId}:${ex}`;
+  const PREFIX = `exkeys:${userId}:`;
+
   async function readRows() {
-    const r = await fetch(`${cfg.url}/rest/v1/exchange_keys?user_id=eq.${encodeURIComponent(userId)}&select=*`, { headers: H });
+    // PostgREST like: * — подстановочный символ.
+    const r = await fetch(`${cfg.url}/rest/v1/app_settings?key=like.${encodeURIComponent(PREFIX + '*')}&select=key,value`, { headers: H });
     if (!r.ok) return [];
     const rows = await r.json();
-    return Array.isArray(rows) ? rows : [];
+    if (!Array.isArray(rows)) return [];
+    // Страховка: like-фильтр мог бы зацепить лишнее — оставляем только строки этого пользователя.
+    return rows.filter(x => typeof x.key === 'string' && x.key.startsWith(PREFIX) && x.value && typeof x.value === 'object')
+      .map(x => ({ ...x.value, exchange: x.key.slice(PREFIX.length) }));
+  }
+  async function writeRow(exchange, value) {
+    return fetch(`${cfg.url}/rest/v1/app_settings`, {
+      method: 'POST',
+      headers: { ...H, Prefer: 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify({ key: rowKey(exchange), value, updated_at: new Date().toISOString() }),
+    });
+  }
+  async function deleteRow(exchange) {
+    return fetch(`${cfg.url}/rest/v1/app_settings?key=eq.${encodeURIComponent(rowKey(exchange))}`,
+      { method: 'DELETE', headers: { ...H, Prefer: 'return=minimal' } });
   }
   async function readOne(exchange) {
     const rows = await readRows();
@@ -141,9 +168,8 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'no_trade_permission', detail: 'У ключа нет прав на торговлю — торговать им не получится.' });
       }
 
+      const prev = await readOne(ad.id);
       const row = {
-        user_id: userId,
-        exchange: ad.id,
         api_key_enc: seal(apiKey, userId),
         api_secret_enc: seal(apiSecret, userId),
         passphrase_enc: passphrase ? seal(passphrase, userId) : null,
@@ -152,13 +178,11 @@ export default async function handler(req, res) {
         can_trade: !!probe.canTrade,
         can_futures: !!probe.canFutures,
         ip_restricted: probe.ipRestricted === null ? null : !!probe.ipRestricted,
+        created_at: (prev && prev.created_at) || new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        last_used_at: null,
       };
-      const w = await fetch(`${cfg.url}/rest/v1/exchange_keys`, {
-        method: 'POST',
-        headers: { ...H, Prefer: 'resolution=merge-duplicates,return=minimal' },
-        body: JSON.stringify(row),
-      });
+      const w = await writeRow(ad.id, row);
       if (!w.ok) {
         const t = await w.text();
         return res.status(500).json({ error: 'save_failed', detail: t.slice(0, 200) });
@@ -176,9 +200,7 @@ export default async function handler(req, res) {
     if (action === 'disconnect') {
       const ad = adapterFor(body.exchange);
       if (!ad) return res.status(400).json({ error: 'unknown_exchange' });
-      const d = await fetch(
-        `${cfg.url}/rest/v1/exchange_keys?user_id=eq.${encodeURIComponent(userId)}&exchange=eq.${encodeURIComponent(ad.id)}`,
-        { method: 'DELETE', headers: { ...H, Prefer: 'return=minimal' } });
+      const d = await deleteRow(ad.id);
       if (!d.ok) return res.status(500).json({ error: 'delete_failed' });
       return res.status(200).json({ ok: true });
     }
@@ -192,15 +214,14 @@ export default async function handler(req, res) {
     if (!creds) {
       return res.status(500).json({
         error: 'decrypt_failed',
-        detail: 'Не удалось расшифровать ключ. Обычно это значит, что сменился EXCHANGE_ENC_KEY. Переподключите биржу.',
+        detail: 'Не удалось расшифровать ключ. Обычно это значит, что сменился ключ шифрования (EXCHANGE_ENC_KEY или токен бота). Переподключите биржу.',
       });
     }
 
     // Отметка использования — полезна, чтобы видеть «живой» ли ключ.
-    const touch = () => fetch(
-      `${cfg.url}/rest/v1/exchange_keys?user_id=eq.${encodeURIComponent(userId)}&exchange=eq.${encodeURIComponent(ad.id)}`,
-      { method: 'PATCH', headers: { ...H, Prefer: 'return=minimal' }, body: JSON.stringify({ last_used_at: new Date().toISOString() }) },
-    ).catch(() => {});
+    // Строка целиком в jsonb, поэтому «отметить использование» = переписать значение.
+    const { exchange: _ex, ...stored } = row;
+    const touch = () => writeRow(ad.id, { ...stored, last_used_at: new Date().toISOString() }).catch(() => {});
 
     if (action === 'balances') {
       const r = await ad.balances(creds); touch();

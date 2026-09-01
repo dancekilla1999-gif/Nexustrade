@@ -12,8 +12,19 @@
 // настоящая защита пользователя — API-ключ БЕЗ права вывода средств, и
 // api/exchange.js отказывается сохранять ключ, у которого вывод разрешён.
 //
-// Требует env EXCHANGE_ENC_KEY: 32 байта в base64 или hex, либо любая
-// достаточно длинная парольная фраза (из неё ключ выводится scrypt).
+// Откуда берётся мастер-ключ (по приоритету):
+//   1) env EXCHANGE_ENC_KEY — 32 байта в base64/hex либо длинная парольная
+//      фраза (из неё ключ выводится scrypt). Явный ключ лучше: его можно
+//      ротировать отдельно от всего остального.
+//   2) иначе — выводится из TELEGRAM_BOT_TOKEN с отдельной меткой, точно так
+//      же, как уже сделан секрет сессионных токенов (api/_session.js). Это
+//      даёт нулевую настройку: токен бота в env есть всегда.
+//
+// Честно про вариант 2: криптографически он не слабее — тот, кто получил env
+// сервера, в обоих вариантах получает и мастер-ключ. Разница практическая:
+// при ротации токена бота сохранённые ключи бирж станут нечитаемыми (клиент
+// получит decrypt_failed и предложение переподключить биржу). Если токен
+// планируется менять — задайте EXCHANGE_ENC_KEY явно.
 
 import crypto from 'crypto';
 
@@ -30,11 +41,18 @@ let _cached = null;
 /** Мастер-ключ из env. 32 байта. Бросает исключение, если не настроен. */
 export function masterKey() {
   if (_cached) return _cached;
-  const raw = process.env.EXCHANGE_ENC_KEY;
-  if (!raw || String(raw).length < 16) {
-    throw new Error('EXCHANGE_ENC_KEY не настроен (нужно ≥16 символов)');
+  const explicit = process.env.EXCHANGE_ENC_KEY;
+  if (!explicit || String(explicit).length < 16) {
+    // Запасной путь: вывод из токена бота. Метка отличается от метки сессий,
+    // чтобы два разных назначения никогда не получили один и тот же ключ.
+    const bot = process.env.TELEGRAM_BOT_TOKEN;
+    if (!bot || String(bot).length < 16) {
+      throw new Error('Не задан ни EXCHANGE_ENC_KEY, ни TELEGRAM_BOT_TOKEN — шифровать нечем');
+    }
+    _cached = crypto.createHash('sha256').update('nexus-exchange-keys|' + String(bot).trim()).digest();
+    return _cached;
   }
-  const s = String(raw).trim();
+  const s = String(explicit).trim();
   let key = null;
   // Ровно 32 байта в base64 или hex используем как есть; иначе — scrypt.
   if (/^[0-9a-fA-F]{64}$/.test(s)) key = Buffer.from(s, 'hex');
