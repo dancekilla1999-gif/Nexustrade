@@ -886,6 +886,7 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
 
   <div class="tabs2 mt5">
     <button class="tab2 active" data-ptab="pos">Позиции<span class="cnt" id="cntPos">0</span></button>
+    <button class="tab2" data-ptab="spot">Спот</button>
     <button class="tab2" data-ptab="hist">История<span class="cnt" id="cntHist" style="background:var(--card2);color:var(--txt2);">0</span></button>
     <button class="tab2" data-ptab="stats">Статистика</button>
   </div>
@@ -1599,6 +1600,21 @@ async function checkMyPayments(silent){
         const t=/vip|вип/i.test(p.plan)?'vip':'prem';
         S.tier=t; saveMeta();
         toast('Подписка '+(t==='vip'?'ВИП':'Премиум')+' активирована','⭐');
+      } else if(p.kind==='bonus'){
+        /* Начисление от платформы на существующий счёт. Показывается как
+           бонус, а не как торговая прибыль: выдуманных сделок в истории
+           не появляется — только честная строка о том, откуда деньги. */
+        const amt=Number((p.meta&&p.meta.amount)||p.amount)||0;
+        if(amt>0){
+          const accs=accList();
+          const target=(p.meta&&p.meta.accountId ? accs.find(x=>x.id===p.meta.accountId) : null)
+            || accs.find(x=>x.status==='PASS') || accs[0];
+          if(target){
+            target.balance=(target.balance||0)+amt;
+            haptic('ok');
+            toast('Бонус +$'+fmt(amt,0)+' зачислен: '+target.label,'🎁');
+          }
+        }
       } else if(p.kind==='challenge'){
         if(paidAccounts().length>=MAX_PAID_ACC){
           if(!silent) toast('Достигнут лимит счетов ('+MAX_PAID_ACC+')','⚠️');
@@ -2861,6 +2877,7 @@ function renderPortfolio(){
   $('cntHist').textContent=S.history.length;
   const body=$('pfBody'); body.innerHTML='';
   if(S.ptab==='stats'){ renderStats(body); return; }
+  if(S.ptab==='spot'){ renderSpot(body); return; }
   if(S.ptab==='pos'){
     if(!S.positions.length){ body.innerHTML='<div class="empty"><div class="big">🐂</div>Нет открытых позиций.<br>Бык ждёт твой первый трейд.</div>'; return; }
     S.positions.forEach(p=>{
@@ -2902,6 +2919,122 @@ function renderPortfolio(){
       body.appendChild(el);
     });
   }
+}
+
+/* ============ СПОТ-ПОРТФЕЛЬ (виртуальный) ============
+   Покупка монет по живым ценам с виртуальным балансом USDT. Это тренировка
+   спот-торговли, а не хранение реальных средств: депозитов/выводов реальных
+   монет здесь нет, и интерфейс об этом говорит прямо. Комиссия 0.1% как у
+   спот-тейкера на крупных биржах — чтобы цифры были похожи на реальность. */
+const SPOT_FEE = 0.001;
+const SPOT_START = 10000;
+function spotState(){
+  if(!S.spot || typeof S.spot.usdt!=='number') S.spot={ usdt:SPOT_START, coins:{}, hist:[] };
+  S.spot.coins=S.spot.coins||{}; S.spot.hist=S.spot.hist||[];
+  return S.spot;
+}
+function spotValue(){
+  const sp=spotState();
+  let v=sp.usdt;
+  for(const sym in sp.coins) v += (sp.coins[sym].qty||0)*priceOf(sym);
+  return v;
+}
+function spotBuy(sym, usd){
+  const sp=spotState();
+  usd=Number(usd)||0;
+  if(usd<5){ toast('Минимальная покупка — $5','⚠️'); return false; }
+  if(usd>sp.usdt+1e-9){ toast('Недостаточно USDT на споте','⚠️'); return false; }
+  const price=priceOf(sym); if(!(price>0)){ toast('Нет цены по '+sym,'⚠️'); return false; }
+  const fee=usd*SPOT_FEE, qty=(usd-fee)/price;
+  const c=sp.coins[sym]||{qty:0,cost:0};
+  c.qty+=qty; c.cost+=usd; sp.coins[sym]=c;
+  sp.usdt-=usd;
+  sp.hist.unshift({side:'BUY', sym, usd, qty, price, fee, ts:Date.now()});
+  sp.hist=sp.hist.slice(0,60);
+  persistState(); haptic('ok');
+  const a=ASSETS.find(x=>x.s===sym);
+  toast('Куплено '+fmt(qty, Math.max(4,(a?a.d:2)))+' '+(a?a.t:sym)+' за '+fUsd(usd),'🪙');
+  return true;
+}
+function spotSell(sym, frac){
+  const sp=spotState();
+  const c=sp.coins[sym]; if(!c||!(c.qty>0)) return false;
+  const price=priceOf(sym); if(!(price>0)){ toast('Нет цены по '+sym,'⚠️'); return false; }
+  frac=Math.min(1, Math.max(0, frac||1));
+  const qty=c.qty*frac, gross=qty*price, fee=gross*SPOT_FEE, net=gross-fee;
+  c.cost*= (1-frac); c.qty-=qty;
+  if(c.qty<=1e-9){ delete sp.coins[sym]; }
+  sp.usdt+=net;
+  sp.hist.unshift({side:'SELL', sym, usd:net, qty, price, fee, ts:Date.now()});
+  sp.hist=sp.hist.slice(0,60);
+  persistState(); haptic('ok');
+  const a=ASSETS.find(x=>x.s===sym);
+  toast('Продано '+fmt(qty, Math.max(4,(a?a.d:2)))+' '+(a?a.t:sym)+' за '+fUsd(net),'💵');
+  return true;
+}
+function renderSpot(body){
+  const sp=spotState();
+  const total=spotValue(), pnl=total-SPOT_START;
+  let html=
+    '<div class="card mt3">'+
+      '<div class="row between"><div><div class="micro">Спот-портфель · <b style="color:var(--gold);">ДЕМО</b></div>'+
+      '<div class="equity mt1" style="font-size:22px;">'+fUsd(total)+'</div>'+
+      '<div class="mono small '+(pnl>=0?'up':'down')+'" style="font-weight:700;">'+(pnl>=0?'+':'')+fUsd(pnl)+' с начала</div></div>'+
+      '<div style="text-align:right;"><div class="micro">Свободно USDT</div><div class="mono" style="font-weight:800;font-size:15px;">'+fUsd(sp.usdt)+'</div></div></div>'+
+      '<div class="small mt2" style="color:var(--txt3);font-size:11px;line-height:1.5;">Виртуальный портфель по живым ценам '+
+      '(комиссия 0.1% как на реальном споте). Реальные монеты сюда не заводятся и не выводятся.</div>'+
+    '</div>'+
+
+    '<div class="card mt3">'+
+      '<div class="prm"><label>Купить монету</label></div>'+
+      '<div class="row gap2 mt2">'+
+        '<select class="input" id="spotSym" style="flex:1;">'+
+          ASSETS.map(a=>'<option value="'+a.s+'">'+a.t+' · '+a.n+'</option>').join('')+
+        '</select>'+
+        '<input class="input" id="spotUsd" type="number" min="5" step="5" placeholder="USDT" style="width:110px;flex:none;">'+
+      '</div>'+
+      '<button class="btn btn-gold btn-block mt3" id="spotBuyBtn">Купить</button>'+
+    '</div>';
+
+  const syms=Object.keys(sp.coins);
+  if(syms.length){
+    html+='<div class="prm mt4"><label>Мои монеты</label></div>';
+    syms.forEach(sym=>{
+      const c=sp.coins[sym], a=ASSETS.find(x=>x.s===sym);
+      const price=priceOf(sym), val=c.qty*price, up=val>=c.cost;
+      const chg=c.cost>0 ? (val/c.cost-1)*100 : 0;
+      html+='<div class="card2" style="margin-bottom:10px;">'+
+        '<div class="row between"><div class="row gap2"><b>'+(a?a.t:sym)+'</b>'+
+        '<span class="micro">'+fmt(c.qty, Math.max(4,(a?a.d:2)))+'</span></div>'+
+        '<span class="mono '+(up?'up':'down')+'" style="font-weight:800;">'+fUsd(val)+'</span></div>'+
+        '<div class="row between small mt2"><span style="color:var(--txt3);">вложено '+fUsd(c.cost)+'</span>'+
+        '<span class="mono '+(up?'up':'down')+'">'+(chg>=0?'+':'')+chg.toFixed(2)+'%</span></div>'+
+        '<div class="row gap2 mt3">'+
+          '<button class="btn btn-ghost btn-sm grow" data-spotsellhalf="'+sym+'">Продать 50%</button>'+
+          '<button class="btn btn-ghost btn-sm grow" data-spotsell="'+sym+'">Продать всё</button>'+
+        '</div></div>';
+    });
+  } else {
+    html+='<div class="empty mt3"><div class="big">🪙</div>Монет пока нет.<br>Купите первую — по настоящей рыночной цене.</div>';
+  }
+
+  if(sp.hist.length){
+    html+='<div class="prm mt4"><label>Последние операции</label></div>'+
+      sp.hist.slice(0,8).map(h=>{
+        const a=ASSETS.find(x=>x.s===h.sym);
+        return '<div class="row between small" style="padding:6px 0;border-bottom:1px solid var(--line);">'+
+          '<span>'+(h.side==='BUY'?'🟢 Купил':'🔴 Продал')+' '+(a?a.t:h.sym)+'</span>'+
+          '<span class="mono" style="color:var(--txt2);">'+fUsd(h.usd)+' · '+new Date(h.ts).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})+'</span></div>';
+      }).join('');
+  }
+
+  body.innerHTML=html;
+  $('spotBuyBtn').addEventListener('click', ()=>{
+    const ok=spotBuy($('spotSym').value, parseFloat($('spotUsd').value));
+    if(ok) renderPortfolio();
+  });
+  body.querySelectorAll('[data-spotsell]').forEach(b=>b.addEventListener('click',()=>{ if(spotSell(b.dataset.spotsell,1)) renderPortfolio(); }));
+  body.querySelectorAll('[data-spotsellhalf]').forEach(b=>b.addEventListener('click',()=>{ if(spotSell(b.dataset.spotsellhalf,0.5)) renderPortfolio(); }));
 }
 
 /* ============ SHEETS ============ */
@@ -4898,13 +5031,13 @@ function authHeaders(extra){ const h=Object.assign({'Content-Type':'application/
   if(S.token) h['Authorization']='Bearer '+S.token; return h; }
 
 /* ============ STATE SYNC (cloud + local) ============ */
-function snapshot(){ return { accounts:S.accounts, activeAccId:S.activeAccId, acc:S.acc, positions:S.positions, history:S.history, tier:S.tier, wallet:S.wallet, chat:S.chat, equityHist:S.equityHist, payoutReq:S.payoutReq, appliedPays:S.appliedPays, bot:S.bot }; }
+function snapshot(){ return { accounts:S.accounts, activeAccId:S.activeAccId, acc:S.acc, positions:S.positions, history:S.history, tier:S.tier, wallet:S.wallet, chat:S.chat, equityHist:S.equityHist, payoutReq:S.payoutReq, appliedPays:S.appliedPays, bot:S.bot, spot:S.spot }; }
 function persistState(){ try{ localStorage.setItem('nx_state', JSON.stringify(snapshot())); }catch(e){} pushState(); }
 function loadState(){ try{ const s=localStorage.getItem('nx_state'); if(s){ const o=JSON.parse(s);
   if(o.acc)S.acc=o.acc; if(o.positions)S.positions=o.positions; if(o.history)S.history=o.history;
   if(o.tier)S.tier=o.tier; if(o.wallet)S.wallet=o.wallet; if(o.chat)S.chat=o.chat; if(o.equityHist)S.equityHist=o.equityHist; if(o.payoutReq)S.payoutReq=o.payoutReq;
   if(o.accounts&&o.accounts.length){ S.accounts=o.accounts; S.activeAccId=o.activeAccId||o.accounts[0].id; }
-  if(o.appliedPays)S.appliedPays=o.appliedPays; if(o.bot)S.bot=o.bot; } }catch(e){} }
+  if(o.appliedPays)S.appliedPays=o.appliedPays; if(o.bot)S.bot=o.bot; if(o.spot)S.spot=o.spot; } }catch(e){} }
 function pingUser(){
   if(!S.user||!S.token) return;
   fetch(API_BASE+'/api/state',{method:'POST',headers:authHeaders(),
@@ -4958,6 +5091,7 @@ async function pullState(){
       S.appliedPays=Array.from(new Set([...(S.appliedPays||[]), ...o.appliedPays]));
     }
     if(o.tier && o.tier!=='free' && S.tier==='free') S.tier=o.tier;
+    if(o.spot && !S.spot) S.spot=o.spot;
     if(!S.accounts||!S.accounts.length){
       if(o.acc)S.acc=o.acc; if(o.positions)S.positions=o.positions; if(o.history)S.history=o.history;
       if(o.wallet)S.wallet=o.wallet; if(o.equityHist)S.equityHist=o.equityHist;
