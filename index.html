@@ -17,49 +17,73 @@
      потому что вебвью не знает о шапке приложения — из-за этого заголовок и
      чипы счетов оказывались под кнопками, и по ним нельзя было попасть. */
   --app-top: env(safe-area-inset-top, 0px);
-  --bg:#04070C; --bg2:#070D15;
-  --card:#0B1220; --card2:#101A2C; --hover:#16233B;
-  --line:#15304A; --line2:#1F4568;
-  --gold:#22E4FF; --gold2:#12C6E6; --gold-deep:#0B8FB4;
-  --green:#2BFF9E; --green2:#12E07F; --green-dim:rgba(43,255,158,0.12);
-  --red:#FF3B57; --red-dim:rgba(255,59,87,0.13);
-  --txt:#EAF7FF; --txt2:#7FA0BC; --txt3:#43607E;
-  --gold-dim:rgba(34,228,255,0.12);
+
+  /* ПАЛИТРА: обсидиан + шампанское золото.
+     Раньше тема была неоново-циановой поверх старой золотой, и rgba-литералы
+     от обеих остались в файле вперемешку — из-за этого, например, у .btn-gold
+     было два box-shadow разного цвета. Теперь все прозрачные цвета берутся
+     из каналов ниже, а не из literal rgba(): сменить акцент = поменять две
+     строки, а не искать сто мест. */
+  --accent-rgb: 227,183,101;      /* шампанское золото */
+  --green-rgb:  47,212,138;
+  --red-rgb:    255,90,106;
+
+  --bg:#07080B; --bg2:#0A0C11;
+  --card:#101216; --card2:#161920; --hover:#1D212A;
+  --line:#22262F; --line2:#313745;
+
+  --gold:rgb(var(--accent-rgb)); --gold2:#CC9F4E; --gold-deep:#9C7530;
+  --gold-dim:rgba(var(--accent-rgb),0.11);
+  --ink:#1A1206;                  /* текст на золотой заливке */
+
+  --green:rgb(var(--green-rgb)); --green2:#17B673; --green-dim:rgba(var(--green-rgb),0.12);
+  --red:rgb(var(--red-rgb)); --red-dim:rgba(var(--red-rgb),0.12);
+
+  --txt:#F3F5F8; --txt2:#98A1B2; --txt3:#5A6373;
+
   --r:18px; --r-s:13px; --r-xs:10px;
   --font:'Manrope',-apple-system,sans-serif;
   --display:'Chakra Petch','Manrope',sans-serif;
   --mono:'JetBrains Mono',monospace;
   --ease:cubic-bezier(.4,0,.2,1); --spring:cubic-bezier(.34,1.56,.64,1);
+
+  /* Единая лестница теней вместо неоновых свечений у каждого компонента. */
+  --sh-1:0 1px 2px rgba(0,0,0,.4);
+  --sh-2:0 4px 16px -6px rgba(0,0,0,.55);
+  --sh-3:0 18px 48px -24px rgba(0,0,0,.85);
+  --edge:inset 0 1px 0 rgba(255,255,255,.045);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html{height:100%;}
 body{min-height:100%;}
 body{
+  /* Сетка-миллиметровка убрана намеренно: она читалась как «кибер-демо».
+     Вместо неё — два едва заметных тёплых пятна и виньетка, дающие глубину
+     без единого светящегося пикселя. */
   background:
-    radial-gradient(1100px 560px at 12% -8%, rgba(34,228,255,0.10), transparent 58%),
-    radial-gradient(900px 620px at 108% 108%, rgba(255,59,87,0.06), transparent 55%),
-    repeating-linear-gradient(0deg, rgba(34,228,255,0.028) 0 1px, transparent 1px 44px),
-    repeating-linear-gradient(90deg, rgba(34,228,255,0.028) 0 1px, transparent 1px 44px),
+    radial-gradient(1200px 620px at 15% -10%, rgba(var(--accent-rgb),0.055), transparent 62%),
+    radial-gradient(900px 700px at 105% 105%, rgba(var(--accent-rgb),0.03), transparent 58%),
     var(--bg);
-  color:var(--txt); font-family:var(--font); font-size:14px; line-height:1.45;
-  -webkit-font-smoothing:antialiased; overflow-x:hidden;
+  background-attachment:fixed;
+  color:var(--txt); font-family:var(--font); font-size:14px; line-height:1.5;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; overflow-x:hidden;
   padding-bottom:calc(120px + env(safe-area-inset-bottom));
   -webkit-overflow-scrolling:touch;
 }
 button{font-family:inherit;border:none;background:none;color:inherit;cursor:pointer;}
 input{font-family:inherit;}
-::selection{background:var(--gold);color:#171206;}
+::selection{background:var(--gold);color:var(--ink);}
 
-/* ambient */
-body::before{content:'';position:fixed;inset:-12%;z-index:-1;pointer-events:none;
-  background:radial-gradient(620px 420px at 20% 15%, rgba(232,197,88,0.05), transparent 60%),
-             radial-gradient(700px 500px at 85% 85%, rgba(34,255,122,0.05), transparent 60%);
-  animation:drift 20s ease-in-out infinite alternate;}
-@keyframes drift{to{transform:translate(2.5%,-2%) scale(1.06);}}
+/* Виньетка: сажает края в темноту, из-за чего карточки читаются как объекты
+   над поверхностью, а не как прямоугольники на плоском фоне. */
+body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(120% 90% at 50% 0%, transparent 45%, rgba(0,0,0,.55) 100%);}
 
 /* ===== TYPO ===== */
-.h1{font-family:var(--display);font-size:25px;font-weight:700;letter-spacing:-0.02em;}
-.h2{font-family:var(--display);font-size:18px;font-weight:700;letter-spacing:-0.01em;}
+.h1{font-family:var(--display);font-size:25px;font-weight:700;letter-spacing:-0.022em;}
+.h2{font-family:var(--display);font-size:18px;font-weight:700;letter-spacing:-0.012em;}
+/* Цифры не должны «дышать» при обновлении котировок — только табличные. */
+.mono,.sv,.bm-big,input{font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1;}
 .h3{font-size:15px;font-weight:700;}
 .small{font-size:12px;color:var(--txt2);}
 .micro{font-size:10.5px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--txt3);}
@@ -87,25 +111,37 @@ body::before{content:'';position:fixed;inset:-12%;z-index:-1;pointer-events:none
 .grow{flex:1;min-width:0;}
 
 /* ===== COMPONENTS ===== */
-.card{background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line);border-radius:var(--r);padding:16px;box-shadow:0 1px 0 rgba(255,255,255,0.02) inset, 0 10px 30px -18px rgba(0,0,0,.7);
+/* Карточка: тонкая верхняя подсветка вместо свечения по контуру — так край
+   ловит «свет сверху» и панель выглядит физическим объектом. */
+.card{position:relative;background:linear-gradient(180deg,var(--card),var(--bg2));
+  border:1px solid var(--line);border-radius:var(--r);padding:16px;
+  box-shadow:var(--edge),var(--sh-2),var(--sh-3);
   transition:transform .2s var(--ease),border-color .2s var(--ease);}
-.card2{background:var(--card2);border:1px solid var(--line);border-radius:var(--r-s);padding:12px;}
+.card::after{content:'';position:absolute;inset:0 0 auto 0;height:1px;border-radius:var(--r) var(--r) 0 0;
+  background:linear-gradient(90deg,transparent,rgba(var(--accent-rgb),.30),transparent);pointer-events:none;}
+.card2{background:var(--card2);border:1px solid var(--line);border-radius:var(--r-s);padding:12px;
+  box-shadow:var(--edge);}
 
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:14px;
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:13px;
   font-weight:800;font-size:14px;padding:14px 20px;position:relative;overflow:hidden;
+  letter-spacing:-0.005em;
   transition:transform .18s var(--spring),box-shadow .25s var(--ease),filter .2s;}
-.btn:active{transform:scale(.96);}
-.btn-gold{background:linear-gradient(135deg,#7DF3FF,var(--gold),var(--gold-deep));color:#03202B;box-shadow:0 8px 26px -10px rgba(34,228,255,.65), 0 1px 0 rgba(255,255,255,.4) inset, 0 0 18px rgba(34,228,255,.25);
-  box-shadow:0 0 0 1px rgba(232,197,88,.4),0 10px 26px rgba(232,197,88,.22);}
-.btn-gold:active{filter:brightness(1.08);}
-.btn-green{background:linear-gradient(135deg,#2BFF84,#0BBF5D);color:#04140A;
-  box-shadow:0 0 0 1px rgba(34,255,122,.4),0 10px 26px rgba(34,255,122,.2);}
-.btn-red{background:linear-gradient(135deg,#FF6371,#D92A3C);color:#1A0507;
-  box-shadow:0 0 0 1px rgba(255,77,94,.35),0 10px 26px rgba(255,77,94,.18);}
-.btn-ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line2);}
+.btn:active{transform:scale(.97);}
+/* Заливка + один аккуратный контур + одна тень. Раньше здесь было ДВА
+   box-shadow разного цвета (остаток миграции темы) — второй молча
+   перекрывал первый. */
+.btn-gold{background:linear-gradient(180deg,#F0CE8C,var(--gold) 55%,var(--gold2));color:var(--ink);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 0 0 1px rgba(var(--accent-rgb),.35),0 8px 22px -10px rgba(var(--accent-rgb),.55);}
+.btn-gold:active{filter:brightness(1.06);}
+.btn-green{background:linear-gradient(180deg,#5FE3AB,var(--green) 55%,var(--green2));color:#04170E;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 0 0 1px rgba(var(--green-rgb),.35),0 8px 22px -10px rgba(var(--green-rgb),.5);}
+.btn-red{background:linear-gradient(180deg,#FF8590,var(--red) 55%,#DE3B49);color:#1C0508;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 0 0 1px rgba(var(--red-rgb),.32),0 8px 22px -10px rgba(var(--red-rgb),.45);}
+.btn-ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line2);box-shadow:var(--edge);}
+.btn-ghost:active{background:var(--hover);}
 .btn-block{width:100%;}
-.btn-sm{padding:9px 14px;font-size:12.5px;border-radius:11px;}
-.btn:disabled{opacity:.4;pointer-events:none;}
+.btn-sm{padding:9px 14px;font-size:12.5px;border-radius:10px;}
+.btn:disabled{opacity:.38;pointer-events:none;}
 
 .badge{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:800;
   padding:4px 10px;border-radius:999px;letter-spacing:0.02em;}
@@ -117,31 +153,38 @@ body::before{content:'';position:fixed;inset:-12%;z-index:-1;pointer-events:none
 .pillbar{display:inline-flex;gap:4px;background:var(--card2);border:1px solid var(--line);border-radius:999px;padding:4px;}
 .pill{font-family:var(--mono);font-size:11.5px;font-weight:700;color:var(--txt2);
   padding:7px 12px;border-radius:999px;position:relative;overflow:hidden;transition:all .2s var(--spring);}
-.pill.active{background:linear-gradient(135deg,var(--gold),var(--gold-deep));color:#171206;}
+.pill.active{background:linear-gradient(135deg,var(--gold),var(--gold-deep));color:var(--ink);}
 .pill:active{transform:scale(.93);}
 
 .chip{font-size:12px;font-weight:600;padding:8px 14px;border-radius:999px;background:var(--card2);
   color:var(--txt2);border:1px solid var(--line);position:relative;overflow:hidden;transition:all .2s;}
-.chip.active{background:var(--gold-dim);color:var(--gold);border-color:rgba(232,197,88,.4);}
+.chip.active{background:var(--gold-dim);color:var(--gold);border-color:rgba(var(--accent-rgb),.4);}
 
 .progress{height:8px;border-radius:99px;background:var(--card2);overflow:hidden;position:relative;}
 .progress .fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--green2),var(--green));
-  box-shadow:0 0 12px rgba(34,255,122,.5);transition:width .8s var(--ease);}
-.progress .fill.gold{background:linear-gradient(90deg,var(--gold-deep),var(--gold));box-shadow:0 0 12px rgba(232,197,88,.45);}
-.progress .fill.red{background:linear-gradient(90deg,#D92A3C,var(--red));box-shadow:0 0 12px rgba(255,77,94,.4);}
+  box-shadow:0 0 12px rgba(var(--green-rgb),.5);transition:width .8s var(--ease);}
+.progress .fill.gold{background:linear-gradient(90deg,var(--gold-deep),var(--gold));box-shadow:0 0 12px rgba(var(--accent-rgb),.45);}
+.progress .fill.red{background:linear-gradient(90deg,#D92A3C,var(--red));box-shadow:0 0 12px rgba(var(--red-rgb),.4);}
 
 .ring{position:relative;flex-shrink:0;}
 .ring svg{transform:rotate(-90deg);display:block;}
 .ring .bgc{fill:none;stroke:var(--line2);}
 .ring .fgc{fill:none;stroke:var(--green);stroke-linecap:round;transition:stroke-dashoffset 1s var(--ease);
-  filter:drop-shadow(0 0 4px rgba(34,255,122,.6));}
+  filter:drop-shadow(0 0 4px rgba(var(--green-rgb),.6));}
 .ring .lbl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
   font-family:var(--mono);font-weight:800;font-size:11px;}
 
 .input{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:12px;
   padding:13px 14px;color:var(--txt);font-size:14px;outline:none;transition:border-color .2s;}
-.input:focus{border-color:var(--gold);}
+.input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.12);}
 .input::placeholder{color:var(--txt3);}
+/* select наследует .input, но нужен свой указатель и стрелка: системная
+   стрелка на тёмном фоне в вебвью Telegram почти не видна. */
+select.input{appearance:none;-webkit-appearance:none;cursor:pointer;padding-right:36px;
+  background-image:linear-gradient(45deg,transparent 50%,var(--txt2) 50%),linear-gradient(135deg,var(--txt2) 50%,transparent 50%);
+  background-position:calc(100% - 19px) 50%,calc(100% - 13px) 50%;
+  background-size:6px 6px,6px 6px;background-repeat:no-repeat;}
+select.input option{background:var(--card2);color:var(--txt);}
 
 .ripple{position:absolute;border-radius:50%;background:rgba(248,240,210,0.3);transform:scale(0);
   animation:rip .6s var(--ease);pointer-events:none;}
@@ -165,19 +208,19 @@ body::before{content:'';position:fixed;inset:-12%;z-index:-1;pointer-events:none
   background:linear-gradient(180deg, rgba(4,7,12,.30) 0%, rgba(4,7,12,.10) 35%, rgba(4,7,12,.78) 68%, #04070C 92%);}
 .sp-fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
 .sp-scan{position:absolute;inset:0;pointer-events:none;mix-blend-mode:overlay;opacity:.35;
-  background:repeating-linear-gradient(0deg, rgba(34,228,255,.10) 0 1px, transparent 1px 3px);
+  background:repeating-linear-gradient(0deg, rgba(var(--accent-rgb),.10) 0 1px, transparent 1px 3px);
   animation:scanMove 7s linear infinite;}
 @keyframes scanMove{from{background-position-y:0;}to{background-position-y:120px;}}
 .sp-vig{position:absolute;inset:0;pointer-events:none;
-  box-shadow:inset 0 0 160px 40px rgba(0,0,0,.85), inset 0 0 60px rgba(34,228,255,.12);}
+  box-shadow:inset 0 0 160px 40px rgba(0,0,0,.85), inset 0 0 60px rgba(var(--accent-rgb),.12);}
 .sp-content{position:relative;z-index:3;width:100%;max-width:400px;padding:0 26px calc(46px + env(safe-area-inset-bottom));text-align:center;
   animation:spRise .9s var(--spring) both;}
 @keyframes spRise{from{opacity:0;transform:translateY(28px);}to{opacity:1;transform:none;}}
 .sp-badge{display:inline-block;font-family:var(--display);font-size:11px;font-weight:700;letter-spacing:.16em;
-  color:var(--gold);border:1px solid rgba(34,228,255,.45);border-radius:99px;padding:5px 14px;margin-bottom:14px;
-  background:rgba(4,7,12,.5);backdrop-filter:blur(8px);box-shadow:0 0 22px rgba(34,228,255,.28);}
+  color:var(--gold);border:1px solid rgba(var(--accent-rgb),.45);border-radius:99px;padding:5px 14px;margin-bottom:14px;
+  background:rgba(4,7,12,.5);backdrop-filter:blur(8px);box-shadow:0 0 22px rgba(var(--accent-rgb),.28);}
 .sp-title{position:relative;font-family:var(--display);font-size:44px;font-weight:700;letter-spacing:.01em;line-height:1;
-  color:#EAF7FF;text-shadow:0 0 18px rgba(34,228,255,.75), 0 0 46px rgba(34,228,255,.4), 0 4px 20px rgba(0,0,0,.9);}
+  color:#EAF7FF;text-shadow:0 0 18px rgba(var(--accent-rgb),.75), 0 0 46px rgba(var(--accent-rgb),.4), 0 4px 20px rgba(0,0,0,.9);}
 .sp-title::before,.sp-title::after{content:attr(data-txt);position:absolute;inset:0;}
 .sp-title::before{color:#FF3B57;animation:glitchA 3.6s steps(2,end) infinite;clip-path:inset(0 0 62% 0);opacity:.55;}
 .sp-title::after{color:#22E4FF;animation:glitchB 3.6s steps(2,end) infinite;clip-path:inset(58% 0 0 0);opacity:.55;}
@@ -187,15 +230,15 @@ body::before{content:'';position:fixed;inset:-12%;z-index:-1;pointer-events:none
 .sp-sub b{color:var(--gold);}
 .sp-cta{margin-top:22px;font-family:var(--display);font-size:16px;letter-spacing:.08em;
   animation:ctaPulse 2.6s ease-in-out infinite;}
-@keyframes ctaPulse{0%,100%{box-shadow:0 8px 26px -10px rgba(34,228,255,.65), 0 0 18px rgba(34,228,255,.25);}
-  50%{box-shadow:0 8px 34px -8px rgba(34,228,255,.9), 0 0 34px rgba(34,228,255,.5);}}
+@keyframes ctaPulse{0%,100%{box-shadow:0 8px 26px -10px rgba(var(--accent-rgb),.65), 0 0 18px rgba(var(--accent-rgb),.25);}
+  50%{box-shadow:0 8px 34px -8px rgba(var(--accent-rgb),.9), 0 0 34px rgba(var(--accent-rgb),.5);}}
 .sp-note{margin-top:12px;font-size:11.5px;color:#7FA0BC;text-shadow:0 2px 8px rgba(0,0,0,.9);}
 
 /* ===== TOPBAR ===== */
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:4px 0 14px;}
 .ava{width:38px;height:38px;border-radius:50%;flex-shrink:0;overflow:hidden;
   background:linear-gradient(135deg,var(--gold),var(--gold-deep));display:flex;align-items:center;justify-content:center;
-  font-weight:900;font-size:13px;color:#171206;box-shadow:0 0 0 2px rgba(232,197,88,.25);}
+  font-weight:900;font-size:13px;color:var(--ink);box-shadow:0 0 0 2px rgba(var(--accent-rgb),.25);}
 .icon-btn{width:38px;height:38px;border-radius:12px;background:var(--card);border:1px solid var(--line);
   display:flex;align-items:center;justify-content:center;color:var(--txt2);position:relative;overflow:hidden;}
 .icon-btn:active{transform:scale(.92);}
@@ -204,11 +247,11 @@ body::before{content:'';position:fixed;inset:-12%;z-index:-1;pointer-events:none
   box-shadow:0 0 6px var(--green);}
 
 /* ===== HERO ACCOUNT CARD ===== */
-.hero-card{border-radius:22px;padding:22px;position:relative;overflow:hidden;box-shadow:0 20px 50px -28px rgba(0,0,0,.9), 0 0 0 1px rgba(34,228,255,.12) inset, 0 0 34px -18px rgba(34,228,255,.5);
-  background:linear-gradient(150deg, rgba(232,197,88,0.13), rgba(34,255,122,0.05) 55%, rgba(16,21,16,0.6)), var(--card);
-  border:1px solid rgba(232,197,88,0.3);}
+.hero-card{border-radius:22px;padding:22px;position:relative;overflow:hidden;box-shadow:0 20px 50px -28px rgba(0,0,0,.9), 0 0 0 1px rgba(var(--accent-rgb),.12) inset, 0 0 34px -18px rgba(var(--accent-rgb),.5);
+  background:linear-gradient(150deg, rgba(var(--accent-rgb),0.13), rgba(var(--green-rgb),0.05) 55%, rgba(16,21,16,0.6)), var(--card);
+  border:1px solid rgba(var(--accent-rgb),0.3);}
 .hero-card::before{content:'';position:absolute;top:-45%;right:-12%;width:260px;height:260px;border-radius:50%;
-  background:radial-gradient(circle, rgba(232,197,88,0.16), transparent 70%);pointer-events:none;}
+  background:radial-gradient(circle, rgba(var(--accent-rgb),0.16), transparent 70%);pointer-events:none;}
 .hero-card::after{content:'';position:absolute;top:0;left:-55%;width:34%;height:100%;
   background:linear-gradient(105deg,transparent,rgba(248,236,196,0.07),transparent);
   animation:sweep 5.8s var(--ease) infinite;pointer-events:none;}
@@ -219,8 +262,8 @@ body::before{content:'';position:fixed;inset:-12%;z-index:-1;pointer-events:none
 .stage-dot{width:30px;height:30px;border-radius:50%;background:var(--card2);border:2px solid var(--line2);
   display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;z-index:1;transition:all .3s;}
 .stage-dot.done{background:linear-gradient(135deg,var(--gold),var(--gold-deep));border-color:transparent;
-  box-shadow:0 0 14px rgba(232,197,88,.5);}
-.stage-dot.now{border-color:var(--green);box-shadow:0 0 12px rgba(34,255,122,.45);}
+  box-shadow:0 0 14px rgba(var(--accent-rgb),.5);}
+.stage-dot.now{border-color:var(--green);box-shadow:0 0 12px rgba(var(--green-rgb),.45);}
 .stage-line{flex:1;height:3px;background:var(--line2);position:relative;overflow:hidden;}
 .stage-line .fl{position:absolute;inset:0;width:0;background:linear-gradient(90deg,var(--gold),var(--green));transition:width 1s var(--ease);}
 
@@ -237,8 +280,8 @@ body::before{content:'';position:fixed;inset:-12%;z-index:-1;pointer-events:none
 /* ===== CHALLENGE TIERS ===== */
 .tier{border-radius:18px;padding:18px;border:1px solid var(--line);background:var(--card);
   position:relative;overflow:hidden;transition:border-color .25s,transform .2s;}
-.tier.best{border-color:rgba(232,197,88,.5);
-  background:linear-gradient(150deg, rgba(232,197,88,0.1), rgba(16,21,16,0.4)), var(--card);}
+.tier.best{border-color:rgba(var(--accent-rgb),.5);
+  background:linear-gradient(150deg, rgba(var(--accent-rgb),0.1), rgba(16,21,16,0.4)), var(--card);}
 .tier .size{font-family:var(--mono);font-weight:900;font-size:26px;}
 .tier-rules{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;}
 .rule{background:var(--card2);border-radius:10px;padding:9px 11px;border:1px solid var(--line);}
@@ -281,7 +324,7 @@ body::before{content:'';position:fixed;inset:-12%;z-index:-1;pointer-events:none
 .tab2.active{color:var(--txt);}
 .tab2.active::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2.5px;border-radius:99px;
   background:linear-gradient(90deg,var(--gold),var(--green));}
-.tab2 .cnt{font-family:var(--mono);font-size:10px;background:var(--gold);color:#171206;border-radius:99px;
+.tab2 .cnt{font-family:var(--mono);font-size:10px;background:var(--gold);color:var(--ink);border-radius:99px;
   padding:1px 6px;margin-left:5px;font-weight:800;vertical-align:2px;}
 
 .empty{padding:36px 20px;text-align:center;color:var(--txt3);}
@@ -326,18 +369,18 @@ body::before{content:'';position:fixed;inset:-12%;z-index:-1;pointer-events:none
 .seg-b{width:34px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;
   color:var(--txt2);background:transparent;border:none;transition:all .18s var(--spring);}
 .seg-b svg{width:18px;height:18px;}
-.seg-b.active{background:linear-gradient(135deg,var(--gold),var(--gold-deep));color:#171206;}
+.seg-b.active{background:linear-gradient(135deg,var(--gold),var(--gold-deep));color:var(--ink);}
 .tbar-ic{width:38px;height:38px;border-radius:12px;background:var(--card2);border:1px solid var(--line);
   display:flex;align-items:center;justify-content:center;color:var(--txt2);transition:all .18s var(--spring);}
 .tbar-ic svg{width:19px;height:19px;}
-.tbar-ic.active{background:var(--gold-dim);color:var(--gold);border-color:rgba(232,197,88,.45);}
-.tbar-ic.gold{color:var(--gold);border-color:rgba(232,197,88,.35);margin-left:auto;}
+.tbar-ic.active{background:var(--gold-dim);color:var(--gold);border-color:rgba(var(--accent-rgb),.45);}
+.tbar-ic.gold{color:var(--gold);border-color:rgba(var(--accent-rgb),.35);margin-left:auto;}
 .tool-cur{font-family:var(--mono);font-size:10px;color:var(--gold);min-width:0;}
 .draw-menu{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;}
 .draw-menu .chip{display:flex;align-items:center;gap:6px;}
 
 .wallet-field label{display:block;font-size:11.5px;color:var(--txt2);margin-bottom:5px;font-weight:600;}
-.note-box{background:rgba(232,197,88,.07);border:1px solid rgba(232,197,88,.22);border-radius:14px;padding:12px 14px;font-size:12px;color:var(--txt2);line-height:1.5;}
+.note-box{background:rgba(var(--accent-rgb),.07);border:1px solid rgba(var(--accent-rgb),.22);border-radius:14px;padding:12px 14px;font-size:12px;color:var(--txt2);line-height:1.5;}
 .sig-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:10px;position:relative;overflow:hidden;}
 .sig-card.locked .sig-inner{filter:blur(5px);opacity:.5;pointer-events:none;}
 .sig-lock{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;z-index:2;}
@@ -346,7 +389,7 @@ body::before{content:'';position:fixed;inset:-12%;z-index:-1;pointer-events:none
 .sig-dir.long{background:var(--green-dim);color:var(--green);}
 .sig-dir.short{background:var(--red-dim);color:var(--red);}
 .tier-card{border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px;position:relative;overflow:hidden;}
-.tier-card.prem{border-color:rgba(232,197,88,.4);background:linear-gradient(160deg,rgba(232,197,88,.08),transparent);}
+.tier-card.prem{border-color:rgba(var(--accent-rgb),.4);background:linear-gradient(160deg,rgba(var(--accent-rgb),.08),transparent);}
 .tier-card.vip{border-color:rgba(46,189,112,.4);background:linear-gradient(160deg,rgba(46,189,112,.09),transparent);}
 .tier-price{font-family:var(--mono);font-weight:800;font-size:22px;}
 .tier-feat{font-size:12.5px;color:var(--txt2);margin-top:4px;display:flex;gap:7px;align-items:flex-start;}
@@ -355,22 +398,22 @@ body::before{content:'';position:fixed;inset:-12%;z-index:-1;pointer-events:none
 .gauge .pin{position:absolute;top:-4px;width:4px;height:18px;border-radius:2px;background:#fff;box-shadow:0 0 8px rgba(255,255,255,.7);transform:translateX(-50%);}
 .chat-log{display:flex;flex-direction:column;gap:10px;max-height:46vh;overflow-y:auto;padding:4px 0;}
 .msg{max-width:86%;padding:10px 13px;border-radius:14px;font-size:13px;line-height:1.5;}
-.msg.u{align-self:flex-end;background:linear-gradient(135deg,var(--gold),var(--gold-deep));color:#171206;font-weight:600;border-bottom-right-radius:4px;}
+.msg.u{align-self:flex-end;background:linear-gradient(135deg,var(--gold),var(--gold-deep));color:var(--ink);font-weight:600;border-bottom-right-radius:4px;}
 .msg.a{align-self:flex-start;background:var(--card2);border:1px solid var(--line);border-bottom-left-radius:4px;}
 .chat-in{display:flex;gap:8px;margin-top:10px;}
 .ai-chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px;}
 
 .mascot-badge{width:140px;height:140px;margin:0 auto;border-radius:50%;background-size:cover;background-position:center top;
-  box-shadow:0 12px 40px rgba(0,0,0,.55), 0 0 0 3px rgba(232,197,88,.35), 0 0 60px rgba(232,197,88,.18);
+  box-shadow:0 12px 40px rgba(0,0,0,.55), 0 0 0 3px rgba(var(--accent-rgb),.35), 0 0 60px rgba(var(--accent-rgb),.18);
   animation:mascotFloat 4s ease-in-out infinite;}
 @keyframes mascotFloat{0%,100%{transform:translateY(0) rotate(-1deg);}50%{transform:translateY(-8px) rotate(1deg);}}
 .mascot-hero{width:100%;max-width:250px;margin:0 auto;display:block;border-radius:20px;
-  box-shadow:0 20px 60px rgba(0,0,0,.5), 0 0 50px rgba(232,197,88,.14);}
+  box-shadow:0 20px 60px rgba(0,0,0,.5), 0 0 50px rgba(var(--accent-rgb),.14);}
 .mascot-img{background-image:url('mascot.png');}
 .flt-badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:11px;font-weight:800;
   padding:3px 9px;border-radius:8px;background:var(--green-dim);color:var(--green);}
 .flt-badge.mid{background:var(--gold-dim);color:var(--gold);}
-.mascot-ava{background-image:url('mascot.png');background-size:cover;background-position:center top;box-shadow:0 0 0 2px rgba(34,228,255,.5), 0 0 16px rgba(34,228,255,.35);}
+.mascot-ava{background-image:url('mascot.png');background-size:cover;background-position:center top;box-shadow:0 0 0 2px rgba(var(--accent-rgb),.5), 0 0 16px rgba(var(--accent-rgb),.35);}
 .hero-bull::before{content:'';position:absolute;right:-6%;top:-10%;width:62%;height:130%;
   background-image:url('mascot.png');background-size:cover;background-position:center 22%;
   -webkit-mask-image:linear-gradient(90deg, transparent 0%, rgba(0,0,0,.55) 34%, #000 78%);
@@ -385,7 +428,7 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
 .seg-lg-b{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:11px 6px;border-radius:12px;color:var(--txt2);transition:all .2s var(--spring);border:1px solid transparent;}
 .seg-lg-b b{font-family:var(--display);font-size:15px;}
 .seg-lg-b span{font-size:11px;}
-.seg-lg-b.active{background:linear-gradient(180deg,var(--gold-dim),transparent);color:var(--gold);border-color:rgba(34,228,255,.45);text-shadow:0 0 12px rgba(34,228,255,.6);}
+.seg-lg-b.active{background:linear-gradient(180deg,var(--gold-dim),transparent);color:var(--gold);border-color:rgba(var(--accent-rgb),.45);text-shadow:0 0 12px rgba(var(--accent-rgb),.6);}
 .rules-tbl{width:100%;border-collapse:collapse;font-size:12.5px;}
 .rules-tbl th{color:var(--txt2);font-weight:600;text-align:center;padding:7px 4px;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;}
 .rules-tbl td{text-align:center;padding:9px 4px;background:var(--card2);}
@@ -395,7 +438,7 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
 .ch-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .ch-card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 12px;text-align:center;cursor:pointer;transition:all .18s var(--spring);overflow:hidden;}
 .ch-card:active{transform:scale(.97);}
-.ch-card.sel{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold), 0 0 24px rgba(34,228,255,.35);background:linear-gradient(160deg,var(--gold-dim),transparent);}
+.ch-card.sel{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold), 0 0 24px rgba(var(--accent-rgb),.35);background:linear-gradient(160deg,var(--gold-dim),transparent);}
 .ch-card .cn{font-size:11px;color:var(--txt2);}
 .ch-card .cs{font-family:var(--display);font-weight:700;font-size:22px;margin-top:3px;}
 .ch-card .cp{color:var(--gold);font-weight:800;font-family:var(--mono);margin-top:2px;}
@@ -425,13 +468,13 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
 .tool-rail::-webkit-scrollbar{display:none;}
 .rail-b{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;
   color:var(--txt2);font-size:15px;background:transparent;border:1px solid transparent;transition:all .15s;flex-shrink:0;}
-.rail-b.active{background:var(--gold-dim);color:var(--gold);border-color:rgba(34,228,255,.4);box-shadow:0 0 12px rgba(34,228,255,.25);}
+.rail-b.active{background:var(--gold-dim);color:var(--gold);border-color:rgba(var(--accent-rgb),.4);box-shadow:0 0 12px rgba(var(--accent-rgb),.25);}
 .rail-sep{height:1px;background:var(--line);margin:3px 2px;flex-shrink:0;}
 .term-chart-wrap{flex:1;min-width:0;}
 .tf-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;}
 .tf-g{padding:10px 4px;border-radius:11px;background:var(--card2);border:1px solid var(--line);
   font-family:var(--mono);font-size:13px;font-weight:700;color:var(--txt2);text-align:center;}
-.tf-g.active{background:linear-gradient(135deg,var(--gold),var(--gold-deep));color:#03202B;border-color:transparent;}
+.tf-g.active{background:linear-gradient(135deg,var(--gold),var(--gold-deep));color:var(--ink);border-color:transparent;}
 .ind-row{display:flex;align-items:center;gap:8px;padding:9px 11px;background:var(--card2);border:1px solid var(--line);
   border-radius:12px;margin-bottom:7px;}
 .ind-row .nm{flex:1;font-size:13px;font-weight:600;}
@@ -448,11 +491,11 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
 .acad-les{display:flex;align-items:center;gap:9px;padding:10px 11px;border-radius:11px;background:var(--card2);
   border:1px solid var(--line);margin-top:7px;}
 .acad-les .lt{flex:1;font-size:13.5px;font-weight:600;}
-.acad-les.done{border-color:rgba(43,255,158,.35);}
+.acad-les.done{border-color:rgba(var(--green-rgb),.35);}
 .acad-les.lock{opacity:.55;}
 .les-num{width:24px;height:24px;border-radius:50%;background:var(--card);border:1px solid var(--line2);
   display:flex;align-items:center;justify-content:center;font-size:11px;font-family:var(--mono);color:var(--txt2);flex-shrink:0;}
-.acad-les.done .les-num{background:var(--green);color:#03202B;border-color:transparent;}
+.acad-les.done .les-num{background:var(--green);color:var(--ink);border-color:transparent;}
 .les-body{font-size:14px;line-height:1.72;color:#D6E6F2;}
 .les-body b{color:var(--gold);}
 .key-box{background:var(--card2);border-left:3px solid var(--gold);border-radius:0 12px 12px 0;padding:12px 14px;margin-top:16px;}
@@ -479,7 +522,7 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
 .tpos-act{display:flex;gap:6px;margin-top:9px;}
 .tpos-act button{flex:1;padding:8px 0;border-radius:9px;font-size:11.5px;font-weight:700;
   background:var(--card2);border:1px solid var(--line);color:var(--txt2);}
-.tpos-act button.cls{border-color:rgba(255,59,87,.4);color:var(--red);}
+.tpos-act button.cls{border-color:rgba(var(--red-rgb),.4);color:var(--red);}
 
 .st-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px;color:var(--txt2);}
 .st-row:last-child{border-bottom:none;}
@@ -491,7 +534,7 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
 .screen{animation:scrFade .32s var(--ease) both;}
 @keyframes scrFade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
 .tool-card{transition:transform .18s var(--spring), border-color .2s;}
-.tool-card:active{transform:scale(.97);border-color:rgba(34,228,255,.35);}
+.tool-card:active{transform:scale(.97);border-color:rgba(var(--accent-rgb),.35);}
 .stat-card{transition:transform .18s var(--spring);}
 .stat-card:active{transform:scale(.98);}
 .btn{position:relative;overflow:hidden;}
@@ -509,9 +552,9 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
 .progress .fill{transition:width .5s var(--ease);}
 .equity{transition:color .3s;}
 ::-webkit-scrollbar{width:0;height:0;}
-.toast{box-shadow:0 12px 40px -12px rgba(0,0,0,.8), 0 0 24px -8px rgba(34,228,255,.35);}
+.toast{box-shadow:0 12px 40px -12px rgba(0,0,0,.8), 0 0 24px -8px rgba(var(--accent-rgb),.35);}
 .acad-les{transition:transform .16s var(--spring), border-color .2s;}
-.acad-les:active{transform:scale(.985);border-color:rgba(34,228,255,.35);}
+.acad-les:active{transform:scale(.985);border-color:rgba(var(--accent-rgb),.35);}
 .rail-b{transition:all .16s var(--spring);}
 .rail-b:active{transform:scale(.9);}
 .tpos{transition:transform .16s var(--spring);}
@@ -519,16 +562,16 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
 
 .term-chart-wrap{position:relative;}
 .go-live{position:absolute;right:64px;bottom:10px;z-index:5;width:34px;height:34px;border-radius:50%;
-  background:rgba(11,18,32,.9);border:1px solid rgba(34,228,255,.45);color:var(--gold);
+  background:rgba(11,18,32,.9);border:1px solid rgba(var(--accent-rgb),.45);color:var(--gold);
   font-family:var(--mono);font-size:13px;font-weight:800;backdrop-filter:blur(8px);
-  box-shadow:0 4px 16px rgba(0,0,0,.5), 0 0 14px rgba(34,228,255,.25);animation:glPop .25s var(--spring);}
+  box-shadow:0 4px 16px rgba(0,0,0,.5), 0 0 14px rgba(var(--accent-rgb),.25);animation:glPop .25s var(--spring);}
 @keyframes glPop{from{transform:scale(.6);opacity:0;}to{transform:none;opacity:1;}}
 
 .tw-cats{display:flex;gap:7px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;}
 .tw-cats::-webkit-scrollbar{display:none;}
 .tw-cat{flex-shrink:0;padding:8px 14px;border-radius:11px;background:var(--card2);border:1px solid var(--line);
   font-size:13px;font-weight:600;color:var(--txt2);white-space:nowrap;}
-.tw-cat.active{background:var(--gold-dim);color:var(--gold);border-color:rgba(34,228,255,.45);}
+.tw-cat.active{background:var(--gold-dim);color:var(--gold);border-color:rgba(var(--accent-rgb),.45);}
 .tw-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-height:50vh;overflow-y:auto;}
 .tw-tool{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:14px 6px;
   border-radius:13px;background:var(--card2);border:1px solid var(--line);transition:all .16s var(--spring);}
@@ -542,11 +585,11 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
 .coach{position:fixed;top:calc(10px + var(--app-top));left:12px;right:12px;z-index:95;
   display:flex;gap:11px;align-items:flex-start;padding:13px 14px;border-radius:16px;
   background:rgba(11,18,32,.96);backdrop-filter:blur(20px);border:1px solid var(--line2);
-  box-shadow:0 16px 44px -14px rgba(0,0,0,.9), 0 0 26px -12px rgba(34,228,255,.5);
+  box-shadow:0 16px 44px -14px rgba(0,0,0,.9), 0 0 26px -12px rgba(var(--accent-rgb),.5);
   transform:translateY(-160%);opacity:0;transition:transform .42s var(--spring), opacity .3s;}
 .coach.show{transform:translateY(0);opacity:1;}
-.coach.warn{border-color:rgba(255,59,87,.5);box-shadow:0 16px 44px -14px rgba(0,0,0,.9), 0 0 26px -12px rgba(255,59,87,.55);}
-.coach.good{border-color:rgba(43,255,158,.5);box-shadow:0 16px 44px -14px rgba(0,0,0,.9), 0 0 26px -12px rgba(43,255,158,.5);}
+.coach.warn{border-color:rgba(var(--red-rgb),.5);box-shadow:0 16px 44px -14px rgba(0,0,0,.9), 0 0 26px -12px rgba(var(--red-rgb),.55);}
+.coach.good{border-color:rgba(var(--green-rgb),.5);box-shadow:0 16px 44px -14px rgba(0,0,0,.9), 0 0 26px -12px rgba(var(--green-rgb),.5);}
 .c-ic{font-size:19px;line-height:1.2;flex-shrink:0;}
 .c-body{flex:1;min-width:0;}
 .c-t{font-family:var(--display);font-size:14px;font-weight:700;color:var(--txt);}
@@ -556,22 +599,22 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
 
 .pat-card{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:12px;margin-bottom:8px;
   transition:transform .16s var(--spring), border-color .2s;}
-.pat-card:active{transform:scale(.98);border-color:rgba(34,228,255,.4);}
+.pat-card:active{transform:scale(.98);border-color:rgba(var(--accent-rgb),.4);}
 .chk{font-size:12.5px;line-height:1.5;padding:6px 10px;border-radius:9px;margin-bottom:5px;}
-.chk.ok{background:rgba(43,255,158,.08);color:#9FE3C0;}
-.chk.no{background:rgba(255,59,87,.07);color:#E39FAC;}
+.chk.ok{background:rgba(var(--green-rgb),.08);color:#9FE3C0;}
+.chk.no{background:rgba(var(--red-rgb),.07);color:#E39FAC;}
 
 .promo-ok{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:11px;
-  background:rgba(43,255,158,.1);border:1px solid rgba(43,255,158,.35);font-size:12.5px;color:var(--green);}
+  background:rgba(var(--green-rgb),.1);border:1px solid rgba(var(--green-rgb),.35);font-size:12.5px;color:var(--green);}
 .promo-ok span{flex:1;line-height:1.4;}
-.promo-ok button{width:22px;height:22px;border-radius:50%;background:rgba(43,255,158,.15);color:var(--green);font-size:11px;flex-shrink:0;}
+.promo-ok button{width:22px;height:22px;border-radius:50%;background:rgba(var(--green-rgb),.15);color:var(--green);font-size:11px;flex-shrink:0;}
 
 .acc-strip{display:flex;gap:8px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:none;}
 .acc-strip::-webkit-scrollbar{display:none;}
 .acc-chip{flex-shrink:0;min-width:112px;display:flex;flex-direction:column;gap:3px;padding:11px 13px;
   border-radius:14px;background:var(--card2);border:1px solid var(--line);text-align:left;transition:all .18s var(--spring);}
 .acc-chip.on{border-color:var(--gold);background:linear-gradient(160deg,var(--gold-dim),transparent);
-  box-shadow:0 0 18px -6px rgba(34,228,255,.4);}
+  box-shadow:0 0 18px -6px rgba(var(--accent-rgb),.4);}
 .acc-chip.dead{opacity:.5;}
 .acc-chip.add{align-items:center;justify-content:center;min-width:88px;color:var(--gold);border-style:dashed;}
 .acc-chip:active{transform:scale(.96);}
@@ -613,17 +656,17 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
   animation:mtUp .7s var(--spring) both;}
 @keyframes mtUp{from{opacity:0;transform:translateY(22px);}to{opacity:1;transform:none;}}
 .mt-gear{width:76px;height:76px;margin:0 auto;color:var(--gold);
-  filter:drop-shadow(0 0 22px rgba(34,228,255,.55));animation:mtSpin 9s linear infinite;}
+  filter:drop-shadow(0 0 22px rgba(var(--accent-rgb),.55));animation:mtSpin 9s linear infinite;}
 .mt-gear svg{width:100%;height:100%;}
 @keyframes mtSpin{to{transform:rotate(360deg);}}
 .mt-badge{display:inline-block;margin-top:20px;font-family:var(--display);font-size:10.5px;font-weight:700;
-  letter-spacing:.18em;color:var(--gold);border:1px solid rgba(34,228,255,.4);border-radius:99px;
-  padding:5px 14px;background:rgba(4,7,12,.6);box-shadow:0 0 20px rgba(34,228,255,.22);}
+  letter-spacing:.18em;color:var(--gold);border:1px solid rgba(var(--accent-rgb),.4);border-radius:99px;
+  padding:5px 14px;background:rgba(4,7,12,.6);box-shadow:0 0 20px rgba(var(--accent-rgb),.22);}
 .mt-title{font-family:var(--display);font-size:30px;font-weight:700;margin-top:14px;color:var(--txt);
-  text-shadow:0 0 24px rgba(34,228,255,.4);}
+  text-shadow:0 0 24px rgba(var(--accent-rgb),.4);}
 .mt-msg{font-size:14px;line-height:1.65;color:var(--txt2);margin-top:12px;}
 .mt-until{margin-top:14px;font-family:var(--mono);font-size:13px;color:var(--gold);
-  background:var(--gold-dim);border:1px solid rgba(34,228,255,.3);border-radius:11px;padding:9px 14px;display:inline-block;}
+  background:var(--gold-dim);border:1px solid rgba(var(--accent-rgb),.3);border-radius:11px;padding:9px 14px;display:inline-block;}
 .mt-card{margin-top:22px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:4px 15px;text-align:left;}
 .mt-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;
   border-bottom:1px solid var(--line);font-size:12.5px;color:var(--txt2);}
@@ -732,6 +775,11 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
       <div class="tool-ic" style="background:var(--gold-dim);color:var(--gold);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg></div>
       <div class="h3">Инвестирование</div>
       <div class="small mt2">Портфель из прибыли сверх депозита</div>
+    </div>
+    <div class="tool-card" data-go="exchange">
+      <div class="tool-ic" style="background:var(--gold-dim);color:var(--gold);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 10h13l-3-3M17 14H4l3 3"/></svg></div>
+      <div class="h3">Своя биржа</div>
+      <div class="small mt2">Торговля реальным балансом по API</div>
     </div>
     <div class="tool-card" data-sheet="tournaments">
       <div class="tool-ic" style="background:var(--green-dim);color:var(--green);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0V4z"/><path d="M7 6H4v2a3 3 0 003 3M17 6h3v2a3 3 0 01-3 3"/></svg></div>
@@ -961,6 +1009,14 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
   <div id="investBody"></div>
 </section>
 
+<section class="screen" id="screen-exchange">
+  <div class="row between" style="padding:4px 0 14px;">
+    <span class="h1">Своя биржа</span>
+    <button class="icon-btn" data-go="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg></button>
+  </div>
+  <div id="exBody"></div>
+</section>
+
 
 <!-- ================= CHALLENGES ================= -->
 <section class="screen" id="screen-challenges">
@@ -1043,6 +1099,15 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
 <script>
 (function(){
 "use strict";
+
+/* ============ ПАЛИТРА ДЛЯ CANVAS ============
+   Canvas и виджет TradingView не понимают CSS-переменных: addColorStop и
+   fillStyle требуют литеральный цвет. Поэтому каналы палитры продублированы
+   здесь, и это единственное место в JS, где цвета заданы числами.
+   Значения обязаны совпадать с --accent-rgb / --green-rgb / --red-rgb в :root —
+   за этим следит тест «палитра CSS и JS не разъехалась». */
+const PAL = { acc:'227,183,101', grn:'47,212,138', red:'255,90,106', txt:'243,245,248' };
+const rgba = (ch, a) => 'rgba(' + ch + ',' + a + ')';
 
 /* ============ TELEGRAM ============ */
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
@@ -1500,7 +1565,7 @@ function startMaintFx(){
   const loop=()=>{
     t+=0.016; x.clearRect(0,0,W,H);
     // сетка
-    x.strokeStyle='rgba(34,228,255,0.035)'; x.lineWidth=1;
+    x.strokeStyle=rgba(PAL.acc,0.035); x.lineWidth=1;
     const g=44*dpr;
     for(let i=0;i<W;i+=g){ x.beginPath(); x.moveTo(i,0); x.lineTo(i,H); x.stroke(); }
     for(let i=0;i<H;i+=g){ x.beginPath(); x.moveTo(0,i); x.lineTo(W,i); x.stroke(); }
@@ -2025,12 +2090,12 @@ function drawEquityChart(){
   const min=Math.min(...pts), max=Math.max(...pts), range=(max-min)||1;
   const yAt=p=>h-((p-min)/range)*h*0.82-h*0.09;
   const grad=x.createLinearGradient(0,0,0,h);
-  grad.addColorStop(0,'rgba(34,255,122,0.3)'); grad.addColorStop(1,'rgba(34,255,122,0)');
+  grad.addColorStop(0,rgba(PAL.grn,0.3)); grad.addColorStop(1,rgba(PAL.grn,0));
   x.beginPath(); pts.forEach((p,i)=>{ const px=i/(pts.length-1)*w, py=yAt(p); i?x.lineTo(px,py):x.moveTo(px,py); });
   x.lineTo(w,h); x.lineTo(0,h); x.closePath(); x.fillStyle=grad; x.fill();
   x.beginPath(); pts.forEach((p,i)=>{ const px=i/(pts.length-1)*w, py=yAt(p); i?x.lineTo(px,py):x.moveTo(px,py); });
   x.strokeStyle='#22FF7A'; x.lineWidth=2; x.lineJoin='round';
-  x.shadowColor='rgba(34,255,122,.6)'; x.shadowBlur=8; x.stroke(); x.shadowBlur=0;
+  x.shadowColor=rgba(PAL.grn,.6); x.shadowBlur=8; x.stroke(); x.shadowBlur=0;
 }
 
 /* ============ RENDER: MARKET ============ */
@@ -2047,7 +2112,7 @@ function sparkline(cv, sym){
   const up=cs[cs.length-1]>=cs[0];
   x.beginPath(); cs.forEach((v,i)=>{ const px=i/(cs.length-1)*w, py=h-((v-min)/r)*h*0.84-h*0.08; i?x.lineTo(px,py):x.moveTo(px,py); });
   x.strokeStyle=up?'#22FF7A':'#FF4D5E'; x.lineWidth=1.7; x.lineCap='round'; x.lineJoin='round';
-  x.shadowColor=up?'rgba(34,255,122,.5)':'rgba(255,77,94,.4)'; x.shadowBlur=5; x.stroke();
+  x.shadowColor=up?rgba(PAL.grn,.5):rgba(PAL.red,.4); x.shadowBlur=5; x.stroke();
 }
 function renderMarket(){
   $('marketLive').textContent=S.live?('LIVE \u00b7 '+S.src):'DEMO';
@@ -2270,7 +2335,7 @@ function kstArr(v){ const r=(p)=>rocArr(v,p).map(x=>x==null?0:x);
   return {k:kk, s:smaArr(kk.map(x=>x==null?0:x),9)}; }
 
 /* ================= INDICATOR REGISTRY (47) ================= */
-const IC={cy:'#22E4FF', gd:'#EAC97A', gr:'#2BFF9E', rd:'#FF3B57', pu:'#B98CFF', or:'#FFA657', wh:'rgba(234,247,255,.75)', bl:'#5EB0FF'};
+const IC={cy:'#E3B765', gd:'#EAC97A', gr:'#2FD48A', rd:'#FF5A6A', pu:'#B98CFF', or:'#FFA657', wh:rgba(PAL.txt,.75), bl:'#5EB0FF'};
 const INDS=[
  ['SMA','ov',(k,c,P)=>({lines:[[smaArr(c,P.p),IC.bl,1.2]]}),[['p','Период',20]]],
  ['EMA','ov',(k,c,P)=>({lines:[[emaArr(c,P.p),IC.cy,1.4]]}),[['p','Период',21]]],
@@ -2279,14 +2344,14 @@ const INDS=[
  ['DEMA','ov',(k,c,P)=>({lines:[[demaArr(c,P.p),IC.gd,1.2]]}),[['p','Период',21]]],
  ['TEMA','ov',(k,c,P)=>({lines:[[temaArr(c,P.p),IC.pu,1.2]]}),[['p','Период',21]]],
  ['ALMA','ov',(k,c,P)=>({lines:[[almaArr(c,P.p),IC.gr,1.2]]}),[['p','Период',21]]],
- ['Bollinger','ov',(k,c,P)=>{const b=bbArr(c,P.p,P.d);return {lines:[[b.up,IC.wh,1],[b.lo,IC.wh,1],[b.mid,IC.wh,1,[3,3]]],fills:[[b.up,b.lo,'rgba(34,228,255,.05)']]};},[['p','Период',20],['d','Отклонение',2]]],
+ ['Bollinger','ov',(k,c,P)=>{const b=bbArr(c,P.p,P.d);return {lines:[[b.up,IC.wh,1],[b.lo,IC.wh,1],[b.mid,IC.wh,1,[3,3]]],fills:[[b.up,b.lo,rgba(PAL.acc,.05)]]};},[['p','Период',20],['d','Отклонение',2]]],
  ['Keltner','ov',(k,c,P)=>{const b=keltArr(k,c);return {lines:[[b.up,IC.or,1],[b.lo,IC.or,1],[b.mid,IC.or,1,[3,3]]]};},[]],
  ['Donchian','ov',(k,c,P)=>{const b=donchArr(k,P.p);return {lines:[[b.up,IC.bl,1],[b.lo,IC.bl,1],[b.mid,IC.bl,1,[3,3]]]};},[['p','Период',20]]],
  ['Envelope','ov',(k,c,P)=>{const b=envArr(c,P.p,P.pc/100);return {lines:[[b.up,IC.pu,1],[b.lo,IC.pu,1]]};},[['p','Период',20],['pc','Отступ %',2]]],
  ['VWAP','ov',(k,c,P)=>({lines:[[vwapArr(k),IC.gd,1.5,[5,4]]]}),[]],
  ['Parabolic SAR','ov',(k,c,P)=>({dots:[[psarArr(k),IC.cy]]}),[]],
  ['Supertrend','ov',(k,c,P)=>({lines:[[superArr(k,c).line,IC.gr,1.6]]}),[]],
- ['Ichimoku','ov',(k,c,P)=>{const x=ichiArr(k);return {lines:[[x.ten,IC.cy,1.1],[x.kij,IC.rd,1.1]],fills:[[x.spA,x.spB,'rgba(43,255,158,.07)']]};},[]],
+ ['Ichimoku','ov',(k,c,P)=>{const x=ichiArr(k);return {lines:[[x.ten,IC.cy,1.1],[x.kij,IC.rd,1.1]],fills:[[x.spA,x.spB,rgba(PAL.grn,.07)]]};},[]],
  ['Pivot Points','ov',(k,c,P)=>({hl:pivotsCalc(k).map(pp=>[pp[1], pp[0]==='P'?IC.gd:(pp[0][0]==='R'?IC.rd:IC.gr), pp[0]])}),[]],
  ['RSI','os',(k,c,P)=>({lines:[[rsiArr(c,P.p),IC.cy]],range:[0,100],levels:[P.lo,P.hi],label:'RSI '+P.p}),[['p','Период',14],['lo','Нижний',30],['hi','Верхний',70]]],
  ['Stochastic','os',(k,c,P)=>{const s=stochArr(k,P.p,P.d);return {lines:[[s.k,IC.gd],[s.d,IC.cy]],range:[0,100],levels:[20,80],label:'Stoch '+P.p+'/'+P.d};},[['p','%K период',14],['d','%D сглаж.',3]]],
@@ -2445,9 +2510,25 @@ async function mountTv(){
       style:'1',
       locale:'ru',
       /* Цвета под интерфейс приложения, чтобы график не выглядел вставкой. */
-      toolbar_bg:'#0B1220',
-      backgroundColor:'#0B1220',
-      gridColor:'rgba(34,228,255,0.06)',
+      toolbar_bg:'#101216',
+      backgroundColor:'#101216',
+      gridColor:rgba(PAL.acc,0.05),
+      /* Свечи в палитре приложения: иначе TradingView рисует свои
+         зелёный/красный, и график спорит с цветами позиций в интерфейсе. */
+      overrides:{
+        'paneProperties.background':'#101216',
+        'paneProperties.backgroundType':'solid',
+        'paneProperties.vertGridProperties.color':rgba(PAL.acc,0.045),
+        'paneProperties.horzGridProperties.color':rgba(PAL.acc,0.045),
+        'scalesProperties.textColor':'#98A1B2',
+        'scalesProperties.lineColor':'#22262F',
+        'mainSeriesProperties.candleStyle.upColor':'#2FD48A',
+        'mainSeriesProperties.candleStyle.downColor':'#FF5A6A',
+        'mainSeriesProperties.candleStyle.borderUpColor':'#2FD48A',
+        'mainSeriesProperties.candleStyle.borderDownColor':'#FF5A6A',
+        'mainSeriesProperties.candleStyle.wickUpColor':'#2FD48A',
+        'mainSeriesProperties.candleStyle.wickDownColor':'#FF5A6A',
+      },
       hide_side_toolbar:false,     // левая панель рисования — она и нужна
       allow_symbol_change:true,    // можно выбрать другую биржу, если инструмент делистнут
       withdateranges:true,
@@ -2487,7 +2568,12 @@ function toggleChartSrc(){
   }
   applyChartSrc();
 }
-try{ S.chartSrc = localStorage.getItem('nx_chartsrc') || 'native'; }catch(e){ S.chartSrc='native'; }
+/* TradingView — основной график по умолчанию: полный набор индикаторов и
+   инструментов разметки, к которым люди привыкли. Встроенный остаётся под
+   кнопкой: он единственный умеет рисовать линии входа, тейка, стопа и
+   ликвидации поверх свечей (виджет живёт в iframe, туда рисовать нельзя).
+   Явный выбор пользователя, если он его сделал, важнее умолчания. */
+try{ S.chartSrc = localStorage.getItem('nx_chartsrc') || 'tv'; }catch(e){ S.chartSrc='tv'; }
 
 function drawTermChart(){
   const cv=$('termChart'), wrap=$('termChartWrap');
@@ -2533,7 +2619,7 @@ function drawTermChart(){
   const P=pt=>[xOfTime(pt.t), Y(pt.p)];
   S.term.layout={plotL,plotR,priceTop,priceBottom,hi,lo,sw,n,a0,b0,va:V.a,vb:V.b,W,H,mR,scaleX:plotR};
   // сетка
-  x.strokeStyle='rgba(34,228,255,0.06)'; x.fillStyle='rgba(234,247,255,0.35)';
+  x.strokeStyle=rgba(PAL.acc,0.06); x.fillStyle=rgba(PAL.txt,0.35);
   x.font='10px JetBrains Mono'; x.textBaseline='middle';
   for(let g=0; g<=4; g++){ const p=lo+(hi-lo)*g/4, y=Y(p);
     x.beginPath(); x.moveTo(plotL,y); x.lineTo(plotR,y); x.stroke(); x.fillText(fmt(p, decOf(S.term.symbol)), plotR+6, y); }
@@ -2541,18 +2627,18 @@ function drawTermChart(){
   if(S.showOB){ orderBlocks(k).forEach(z=>{
     const zx=xOfTime(z.t); if(zx>plotR) return;
     const y1=Y(z.top), y2=Y(z.bot);
-    x.fillStyle=z.bull?'rgba(43,255,158,.09)':'rgba(255,59,87,.09)';
-    x.strokeStyle=z.bull?'rgba(43,255,158,.5)':'rgba(255,59,87,.5)';
+    x.fillStyle=z.bull?rgba(PAL.grn,.09):rgba(PAL.red,.09);
+    x.strokeStyle=z.bull?rgba(PAL.grn,.5):rgba(PAL.red,.5);
     x.fillRect(Math.max(plotL,zx), Math.min(y1,y2), plotR-Math.max(plotL,zx), Math.abs(y2-y1)||1);
     x.strokeRect(Math.max(plotL,zx), Math.min(y1,y2), plotR-Math.max(plotL,zx), Math.abs(y2-y1)||1);
-    x.fillStyle=z.bull?'rgba(43,255,158,.8)':'rgba(255,59,87,.8)'; x.font='9px JetBrains Mono';
-    x.fillText('OB', Math.max(plotL,zx)+3, Math.min(y1,y2)+8); x.font='10px JetBrains Mono'; x.fillStyle='rgba(234,247,255,0.35)';
+    x.fillStyle=z.bull?rgba(PAL.grn,.8):rgba(PAL.red,.8); x.font='9px JetBrains Mono';
+    x.fillText('OB', Math.max(plotL,zx)+3, Math.min(y1,y2)+8); x.font='10px JetBrains Mono'; x.fillStyle=rgba(PAL.txt,0.35);
   }); }
   // свечи/бары/линия
   const ctype=S.term.type||'candle';
   if(ctype==='line'){
     const grad=x.createLinearGradient(0,priceTop,0,priceBottom);
-    grad.addColorStop(0,'rgba(34,228,255,0.20)'); grad.addColorStop(1,'rgba(34,228,255,0.01)');
+    grad.addColorStop(0,rgba(PAL.acc,0.20)); grad.addColorStop(1,rgba(PAL.acc,0.01));
     if(vn){ x.beginPath(); x.moveTo(X(a0),Y(vis[0].c));
     for(let i=1;i<vn;i++) x.lineTo(X(a0+i),Y(vis[i].c));
     x.strokeStyle='#22E4FF'; x.lineWidth=1.8; x.lineJoin='round'; x.stroke();
@@ -2591,7 +2677,7 @@ function drawTermChart(){
     (o.s.hl||[]).forEach(HL=>{ const y=Y(HL[0]); if(y<priceTop||y>priceBottom) return;
       x.setLineDash([4,4]); x.strokeStyle=HL[1]; x.lineWidth=1;
       x.beginPath(); x.moveTo(plotL,y); x.lineTo(plotR,y); x.stroke(); x.setLineDash([]);
-      x.fillStyle=HL[1]; x.font='9px JetBrains Mono'; x.fillText(HL[2]||'', plotL+3, y-6); x.font='10px JetBrains Mono'; x.fillStyle='rgba(234,247,255,0.35)'; });
+      x.fillStyle=HL[1]; x.font='9px JetBrains Mono'; x.fillText(HL[2]||'', plotL+3, y-6); x.font='10px JetBrains Mono'; x.fillStyle=rgba(PAL.txt,0.35); });
   });
   // позиции
   S.positions.filter(p=>p.symbol===S.term.symbol).forEach(p=>{
@@ -2600,15 +2686,15 @@ function drawTermChart(){
       x.setLineDash([4,4]); x.strokeStyle=color; x.lineWidth=1.2;
       x.beginPath(); x.moveTo(plotL,y); x.lineTo(plotR,y); x.stroke(); x.setLineDash([]);
       x.fillStyle=color; x.font='9px JetBrains Mono'; x.fillText(label, plotL+4, y-5);
-      x.font='10px JetBrains Mono'; x.fillStyle='rgba(234,247,255,0.35)';
+      x.font='10px JetBrains Mono'; x.fillStyle=rgba(PAL.txt,0.35);
     };
-    drawL(p.entry, p.side==='LONG'?'rgba(43,255,158,.7)':'rgba(255,59,87,.7)', (p.side==='LONG'?'LONG':'SHORT')+' x'+p.lev);
-    drawL(p.tp, 'rgba(43,255,158,.85)', 'TP');
-    drawL(p.sl, 'rgba(255,59,87,.85)', 'SL');
+    drawL(p.entry, p.side==='LONG'?rgba(PAL.grn,.7):rgba(PAL.red,.7), (p.side==='LONG'?'LONG':'SHORT')+' x'+p.lev);
+    drawL(p.tp, rgba(PAL.grn,.85), 'TP');
+    drawL(p.sl, rgba(PAL.red,.85), 'SL');
   });
   // ПОСТРОЕНИЯ
   x.save(); x.beginPath(); x.rect(plotL,priceTop,plotR-plotL,priceBottom-priceTop+2); x.clip();
-  const CYA='rgba(34,228,255,.95)', CYD='rgba(34,228,255,.55)';
+  const CYA=rgba(PAL.acc,.95), CYD=rgba(PAL.acc,.55);
   function pts(d){ if(d.pts) return d.pts;
     if(d.type==='h') return [{t:k[Math.max(0,V.a)].t,p:d.p}];
     if(d.type==='v') return [{t:d.t,p:(hi+lo)/2}];
@@ -2732,7 +2818,7 @@ function drawTermChart(){
         for(let i=lo2;i<=hi2 && i<k.length;i++){ const e=k[i].c-(sl*i+ic); dev+=e*e; }
         const sd=Math.sqrt(dev/n2);
         const yA=sl*lo2+ic, yB=sl*hi2+ic;
-        [[0,CYA],[2,'rgba(34,228,255,.5)'],[-2,'rgba(34,228,255,.5)']].forEach(o=>{
+        [[0,CYA],[2,rgba(PAL.acc,.5)],[-2,rgba(PAL.acc,.5)]].forEach(o=>{
           x.strokeStyle=o[1]; x.beginPath();
           x.moveTo(X(lo2),Y(yA+o[0]*sd)); x.lineTo(X(hi2),Y(yB+o[0]*sd)); x.stroke(); });
         x.strokeStyle=ghost?CYD:CYA; } } }
@@ -2835,7 +2921,7 @@ function drawTermChart(){
   oscItems.forEach((it,oi)=>{
     const ind=indByName(it.n); if(!ind) return;
     const top=priceBottom+oscGap+oi*(OH+oscGap), bot=top+OH;
-    x.strokeStyle='rgba(34,228,255,0.10)'; x.strokeRect(plotL,top,plotR-plotL,OH);
+    x.strokeStyle=rgba(PAL.acc,0.10); x.strokeRect(plotL,top,plotR-plotL,OH);
     const spec=ind[2](k, closesAll, it.p);
     let mn=Infinity,mx=-Infinity;
     const consider=arr=>{ for(let g=a0;g<b0;g++){ const v=arr[g]; if(v!=null&&isFinite(v)){ if(v<mn)mn=v; if(v>mx)mx=v; } } };
@@ -2847,22 +2933,22 @@ function drawTermChart(){
     S.term.oscBounds=S.term.oscBounds||[]; S.term.oscBounds[oi]={top,bot};
     const yv=v=>bot-(v-mn)/(mx-mn)*(bot-top);
     x.font='9px JetBrains Mono';
-    (spec.levels||[]).forEach(v=>{ const yy=yv(v); x.setLineDash([3,3]); x.strokeStyle='rgba(234,247,255,0.15)';
+    (spec.levels||[]).forEach(v=>{ const yy=yv(v); x.setLineDash([3,3]); x.strokeStyle=rgba(PAL.txt,0.15);
       x.beginPath(); x.moveTo(plotL,yy); x.lineTo(plotR,yy); x.stroke(); x.setLineDash([]);
-      x.fillStyle='rgba(234,247,255,0.4)'; x.fillText(String(v), plotR+5, yy); });
-    if(spec.zero && mn<0 && mx>0){ const zy=yv(0); x.strokeStyle='rgba(234,247,255,0.2)';
+      x.fillStyle=rgba(PAL.txt,0.4); x.fillText(String(v), plotR+5, yy); });
+    if(spec.zero && mn<0 && mx>0){ const zy=yv(0); x.strokeStyle=rgba(PAL.txt,0.2);
       x.beginPath(); x.moveTo(plotL,zy); x.lineTo(plotR,zy); x.stroke(); }
     if(spec.hist){ const zy=yv(Math.max(mn,Math.min(mx,0)));
       const bw=Math.max(1,(plotR-plotL)/n*0.6);
       for(let g=a0;g<b0;g++){ const hv=spec.hist[g]; if(hv==null||!isFinite(hv)) continue;
-        const py=yv(hv); x.fillStyle=hv>=0?'rgba(43,255,158,.55)':'rgba(255,59,87,.55)';
+        const py=yv(hv); x.fillStyle=hv>=0?rgba(PAL.grn,.55):rgba(PAL.red,.55);
         x.fillRect(X(g)-bw/2, Math.min(py,zy), bw, Math.abs(py-zy)||1); } }
     (spec.lines||[]).forEach(L=>{ x.beginPath(); let st=false;
       for(let g=a0;g<b0;g++){ const v=L[0][g]; if(v==null||!isFinite(v)) continue;
         const px=X(g), py=yv(v); if(!st){ x.moveTo(px,py); st=true; } else x.lineTo(px,py); }
       x.strokeStyle=L[1]; x.lineWidth=1.3; x.stroke(); });
-    x.fillStyle='rgba(34,228,255,.85)'; x.fillText(spec.label||ind[0], plotL+4, top+8);
-    x.fillStyle='rgba(234,247,255,0.35)'; x.font='10px JetBrains Mono';
+    x.fillStyle=rgba(PAL.acc,.85); x.fillText(spec.label||ind[0], plotL+4, top+8);
+    x.fillStyle=rgba(PAL.txt,0.35); x.font='10px JetBrains Mono';
   });
   // ===== ТЕКУЩАЯ ЦЕНА + ТАЙМЕР ДО ЗАКРЫТИЯ СВЕЧИ =====
   (function(){
@@ -2893,7 +2979,7 @@ function drawTermChart(){
       x.fillText(pTxt, plotR+7, y-2);
       x.font='9px JetBrains Mono'; x.globalAlpha=.75;
       x.fillText(timeStr, plotR+7, y+10);
-      x.globalAlpha=1; x.font='10px JetBrains Mono'; x.fillStyle='rgba(234,247,255,0.35)';
+      x.globalAlpha=1; x.font='10px JetBrains Mono'; x.fillStyle=rgba(PAL.txt,0.35);
     }
   })();
 
@@ -2905,7 +2991,7 @@ function drawTermChart(){
   const tt=$('termTT'); const hov=S.term.hover;
   if(hov!==null && hov>=a0 && hov<b0){
     const o=k[hov], px=X(hov);
-    x.setLineDash([3,3]); x.strokeStyle='rgba(234,247,255,.25)'; x.lineWidth=1;
+    x.setLineDash([3,3]); x.strokeStyle=rgba(PAL.txt,.25); x.lineWidth=1;
     x.beginPath(); x.moveTo(px,priceTop); x.lineTo(px,H-mB); x.stroke(); x.setLineDash([]);
     const d=new Date(o.t);
     tt.innerHTML='<div><b>'+d.toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+'</b></div>'+
@@ -2923,10 +3009,10 @@ function drawLoupe(pos){
   x.save();
   x.beginPath(); x.arc(cx,cy,R,0,Math.PI*2); x.clip();
   x.drawImage(cv, (pos.x-R/Z)*dpr, (pos.y-R/Z)*dpr, (2*R/Z)*dpr, (2*R/Z)*dpr, cx-R, cy-R, 2*R, 2*R);
-  x.strokeStyle='rgba(34,228,255,.9)'; x.lineWidth=1;
+  x.strokeStyle=rgba(PAL.acc,.9); x.lineWidth=1;
   x.beginPath(); x.moveTo(cx-R,cy); x.lineTo(cx+R,cy); x.moveTo(cx,cy-R); x.lineTo(cx,cy+R); x.stroke();
   x.restore();
-  x.strokeStyle='rgba(34,228,255,.9)'; x.lineWidth=2; x.shadowColor='rgba(34,228,255,.6)'; x.shadowBlur=10;
+  x.strokeStyle=rgba(PAL.acc,.9); x.lineWidth=2; x.shadowColor=rgba(PAL.acc,.6); x.shadowBlur=10;
   x.beginPath(); x.arc(cx,cy,R,0,Math.PI*2); x.stroke(); x.shadowBlur=0;
 }
 
@@ -3060,6 +3146,186 @@ function spotSell(sym, frac){
   toast('Продано '+fmt(qty, Math.max(4,(a?a.d:2)))+' '+(a?a.t:sym)+' за '+fUsd(net),'💵');
   return true;
 }
+/* ============================================================================
+   СВОЯ БИРЖА — торговля реальным балансом по API-ключу.
+
+   Это единственная часть приложения, где деньги настоящие. Всё остальное —
+   проп-симулятор с виртуальными счетами. Разделение принципиальное, поэтому:
+
+   1. Ключ и секрет уходят на сервер РОВНО ОДИН РАЗ, при подключении, и
+      обратно не возвращаются никогда. Здесь, на клиенте, они не хранятся —
+      ни в localStorage, ни в S. После отправки поля очищаются.
+   2. Все запросы к бирже подписывает сервер (api/exchange.js). Браузер
+      отправляет намерение, а не подпись.
+   3. Ключ с правом ВЫВОДА сервер отказывается сохранять — см. api/exchange.js.
+   4. Автоторговля сюда не подключена. Движок сигналов честно измерен и даёт
+      отрицательное матожидание (research/MIE_BACKTEST.md); отправлять по нему
+      ордера на реальные деньги — гарантированный слив, а не функция.
+   ========================================================================== */
+const EX_STATE = { loading:false, catalog:[], connected:[], sel:null, balances:{}, positions:{}, err:null };
+
+async function exApi(payload, method){
+  const opt = { method: method||'POST', headers: authHeaders() };
+  let url = '/api/exchange';
+  if(opt.method==='GET') url += '?action='+encodeURIComponent(payload.action);
+  else opt.body = JSON.stringify(payload);
+  const r = await fetch(url, opt);
+  let j=null; try{ j=await r.json(); }catch(e){}
+  if(!r.ok) throw new Error((j && (j.detail||j.error)) || ('HTTP '+r.status));
+  return j||{};
+}
+
+async function exLoad(){
+  EX_STATE.loading=true; EX_STATE.err=null; renderExchange();
+  try{
+    const s = await exApi({action:'status'}, 'GET');
+    EX_STATE.catalog = s.exchanges||[];
+    EX_STATE.connected = s.connected||[];
+    if(!EX_STATE.sel && EX_STATE.connected.length) EX_STATE.sel = EX_STATE.connected[0].exchange;
+  }catch(e){ EX_STATE.err = String(e.message||e); }
+  EX_STATE.loading=false; renderExchange();
+}
+
+async function exConnect(){
+  const ex = $('exSelect') ? $('exSelect').value : '';
+  const keyEl=$('exKey'), secEl=$('exSecret'), passEl=$('exPass');
+  const apiKey=(keyEl&&keyEl.value||'').trim(), apiSecret=(secEl&&secEl.value||'').trim();
+  const passphrase=(passEl&&passEl.value||'').trim();
+  if(!ex) return toast('Выберите биржу','⚠️');
+  if(!apiKey||!apiSecret) return toast('Заполните ключ и секрет','⚠️');
+  const btn=$('exConnectBtn'); if(btn){ btn.disabled=true; btn.textContent='Проверяю ключ на бирже…'; }
+  try{
+    const r = await exApi({action:'connect', exchange:ex, apiKey, apiSecret, passphrase});
+    // Немедленно стираем поля: секрет не должен оставаться в DOM.
+    if(keyEl) keyEl.value=''; if(secEl) secEl.value=''; if(passEl) passEl.value='';
+    toast('Биржа подключена','✅'); haptic('ok');
+    if(r.warning) setTimeout(()=>toast(r.warning,'⚠️'), 1200);
+    EX_STATE.sel = ex;
+    await exLoad();
+  }catch(e){
+    // Текст ошибки от сервера содержательный (например, про право вывода) — показываем целиком.
+    alert(String(e.message||e));
+    haptic('err');
+  }finally{ if(btn){ btn.disabled=false; btn.textContent='Подключить'; } }
+}
+
+async function exDisconnect(ex){
+  if(!confirm('Отключить '+ex+'?\n\nКлюч будет удалён с сервера. Сама биржа и деньги на ней не затрагиваются, '+
+              'но ключ лучше отозвать и в личном кабинете биржи.')) return;
+  try{ await exApi({action:'disconnect', exchange:ex}); toast('Биржа отключена','✅'); await exLoad(); }
+  catch(e){ toast(String(e.message||e),'⚠️'); }
+}
+
+async function exFetch(kind, ex){
+  try{
+    const r = await exApi({action:kind, exchange:ex});
+    if(kind==='balances') EX_STATE.balances[ex]=r.assets||[];
+    else EX_STATE.positions[ex]=r.positions||[];
+    renderExchange();
+  }catch(e){ toast(String(e.message||e),'⚠️'); }
+}
+
+function renderExchange(){
+  const body=$('exBody'); if(!body) return;
+  const esc=(s)=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+  if(!S.token){
+    body.innerHTML='<div class="note-box"><b>Нужен вход.</b><br>Подключение биржи привязано к вашему аккаунту, '+
+      'поэтому сначала войдите в приложение.</div>';
+    return;
+  }
+  if(EX_STATE.loading && !EX_STATE.catalog.length){
+    body.innerHTML='<div class="mut small" style="text-align:center;padding:20px;">Загружаю…</div>'; return;
+  }
+
+  let h='';
+
+  /* Предупреждение идёт ПЕРВЫМ и всегда: это единственное место в приложении
+     с настоящими деньгами, и человек должен понимать это до, а не после. */
+  h+='<div class="note-box" style="border-left:3px solid var(--red);">'+
+     '<b>Здесь настоящие деньги.</b> Всё остальное в приложении — проп-симулятор с виртуальными счетами. '+
+     'Этот раздел отправляет ордера на вашу биржу и меняет ваш реальный баланс.<br><br>'+
+     '<b>Создавайте ключ только с правом торговли.</b> Ключ с правом вывода средств мы не примем: '+
+     'если он утечёт, деньги можно увести. Обязательно ограничьте ключ по IP в настройках биржи.<br><br>'+
+     'Секрет уходит на сервер один раз, хранится зашифрованным и обратно не возвращается. '+
+     'Все запросы к бирже подписываются на сервере.</div>';
+
+  /* Подключённые биржи */
+  if(EX_STATE.connected.length){
+    h+='<div class="prm mt4"><label>Подключено</label></div>';
+    EX_STATE.connected.forEach(c=>{
+      const name=(EX_STATE.catalog.find(x=>x.id===c.exchange)||{}).name||c.exchange;
+      const bal=EX_STATE.balances[c.exchange], pos=EX_STATE.positions[c.exchange];
+      h+='<div class="card mt2">'+
+        '<div class="row between"><div><b>'+esc(name)+'</b>'+
+        '<div class="small mt1" style="color:var(--txt3);">ключ '+esc(c.keyMask)+
+        (c.canFutures?' · фьючерсы':'')+
+        (c.ipRestricted===true?' · <span style="color:var(--green);">IP ограничен</span>'
+          : c.ipRestricted===false?' · <span style="color:var(--red);">IP не ограничен</span>' : '')+
+        '</div></div>'+
+        '<button class="btn btn-ghost btn-sm" data-exdis="'+esc(c.exchange)+'" style="flex:none;">Отключить</button></div>'+
+        '<div class="row gap2 mt3">'+
+          '<button class="btn btn-ghost btn-sm grow" data-exbal="'+esc(c.exchange)+'">Баланс</button>'+
+          '<button class="btn btn-ghost btn-sm grow" data-expos="'+esc(c.exchange)+'">Позиции</button>'+
+        '</div>';
+      if(bal){
+        h+= bal.length
+          ? '<div class="mt3">'+bal.map(a=>'<div class="row between" style="padding:4px 0;">'+
+              '<span class="small">'+esc(a.asset)+'</span>'+
+              '<b class="small mono">'+a.total.toFixed(6).replace(/0+$/,'').replace(/\.$/,'')+'</b></div>').join('')+'</div>'
+          : '<div class="small mt3" style="color:var(--txt3);">Баланс пуст.</div>';
+      }
+      if(pos){
+        h+= pos.length
+          ? '<div class="mt3">'+pos.map(p=>'<div class="row between" style="padding:4px 0;">'+
+              '<span class="small">'+esc(p.symbol)+' <span style="color:'+(p.side==='LONG'?'var(--green)':'var(--red)')+';">'+p.side+'</span></span>'+
+              '<b class="small mono" style="color:'+(p.pnl>=0?'var(--green)':'var(--red)')+';">'+(p.pnl>=0?'+':'')+p.pnl.toFixed(2)+'</b></div>').join('')+'</div>'
+          : '<div class="small mt3" style="color:var(--txt3);">Открытых позиций нет.</div>';
+      }
+      h+='</div>';
+    });
+  }
+
+  /* Форма подключения */
+  const cat=EX_STATE.catalog;
+  if(cat.length){
+    const sel=EX_STATE.sel||cat[0].id;
+    const needPass=(cat.find(x=>x.id===sel)||{}).needsPassphrase;
+    h+='<div class="prm mt4"><label>Подключить биржу</label></div><div class="card mt2">'+
+      '<select id="exSelect" class="input" style="width:100%;">'+
+        cat.map(c=>'<option value="'+esc(c.id)+'"'+(c.id===sel?' selected':'')+'>'+esc(c.name)+'</option>').join('')+
+      '</select>'+
+      '<input id="exKey" class="input mt2" style="width:100%;" placeholder="API Key" autocomplete="off" spellcheck="false">'+
+      '<input id="exSecret" class="input mt2" style="width:100%;" type="password" placeholder="API Secret" autocomplete="new-password" spellcheck="false">'+
+      (needPass?'<input id="exPass" class="input mt2" style="width:100%;" type="password" placeholder="Passphrase" autocomplete="new-password" spellcheck="false">':'')+
+      '<button class="btn btn-gold btn-block mt3" id="exConnectBtn">Подключить</button>'+
+      '<div class="small mt3" style="color:var(--txt3);line-height:1.5;">'+
+        'Ключ проверяется на бирже до сохранения. Если у него разрешён вывод средств — подключение будет отклонено.'+
+        ((cat.find(x=>x.id===sel)||{}).helpUrl ? '<br><a href="'+esc(cat.find(x=>x.id===sel).helpUrl)+'" target="_blank" rel="noopener" style="color:var(--gold);">Где создать ключ</a>' : '')+
+      '</div></div>';
+  }
+
+  if(EX_STATE.err){
+    h+='<div class="note-box mt3" style="border-left:3px solid var(--red);"><b>Не удалось загрузить.</b><br>'+esc(EX_STATE.err)+'</div>';
+  }
+
+  h+='<div class="note-box mt4"><b>Автоторговли здесь нет — и это осознанно.</b><br>'+
+     'Движок сигналов приложения проверен на истории: '+MIE_BACKTEST.n+' сделок, винрейт '+MIE_BACKTEST.winRate+'%, '+
+     'средний R '+MIE_BACKTEST.avgR+', итог '+MIE_BACKTEST.ret+'%. На тех же точках входа случайная сторона даёт '+
+     MIE_BACKTEST.randR+'R, то есть движок выбирает направление хуже монетки. Подключать такой движок к реальным '+
+     'деньгам нельзя. Ордера отправляются только вручную, решение принимаете вы.</div>';
+
+  body.innerHTML=h;
+
+  const cb=$('exConnectBtn'); if(cb) cb.addEventListener('click', exConnect);
+  const sl=$('exSelect'); if(sl) sl.addEventListener('change', ()=>{ EX_STATE.sel=sl.value; renderExchange(); });
+  body.querySelectorAll('[data-exdis]').forEach(b=>b.addEventListener('click',()=>exDisconnect(b.dataset.exdis)));
+  body.querySelectorAll('[data-exbal]').forEach(b=>b.addEventListener('click',()=>exFetch('balances', b.dataset.exbal)));
+  body.querySelectorAll('[data-expos]').forEach(b=>b.addEventListener('click',()=>exFetch('positions', b.dataset.expos)));
+
+  if(!EX_STATE.catalog.length && !EX_STATE.loading && !EX_STATE.err) exLoad();
+}
+
 function renderInvest(){
   const body=$('investBody'); if(!body) return;
   bindAcc();
@@ -3179,6 +3445,7 @@ function go(screen){
   if(screen==='signals') renderSignals();
   if(screen==='wallet') renderWallet();
   if(screen==='invest') renderInvest();
+  if(screen==='exchange') renderExchange();
   if(screen==='challenges') renderChallenges();
   if(screen==='academy') renderAcademy();
   if(screen==='admin') renderAdmin();
@@ -3392,17 +3659,17 @@ function drawAim(pos){
   const cv=$('termChart'); if(!cv) return; const L=S.term.layout; if(!L) return;
   const x=cv.getContext('2d');
   x.save();
-  x.strokeStyle='rgba(34,228,255,.85)'; x.lineWidth=1; x.setLineDash([5,4]);
+  x.strokeStyle=rgba(PAL.acc,.85); x.lineWidth=1; x.setLineDash([5,4]);
   x.beginPath(); x.moveTo(L.plotL,pos.y); x.lineTo(L.plotR,pos.y);
   x.moveTo(pos.x,L.priceTop); x.lineTo(pos.x,L.priceBottom); x.stroke(); x.setLineDash([]);
   x.beginPath(); x.arc(pos.x,pos.y,7,0,Math.PI*2);
-  x.strokeStyle='rgba(34,228,255,1)'; x.lineWidth=2; x.shadowColor='rgba(34,228,255,.8)'; x.shadowBlur=10; x.stroke();
-  x.shadowBlur=0; x.fillStyle='rgba(34,228,255,1)';
+  x.strokeStyle=rgba(PAL.acc,1); x.lineWidth=2; x.shadowColor=rgba(PAL.acc,.8); x.shadowBlur=10; x.stroke();
+  x.shadowBlur=0; x.fillStyle=rgba(PAL.acc,1);
   x.beginPath(); x.arc(pos.x,pos.y,2.2,0,Math.PI*2); x.fill();
   // ценник справа
   const pr=priceAtY(pos.y); const lbl=fmt(pr, decOf(S.term.symbol));
   x.font='10px JetBrains Mono'; const w=x.measureText(lbl).width+10;
-  x.fillStyle='rgba(34,228,255,.95)'; x.fillRect(L.plotR+2, pos.y-8, w, 16);
+  x.fillStyle=rgba(PAL.acc,.95); x.fillRect(L.plotR+2, pos.y-8, w, 16);
   x.fillStyle='#04070C'; x.fillText(lbl, L.plotR+7, pos.y+3.5);
   x.restore();
 }
@@ -5562,7 +5829,7 @@ function openSettings(){
     '<div class="micro mt4" style="margin-bottom:6px;">ДАННЫЕ</div>'+
     '<button class="btn btn-ghost btn-block" id="setExport">📤 Выгрузить историю сделок (CSV)</button>'+
     '<button class="btn btn-ghost btn-block mt2" id="setClearDraws">🧹 Очистить все построения на графиках</button>'+
-    '<button class="btn btn-ghost btn-block mt2" id="setReset" style="border-color:rgba(255,59,87,.4);color:var(--red);">♻️ Сбросить демо-счёт</button>'+
+    '<button class="btn btn-ghost btn-block mt2" id="setReset" style="border-color:rgba(var(--red-rgb),.4);color:var(--red);">♻️ Сбросить демо-счёт</button>'+
 
     '<div class="micro mt5" style="text-align:center;color:var(--txt3);line-height:1.6;">Nexus Prop · демо-режим<br>Торговля сопряжена с риском потери средств.<br>Материалы не являются инвестиционной рекомендацией.</div>';
   $('sheetVeil').classList.add('open');
@@ -7109,7 +7376,7 @@ async function reviewPay(id, decision){
     rays.forEach(r=>{
       r.x+= Math.sin(t*r.sp)*0.3;
       const g=ctx.createLinearGradient(r.x-r.w/2,0,r.x+r.w/2,H);
-      g.addColorStop(0,'rgba(34,228,255,0)'); g.addColorStop(.5,'rgba(34,228,255,'+r.a+')'); g.addColorStop(1,'rgba(34,228,255,0)');
+      g.addColorStop(0,rgba(PAL.acc,0)); g.addColorStop(.5,rgba(PAL.acc,r.a)); g.addColorStop(1,rgba(PAL.acc,0));
       ctx.fillStyle=g; ctx.fillRect(r.x-r.w/2,0,r.w,H);
     });
     // частицы
