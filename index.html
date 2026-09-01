@@ -919,8 +919,20 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
     <div class="small mt2">Профит-сплит <b style="color:var(--gold);">до 80%</b> · выплаты в стейблкоинах</div>
     <div id="payoutBox" class="mt4"></div>
   </div>
-  <button class="btn btn-gold btn-block mt4" id="tgWalletBtn">Привязать Telegram Wallet</button>
-  <div class="micro" id="tgWalletState" style="text-align:center;margin-top:8px;"></div>
+  <div class="row between mt6" style="margin-bottom:10px;"><span class="h2">TON-кошелёк</span></div>
+  <div class="card">
+    <div class="small" style="color:var(--txt2);line-height:1.5;">Подключите свой кошелёк (Tonkeeper, Wallet в Telegram и др.) через TON Connect.
+      Ключи остаются у вас — приложение их не видит и не хранит.</div>
+    <div id="tonConnectBox" class="mt3"></div>
+  </div>
+
+  <div id="tonDepositCard" class="card mt4" style="display:none;">
+    <div class="h3">Пополнить (TON)</div>
+    <div class="small mt2" style="color:var(--txt2);">Перевод уходит из вашего кошелька напрямую на адрес платформы — вы подтверждаете его в своём кошельке.</div>
+    <div class="wallet-field mt3"><label>Сумма, TON</label><input class="input mono" id="tonDepAmount" type="number" min="0.1" step="0.1" placeholder="0.0"></div>
+    <button class="btn btn-gold btn-block mt3" id="tonDepBtn">Отправить перевод</button>
+    <div class="micro mt2" id="tonDepState" style="color:var(--txt3);"></div>
+  </div>
 
   <div class="row between mt6" style="margin-bottom:10px;"><span class="h2">Адреса для вывода</span></div>
   <div class="card">
@@ -930,7 +942,7 @@ img.coin-ic{object-fit:cover;background:var(--card2);}
     <div class="wallet-field mt3"><label>ETH · ERC-20</label><input class="input mono" id="addr_eth" placeholder="0x..."></div>
     <button class="btn btn-gold btn-block mt4" id="saveWallet">Сохранить адреса</button>
   </div>
-  <div class="note-box mt4">⚠️ Проверяйте сеть перед выводом. Отправка в неверную сеть приведёт к потере средств. Реальные выплаты подключаются на стороне сервера/провайдера.</div>
+  <div class="note-box mt4">⚠️ Проверяйте сеть перед выводом. Отправка в неверную сеть приведёт к потере средств. Вывод обрабатывается вручную владельцем на указанный адрес — приложение не хранит ключи и не отправляет средства автоматически.</div>
 </section>
 
 
@@ -3099,10 +3111,7 @@ document.addEventListener('click', e=>{
   if(e.target.id==='authTg'){ authTelegram(); return; }
   if(e.target.id==='authGoogle'){ authProvider('google'); return; }
   if(e.target.id==='authEmailBtn'){ const em=($('authEmail')||{}).value||''; if(!em.includes('@')){ toast('Введите email','✉️'); return; } authProvider('email', em); return; }
-  if(e.target.id==='tgWalletBtn'){
-    const u=(tg&&tg.initDataUnsafe&&tg.initDataUnsafe.user)?('@'+(tg.initDataUnsafe.user.username||tg.initDataUnsafe.user.id)):'Telegram';
-    S.wallet.tg=u; saveMeta(); renderWallet(); toast('Telegram Wallet привязан','🔗'); haptic('ok');
-  }
+  if(e.target.id==='tonDepBtn'){ tonDeposit(); return; }
 });
 document.addEventListener('pointerdown', e=>{
   const t=e.target.closest('.btn,.pill,.chip,.tab,.asset-row,.tool-card'); if(!t) return;
@@ -4923,12 +4932,91 @@ function aiAnalyze(sym){
 }
 
 /* ============ WALLET ============ */
+/* ============ TON CONNECT (некастодиальный кошелёк) ============
+   Пользователь подключает СВОЙ кошелёк (Tonkeeper, Wallet в Telegram и др.);
+   приватные ключи остаются у него — приложение их не видит и не хранит.
+   Депозит: прямой перевод из кошелька пользователя на адрес платформы, который
+   владелец задаёт в env TON_DEPOSIT_ADDRESS и который отдаётся через /api/config
+   (получать средства можно, зная только адрес; приватный ключ для приёма не
+   нужен). Вывод: подключённый адрес подставляется в поле вывода, а средства
+   владелец отправляет вручную — автоматической отправки с ключами в приложении
+   нет и не будет. */
+let _tonUI=null, _tonReady=null;
+function tonLoad(){
+  if(_tonReady) return _tonReady;
+  _tonReady=new Promise((res,rej)=>{
+    if(window.TON_CONNECT_UI) return res();
+    const s=document.createElement('script');
+    s.src='https://unpkg.com/@tonconnect/ui@2.0.9/dist/tonconnect-ui.min.js';
+    s.onload=()=>res(); s.onerror=()=>rej(new Error('ton load'));
+    document.head.appendChild(s);
+  });
+  return _tonReady;
+}
+function tonAddr(){ return (_tonUI && _tonUI.account && _tonUI.account.address) || ''; }
+async function tonRenderConnect(){
+  const box=$('tonConnectBox'); if(!box) return;
+  try{ await tonLoad(); }catch(e){
+    box.innerHTML='<div class="micro" style="color:var(--txt3);">Не удалось загрузить TON Connect. Проверьте соединение.</div>';
+    return;
+  }
+  if(!_tonUI && window.TON_CONNECT_UI){
+    try{
+      _tonUI=new TON_CONNECT_UI.TonConnectUI({
+        manifestUrl: location.origin+'/tonconnect-manifest.json',
+        buttonRootId: 'tonConnectBox'
+      });
+      _tonUI.onStatusChange(w=>tonOnStatus(w));
+    }catch(e){ box.innerHTML='<div class="micro" style="color:var(--txt3);">TON Connect недоступен.</div>'; return; }
+  }
+  tonOnStatus(_tonUI ? (_tonUI.wallet||null) : null);
+}
+function tonOnStatus(w){
+  const addr=(w && w.account && w.account.address) || tonAddr();
+  const depCard=$('tonDepositCard');
+  const depConfigured=!!(S.appConfig && S.appConfig.wallet && S.appConfig.wallet.tonDeposit);
+  if(addr){
+    // Автоподстановка адреса вывода — меньше шансов ошибиться при копировании.
+    if(!S.wallet.ton){ S.wallet.ton=addr; const el=$('addr_ton'); if(el) el.value=addr; saveMeta(); }
+    if(depCard) depCard.style.display = depConfigured ? '' : 'none';
+  } else {
+    if(depCard) depCard.style.display='none';
+  }
+}
+async function tonDeposit(){
+  const st=$('tonDepState');
+  const dep=S.appConfig && S.appConfig.wallet && S.appConfig.wallet.tonDeposit;
+  if(!dep){ toast('Приём депозитов ещё не настроен','⚠️'); return; }
+  if(!_tonUI || !tonAddr()){ toast('Сначала подключите кошелёк','⚠️'); return; }
+  const amt=parseFloat(($('tonDepAmount')||{}).value);
+  if(!(amt>0)){ toast('Введите сумму в TON','⚠️'); return; }
+  let nano; try{ nano=BigInt(Math.round(amt*1e9)).toString(); }catch(e){ toast('Некорректная сумма','⚠️'); return; }
+  try{
+    if(st) st.textContent='Подтвердите перевод в кошельке…';
+    await _tonUI.sendTransaction({
+      validUntil: Math.floor(Date.now()/1000)+600,
+      messages:[{ address: dep, amount: nano }]
+    });
+    // Перевод ушёл ИЗ кошелька пользователя. Записываем заявку для владельца:
+    // зачисление — только после проверки поступления в сети, вручную, а не на веру.
+    try{
+      await fetch(API_BASE+'/api/payments',{method:'POST',headers:authHeaders(),
+        body:JSON.stringify({action:'create', name:S.user?S.user.name:'', kind:'deposit',
+          plan:'Депозит TON', amount:amt, network:'TON', address:tonAddr(), meta:{ton:amt}})});
+    }catch(e){}
+    if(st) st.textContent='Перевод отправлен. Зачисление — после подтверждения в сети.';
+    toast('Перевод отправлен','🪙'); haptic('ok');
+  }catch(e){
+    if(st) st.textContent='Перевод отменён.';
+  }
+}
+
 function renderWallet(){
   ['trc20','bep20','ton','eth'].forEach(k=>{ const el=$('addr_'+k); if(el) el.value=(S.wallet[k]||''); });
   const eq=equity(); const startCap=S.acc?S.acc.tier:10000;
   const payout=Math.max(0,(eq-startCap))*0.8;
   $('wPayout').textContent=fUsd(payout>0?payout:0);
-  $('tgWalletState').textContent=S.wallet.tg?('Привязан: '+S.wallet.tg):'';
+  try{ tonRenderConnect(); }catch(e){}
   const box=$('payoutBox'); if(!box) return;
 
   if(!isFunded()){

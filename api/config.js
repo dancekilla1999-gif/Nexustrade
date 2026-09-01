@@ -19,7 +19,14 @@ export default async function handler(req, res) {
     // которая может вернуть ошибку: при недоступной базе считаем, что всё работает,
     // и приложение не блокируется из-за проблем с самим переключателем.
     res.setHeader('Cache-Control', 's-maxage=15, stale-while-revalidate=30');
-    return res.status(200).json(toPublic(await readSettings()));
+    // Публичный TON-адрес приёма депозитов задаётся владельцем через env
+    // (TON_DEPOSIT_ADDRESS) — приватный ключ этого кошелька в приложении
+    // не хранится и не нужен: получать средства можно, зная только адрес.
+    // Пока адрес не задан, клиент честно показывает, что депозиты не настроены,
+    // а не отправляет реальные деньги на выдуманный адрес.
+    const pub = toPublic(await readSettings());
+    pub.wallet = { tonDeposit: String(process.env.TON_DEPOSIT_ADDRESS || '').trim() };
+    return res.status(200).json(pub);
   }
 
   if (req.method === 'POST') {
