@@ -3162,7 +3162,7 @@ function spotSell(sym, frac){
       отрицательное матожидание (research/MIE_BACKTEST.md); отправлять по нему
       ордера на реальные деньги — гарантированный слив, а не функция.
    ========================================================================== */
-const EX_STATE = { loading:false, catalog:[], connected:[], sel:null, balances:{}, positions:{}, err:null };
+const EX_STATE = { loading:false, catalog:[], connected:[], sel:null, balances:{}, positions:{}, err:null, side:{}, trade:null };
 
 async function exApi(payload, method){
   const opt = { method: method||'POST', headers: authHeaders() };
@@ -3225,6 +3225,56 @@ async function exFetch(kind, ex){
   }catch(e){ toast(String(e.message||e),'⚠️'); }
 }
 
+/* Формат символа у бирж разный: одна и та же ошибка «BTCUSDT на OKX» отклонится
+   биржей с невнятным текстом. Подсказка и мягкая проверка — до отправки. */
+const EX_SYMBOL_HINT = {
+  binance:{ ex:'BTCUSDT',        re:/^[A-Z0-9]{5,20}$/ },
+  bybit:  { ex:'BTCUSDT',        re:/^[A-Z0-9]{5,20}$/ },
+  okx:    { ex:'BTC-USDT-SWAP',  re:/^[A-Z0-9]+-[A-Z0-9]+(-SWAP)?$/ },
+};
+
+/* Ордер на реальные деньги. Порядок принципиальный:
+   1) собрать и проверить ввод ЛОКАЛЬНО (кривой символ/объём не должны доезжать до биржи);
+   2) показать человеку ровно то, что уйдёт, и получить явное подтверждение;
+   3) отправить на сервер, который подпишет и отправит на биржу;
+   4) обновить позиции, чтобы результат был виден сразу. */
+async function exOrder(ex){
+  const g=(id)=>{ const el=$(id); return el ? (el.type==='checkbox' ? el.checked : String(el.value||'').trim()) : ''; };
+  const symbol=g('exoSym').toUpperCase(), side=EX_STATE.side[ex]||'BUY', type=g('exoType')||'MARKET';
+  const qty=Number(g('exoQty')), price=Number(g('exoPrice')), reduceOnly=!!g('exoReduce');
+  const hint=EX_SYMBOL_HINT[ex];
+  if(!symbol) return toast('Укажите символ','⚠️');
+  if(hint && !hint.re.test(symbol)) return toast('Формат символа для этой биржи: '+hint.ex,'⚠️');
+  if(!(qty>0)) return toast('Объём должен быть больше нуля','⚠️');
+  if(type==='LIMIT' && !(price>0)) return toast('Для лимитного ордера нужна цена','⚠️');
+
+  const name=(EX_STATE.catalog.find(x=>x.id===ex)||{}).name||ex;
+  const what=(side==='BUY'?'КУПИТЬ':'ПРОДАТЬ')+' '+qty+' '+symbol+' '+(type==='LIMIT'?('лимитом по '+price):'по рынку')+(reduceOnly?' (только закрытие)':'');
+  if(!confirm('РЕАЛЬНЫЙ ОРДЕР на '+name+'\n\n'+what+'\n\nЭто настоящие деньги на вашей бирже. Отменить после отправки рыночный ордер нельзя.\n\nОтправить?')) return;
+
+  const btn=$('exoSend'); if(btn){ btn.disabled=true; btn.textContent='Отправляю…'; }
+  try{
+    const r=await exApi({action:'order', exchange:ex, symbol, side, type, qty, price: type==='LIMIT'?price:undefined, reduceOnly});
+    toast('Ордер принят биржей'+(r.orderId?(' · #'+r.orderId):''),'✅'); haptic('ok');
+    const q=$('exoQty'); if(q) q.value='';
+    await exFetch('positions', ex);
+  }catch(e){ alert('Биржа отклонила ордер:\n\n'+String(e.message||e)); haptic('err'); }
+  finally{ if(btn){ btn.disabled=false; btn.textContent='Отправить ордер'; } }
+}
+
+/* Закрыть позицию = рыночный ордер противоположной стороны на весь объём с
+   флагом reduceOnly, чтобы при рассинхроне объёма не открылась обратная позиция. */
+async function exClosePos(ex, idx){
+  const p=(EX_STATE.positions[ex]||[])[idx]; if(!p) return;
+  const name=(EX_STATE.catalog.find(x=>x.id===ex)||{}).name||ex;
+  if(!confirm('ЗАКРЫТЬ ПОЗИЦИЮ на '+name+'\n\n'+p.symbol+' '+p.side+' · объём '+p.qty+'\nТекущий PnL: '+(p.pnl>=0?'+':'')+p.pnl.toFixed(2)+'\n\nБудет отправлен рыночный ордер на весь объём. Это настоящие деньги.\n\nЗакрыть?')) return;
+  try{
+    await exApi({action:'order', exchange:ex, symbol:p.symbol, side: p.side==='LONG'?'SELL':'BUY', type:'MARKET', qty:p.qty, reduceOnly:true});
+    toast('Позиция закрывается','✅'); haptic('ok');
+    await exFetch('positions', ex);
+  }catch(e){ alert('Биржа отклонила закрытие:\n\n'+String(e.message||e)); haptic('err'); }
+}
+
 function renderExchange(){
   const body=$('exBody'); if(!body) return;
   const esc=(s)=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -3277,10 +3327,35 @@ function renderExchange(){
       }
       if(pos){
         h+= pos.length
-          ? '<div class="mt3">'+pos.map(p=>'<div class="row between" style="padding:4px 0;">'+
-              '<span class="small">'+esc(p.symbol)+' <span style="color:'+(p.side==='LONG'?'var(--green)':'var(--red)')+';">'+p.side+'</span></span>'+
-              '<b class="small mono" style="color:'+(p.pnl>=0?'var(--green)':'var(--red)')+';">'+(p.pnl>=0?'+':'')+p.pnl.toFixed(2)+'</b></div>').join('')+'</div>'
+          ? '<div class="mt3">'+pos.map((p,i)=>'<div class="row between" style="padding:6px 0;border-bottom:1px solid var(--line);">'+
+              '<div><span class="small">'+esc(p.symbol)+' <span style="color:'+(p.side==='LONG'?'var(--green)':'var(--red)')+';">'+p.side+'</span>'+
+              (p.lev?' <span class="micro">x'+p.lev+'</span>':'')+'</span>'+
+              '<div class="micro mt1" style="color:var(--txt3);">объём '+p.qty+' · вход '+p.entry+'</div></div>'+
+              '<div class="row gap2"><b class="small mono" style="color:'+(p.pnl>=0?'var(--green)':'var(--red)')+';">'+(p.pnl>=0?'+':'')+p.pnl.toFixed(2)+'</b>'+
+              '<button class="btn btn-ghost btn-sm" data-exclose="'+esc(c.exchange)+'" data-idx="'+i+'" style="flex:none;padding:6px 10px;">Закрыть</button></div></div>').join('')+'</div>'
           : '<div class="small mt3" style="color:var(--txt3);">Открытых позиций нет.</div>';
+      }
+      /* Кнопка «Торговать» раскрывает форму ордера только для одной биржи за раз. */
+      const open=EX_STATE.trade===c.exchange;
+      h+='<button class="btn '+(open?'btn-ghost':'btn-gold')+' btn-block mt3" data-extrade="'+esc(c.exchange)+'">'+(open?'Скрыть форму ордера':'Торговать')+'</button>';
+      if(open){
+        const side=EX_STATE.side[c.exchange]||'BUY', hint=EX_SYMBOL_HINT[c.exchange]||{ex:'BTCUSDT'};
+        h+='<div class="card2 mt3" id="exOrderBox">'+
+          '<div class="row gap2">'+
+            '<button class="btn '+(side==='BUY'?'btn-green':'btn-ghost')+' btn-sm grow" data-exside="BUY">Купить / LONG</button>'+
+            '<button class="btn '+(side==='SELL'?'btn-red':'btn-ghost')+' btn-sm grow" data-exside="SELL">Продать / SHORT</button>'+
+          '</div>'+
+          '<input id="exoSym" class="input mono mt2" style="width:100%;text-transform:uppercase;" placeholder="Символ, напр. '+esc(hint.ex)+'" autocomplete="off" spellcheck="false" value="'+esc(EX_STATE.lastSym||'')+'">'+
+          '<div class="row gap2 mt2">'+
+            '<select id="exoType" class="input" style="flex:1;"><option value="MARKET">По рынку</option><option value="LIMIT">Лимит</option></select>'+
+            '<input id="exoQty" class="input mono" style="flex:1;" type="number" inputmode="decimal" placeholder="Объём" min="0" step="any">'+
+          '</div>'+
+          '<input id="exoPrice" class="input mono mt2" style="width:100%;display:none;" type="number" inputmode="decimal" placeholder="Цена лимита" min="0" step="any">'+
+          '<label class="row gap2 mt3 small" style="color:var(--txt2);cursor:pointer;"><input id="exoReduce" type="checkbox"> Только закрытие (reduce-only): не откроет обратную позицию</label>'+
+          '<button class="btn '+(side==='BUY'?'btn-green':'btn-red')+' btn-block mt3" id="exoSend">Отправить ордер</button>'+
+          '<div class="micro mt2" style="color:var(--txt3);line-height:1.5;">Объём — в единицах контракта биржи (у Binance/Bybit это монеты, у OKX — контракты). '+
+          'Плечо и режим маржи берутся из настроек вашего аккаунта на бирже. Перед отправкой будет подтверждение.</div>'+
+        '</div>';
       }
       h+='</div>';
     });
@@ -3322,6 +3397,21 @@ function renderExchange(){
   body.querySelectorAll('[data-exdis]').forEach(b=>b.addEventListener('click',()=>exDisconnect(b.dataset.exdis)));
   body.querySelectorAll('[data-exbal]').forEach(b=>b.addEventListener('click',()=>exFetch('balances', b.dataset.exbal)));
   body.querySelectorAll('[data-expos]').forEach(b=>b.addEventListener('click',()=>exFetch('positions', b.dataset.expos)));
+  body.querySelectorAll('[data-exclose]').forEach(b=>b.addEventListener('click',()=>exClosePos(b.dataset.exclose, +b.dataset.idx)));
+  body.querySelectorAll('[data-extrade]').forEach(b=>b.addEventListener('click',()=>{
+    const ex=b.dataset.extrade;
+    EX_STATE.trade = EX_STATE.trade===ex ? null : ex;
+    renderExchange();
+    // Форма открылась впервые — сразу подтянуть позиции, чтобы было что закрывать.
+    if(EX_STATE.trade===ex && !EX_STATE.positions[ex]) exFetch('positions', ex);
+  }));
+  body.querySelectorAll('[data-exside]').forEach(b=>b.addEventListener('click',()=>{
+    const sym=$('exoSym'); if(sym) EX_STATE.lastSym=sym.value;
+    EX_STATE.side[EX_STATE.trade]=b.dataset.exside; renderExchange();
+  }));
+  const ty=$('exoType'); if(ty) ty.addEventListener('change',()=>{ const p=$('exoPrice'); if(p) p.style.display = ty.value==='LIMIT' ? '' : 'none'; });
+  const symIn=$('exoSym'); if(symIn) symIn.addEventListener('input',()=>{ EX_STATE.lastSym=symIn.value; });
+  const send=$('exoSend'); if(send) send.addEventListener('click',()=>exOrder(EX_STATE.trade));
 
   if(!EX_STATE.catalog.length && !EX_STATE.loading && !EX_STATE.err) exLoad();
 }

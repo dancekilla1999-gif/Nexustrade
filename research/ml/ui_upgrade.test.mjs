@@ -32,6 +32,10 @@ page.on('pageerror', e => errors.push(String(e)));
 page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
 
 let statusCalls = 0, connectBody = null;
+const orderBodies = [];
+// confirm()/alert() в тестах принимаем автоматически, но запоминаем текст.
+const dialogs = [];
+page.on('dialog', d => { dialogs.push({ type: d.type(), msg: d.message() }); d.accept(); });
 await page.route('**/api/**', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
 await page.route('**/api/config**', r => r.fulfill({
   status: 200, contentType: 'application/json',
@@ -58,7 +62,8 @@ await page.route('**/api/exchange**', r => {
   try { b = JSON.parse(req.postData() || '{}'); } catch (e) {}
   if (b.action === 'connect') { connectBody = b; return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, exchange: b.exchange, keyMask: 'AAAA…ZZZZ' }) }); }
   if (b.action === 'balances') return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, assets: [{ asset: 'USDT', free: 900, total: 1000.5 }] }) });
-  if (b.action === 'positions') return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, positions: [{ symbol: 'BTCUSDT', side: 'LONG', qty: 0.1, entry: 60000, mark: 61000, pnl: 100 }] }) });
+  if (b.action === 'positions') return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, positions: [{ symbol: 'BTCUSDT', side: 'LONG', qty: 0.1, entry: 60000, mark: 61000, pnl: 100, lev: 5 }] }) });
+  if (b.action === 'order') { orderBodies.push(b); return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, orderId: '424242', status: 'NEW' }) }); }
   return r.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
 });
 await page.route(/(crypto\.com|binance\.com|coingecko\.com|tradingview\.com)/, r => r.abort());
@@ -184,6 +189,55 @@ t('баланс отображается', /1000\.5/.test(await page.evaluate(()
 await page.$eval('[data-expos]', el => el.click());
 await page.waitForTimeout(900);
 t('позиции отображаются', /BTCUSDT/.test(await page.evaluate(() => document.getElementById('exBody').textContent)));
+
+console.log('\n--- торговля: форма ордера ---');
+await page.$eval('[data-extrade]', el => el.click());
+await page.waitForTimeout(900);
+t('кнопка «Торговать» раскрывает форму', await page.evaluate(() => !!document.getElementById('exOrderBox')));
+t('по умолчанию сторона BUY', await page.evaluate(() => document.getElementById('exoSend').classList.contains('btn-green')));
+t('поле цены скрыто для рыночного ордера', await page.evaluate(() => document.getElementById('exoPrice').style.display === 'none'));
+await page.selectOption('#exoType', 'LIMIT');
+t('для лимита поле цены появляется', await page.evaluate(() => document.getElementById('exoPrice').style.display !== 'none'));
+await page.selectOption('#exoType', 'MARKET');
+
+// Без символа — не отправляем.
+const before = orderBodies.length;
+await page.$eval('#exoSend', el => el.click());
+await page.waitForTimeout(400);
+t('пустой символ -> ордер не отправлен', orderBodies.length === before);
+
+// Переключаем на SELL, заполняем, отправляем.
+await page.fill('#exoSym', 'ethusdt');
+await page.$eval('[data-exside="SELL"]', el => el.click());
+await page.waitForTimeout(500);
+t('символ пережил перерисовку при смене стороны', (await page.inputValue('#exoSym')) === 'ethusdt');
+t('кнопка отправки стала красной для SELL', await page.evaluate(() => document.getElementById('exoSend').classList.contains('btn-red')));
+await page.fill('#exoQty', '0.5');
+dialogs.length = 0;
+await page.$eval('#exoSend', el => el.click());
+await page.waitForTimeout(1200);
+t('перед отправкой было подтверждение с текстом про реальные деньги',
+  dialogs.some(d => d.type === 'confirm' && /настоящие деньги/i.test(d.msg) && /ПРОДАТЬ 0\.5 ETHUSDT/.test(d.msg)), JSON.stringify(dialogs));
+const ord = orderBodies[orderBodies.length - 1];
+t('ордер ушёл на сервер с правильным телом',
+  ord && ord.action === 'order' && ord.exchange === 'binance' && ord.symbol === 'ETHUSDT' && ord.side === 'SELL' && ord.type === 'MARKET' && ord.qty === 0.5 && ord.reduceOnly === false && ord.auto === undefined,
+  JSON.stringify(ord));
+t('символ приведён к верхнему регистру', ord && ord.symbol === 'ETHUSDT');
+t('поле объёма очищено после отправки', (await page.inputValue('#exoQty')) === '');
+
+console.log('\n--- торговля: закрытие позиции ---');
+await page.$eval('[data-expos]', el => el.click());
+await page.waitForTimeout(900);
+t('у позиции есть кнопка «Закрыть»', await page.evaluate(() => !!document.querySelector('[data-exclose]')));
+dialogs.length = 0;
+const n0 = orderBodies.length;
+await page.$eval('[data-exclose]', el => el.click());
+await page.waitForTimeout(1200);
+const cls = orderBodies[orderBodies.length - 1];
+t('закрытие запросило подтверждение', dialogs.some(d => d.type === 'confirm' && /ЗАКРЫТЬ ПОЗИЦИЮ/.test(d.msg)));
+t('закрытие LONG = SELL на весь объём с reduceOnly',
+  orderBodies.length === n0 + 1 && cls.side === 'SELL' && cls.qty === 0.1 && cls.reduceOnly === true && cls.type === 'MARKET' && cls.symbol === 'BTCUSDT',
+  JSON.stringify(cls));
 
 console.log('\n--- ошибки страницы ---');
 const real = errors.filter(e => !/net::ERR|Failed to fetch|NetworkError|aborted|URL scheme "file"/i.test(e));
